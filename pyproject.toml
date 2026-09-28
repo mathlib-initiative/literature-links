@@ -27,14 +27,24 @@ license-files = ["LICENSE"]
 authors = [{ name = "the formal-companion contributors" }]
 keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema", "web-annotation"]
 classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering :: Mathematics",
+  "Typing :: Typed",
 ]
 dependencies = []
+
+[project.urls]
+Source = "https://github.com/mathlib-initiative/formal-companion-annotations"
+Issues = "https://github.com/mathlib-initiative/formal-companion-annotations/issues"
+Changelog = "https://github.com/mathlib-initiative/formal-companion-annotations/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
@@ -48,7 +58,8 @@ formal-companion-annotations-validate = "formal_companion_annotations.validate:m
 where = ["src"]
 
 [tool.setuptools.package-data]
-formal_companion_annotations = ["schema/*.json"]
+# py.typed: the public API is fully annotated (tests/test_public_api.py checks it).
+formal_companion_annotations = ["schema/*.json", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

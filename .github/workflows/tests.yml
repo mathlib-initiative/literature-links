@@ -157,7 +157,8 @@ jobs:
           names = zipfile.ZipFile(wheel).namelist()
           package = sorted(n for n in names if not n.split("/")[0].endswith(".dist-info"))
           want = ["formal_companion_annotations/__init__.py", "formal_companion_annotations/__main__.py",
-                  "formal_companion_annotations/ids.py", "formal_companion_annotations/schema/annotations-v1.schema.json",
+                  "formal_companion_annotations/ids.py", "formal_companion_annotations/py.typed",
+                  "formal_companion_annotations/schema/annotations-v1.schema.json",
                   "formal_companion_annotations/schemacheck.py", "formal_companion_annotations/validate.py",
                   "formal_companion_annotations/vocab.py"]
           assert package == want, package

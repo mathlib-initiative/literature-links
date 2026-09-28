@@ -202,10 +202,10 @@ class TestEntryPoints(unittest.TestCase):
 
 #: A backticked token is read as a path in this repository when it starts with one of these.
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
-REPO_FILES = ("README.md", "CHANGELOG.md", "SWITCHOVER.md", "LICENSE", "pyproject.toml")
+REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SWITCHOVER.md", "LICENSE", "pyproject.toml")
 #: Documents about THIS repository.  SWITCHOVER.md and CHANGELOG.md are about the
 #: skill's tree too, so they cite paths that are not here by design.
-DOCS = ("README.md", "docs/annotations.md", "docs/vocabulary.md")
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md")
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):

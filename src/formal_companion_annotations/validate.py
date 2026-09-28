@@ -44,6 +44,14 @@ from typing import Any, Iterator
 from . import __version__, ids, vocab
 from .schemacheck import Validator
 
+#: The stable public API of this module (README.md, "Public API"): exactly these
+#: names.  Anything else, underscored or not, is internal and may change in any release.
+__all__ = [
+    "RECORD_ARRAYS", "SCHEMA_DIR", "SCHEMA_PATH", "LoadError", "Report", "canonical_dumps",
+    "canonicalize", "check", "loads", "main", "order_key", "schema_path", "site_sha256",
+    "validate",
+]
+
 HERE = Path(__file__).resolve().parent
 #: The schema files ship inside the package (package data), so an installed
 #: copy finds them without the repository's top-level ``schema/`` directory.
@@ -435,7 +443,7 @@ class Report:
 class Checker:
     """Collects ``path: message`` strings for one document."""
 
-    def __init__(self, doc: dict):
+    def __init__(self, doc: dict) -> None:
         self.doc = doc
         self.problems: list[str] = []
         self.warnings: list[str] = []

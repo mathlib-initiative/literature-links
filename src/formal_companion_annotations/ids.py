@@ -56,6 +56,15 @@ from dataclasses import dataclass
 
 from . import vocab
 
+#: The stable public API of this module (README.md, "Public API"): exactly these
+#: names.  Anything else, underscored or not, is internal and may change in any release.
+__all__ = [
+    "DECLARED_ID", "HASH_ID", "AnonymousDecl", "anonymous_id", "assign_ids", "blank_literals",
+    "comment_tags", "item_label_id", "named_signature", "normalize_statement",
+    "normalize_text", "ordinal_ids", "passage_page_id", "passage_quote_id", "private_id",
+    "scan_file", "statement_sha256", "strip_comments", "token_at",
+]
+
 HASH_ID = re.compile(r"^" + vocab.HASH_ID_PATTERN + r"$")
 DECLARED_ID = re.compile(r"^" + vocab.DECLARED_ID_PATTERN + r"$")
 
@@ -375,7 +384,7 @@ class AnonymousDecl:
     comment_tags: tuple[str, ...] = ()
 
 
-def _comments_above(text: str, spans, decl_start: int) -> list[tuple[int, int, str]]:
+def _comments_above(text: str, spans: list[tuple[int, int, str]], decl_start: int) -> list[tuple[int, int, str]]:
     """The run of comments directly above ``decl_start``, nearest first.
 
     Only whitespace, attributes and the one-line ``... in`` prefixes (``open``,
@@ -402,7 +411,8 @@ def _comment_body(text: str, a: int, b: int, kind: str) -> str:
     return body[opener:-2 if body.endswith("-/") else len(body)].strip()
 
 
-def declared_tag(text: str, spans, decl_start: int, keyword: str) -> tuple[str | None, str | None]:
+def declared_tag(text: str, spans: list[tuple[int, int, str]], decl_start: int,
+                 keyword: str) -> tuple[str | None, str | None]:
     """``(declared id, rejection)`` from the comments directly above a declaration."""
     found: list[str] = []
     rejected: list[str] = []
@@ -439,7 +449,7 @@ def declared_tag(text: str, spans, decl_start: int, keyword: str) -> tuple[str |
 _TAG_OPENING = re.compile(r"^`((?:example|instance):[^`\s]+)`")
 
 
-def comment_tags(text: str, spans, decl_start: int) -> tuple[str, ...]:
+def comment_tags(text: str, spans: list[tuple[int, int, str]], decl_start: int) -> tuple[str, ...]:
     """The ``<keyword>:<slug>`` tags that OPEN the comments directly above a declaration.
 
     The same comments :func:`declared_tag` reads, but every tag-shaped opening
