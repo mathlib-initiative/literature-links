@@ -1,21 +1,17 @@
-"""The lean-companion annotation format: schema, invariants, ids, canonical form.
+"""The formal-companion annotation format: schema, invariants, ids, canonical form.
 
-New code, testing docs/annotations.md.  The shipped examples must validate, the
+Extracted from the formal-companion skill (tests/test_annotations_schema.py),
+testing docs/annotations.md.  The shipped examples must validate, the
 two deliberately broken ones must fail with exactly the message they record in
 their own ``x_expected_error`` key, and a shuffled document must canonicalise
 back to the same bytes.  When the ``jsonschema`` package is importable the
-in-repo evaluator is also checked against it; the suite never needs it.
+package's own evaluator is also checked against it; the suite never needs it.
 """
 from __future__ import annotations
 
-# The first import, before anything reads HOME (see tests/_hermetic.py).
-try:
-    import _hermetic  # noqa: F401
-except ImportError:  # pragma: no cover
-    from tests import _hermetic  # noqa: F401
-
 import copy
 import hashlib
+import importlib.util
 import io
 import json
 import random
@@ -27,18 +23,33 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SKILL = HERE.parent
-SCRIPTS = SKILL / "scripts"
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
+ROOT = HERE.parent
+SRC = ROOT / "src"
+# The copy under test is the one Python imports: an installed package when
+# there is one (a wheel, an sdist install, an editable install of src/).
+# Only when none is importable does the suite fall back to the source tree, so
+# a checkout still runs with nothing installed.
+if importlib.util.find_spec("formal_companion_annotations") is None:
+    sys.path.insert(0, str(SRC))
 
-from annotations import ids                                        # noqa: E402
-from annotations import validate as V                              # noqa: E402
-from annotations.schemacheck import SchemaError, Validator         # noqa: E402
-from cflib import vocab                                            # noqa: E402
+import formal_companion_annotations                                                 # noqa: E402
+from formal_companion_annotations import ids                                        # noqa: E402
+from formal_companion_annotations import validate as V                              # noqa: E402
+from formal_companion_annotations import vocab                                      # noqa: E402
+from formal_companion_annotations.schemacheck import SchemaError, Validator         # noqa: E402
 
-EXAMPLES = SKILL / "examples" / "annotations"
-SCHEMA = SKILL / "schema" / "annotations-v1.schema.json"
+#: The imported package's directory, wherever it was installed.
+PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
+EXAMPLES = ROOT / "examples" / "annotations"
+#: The repository's copy, for readers and non-Python consumers ...
+SCHEMA = ROOT / "schema" / "annotations-v1.schema.json"
+#: ... the package-data copy in the source tree, which a build packages ...
+SOURCE_TREE_SCHEMA = SRC / "formal_companion_annotations" / "schema" / "annotations-v1.schema.json"
+#: ... and the copy the imported checker loads (the same file as the one above
+#: when the source tree is what is imported); all three are byte-identical.
+PACKAGED_SCHEMA = PACKAGE / "schema" / "annotations-v1.schema.json"
+#: The schema's ``$id``: a working name, never fetched (README.md).
+SCHEMA_ID = "https://github.com/mathlib-initiative/formal-companion-annotations/schema/annotations-v1.schema.json"
 VALID = ("ledger-graph.json", "mixed.json", "other-media.json", "pdf-region.json", "site-pages.json",
          "tex-lines.json", "web-passage.json")
 INVALID = ("invalid-dangling-reference.json", "invalid-reversed-line-range.json")
@@ -76,9 +87,28 @@ class TestTheSchemaFile(unittest.TestCase):
     def test_it_is_draft_2020_12_with_an_id_that_is_never_fetched(self):
         schema = self.schema()
         self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
-        self.assertIn("/lean-companion/", schema["$id"])
-        self.assertIn("rename", schema["description"])
+        self.assertEqual(schema["$id"], SCHEMA_ID)
+        self.assertNotIn("rename", schema["description"], "the rename is no longer pending")
         self.assertIn("never fetched", schema["description"])
+
+    def test_the_description_names_this_projects_checker(self):
+        """Not the skill's ``scripts/annotations/validate.py``, which is not in this repository."""
+        description = self.schema()["description"]
+        self.assertNotIn("scripts/annotations/", description)
+        self.assertIn("the formal-companion-annotations-validate command", description)
+        self.assertIn("src/formal_companion_annotations/validate.py", description)
+        self.assertTrue((ROOT / "src" / "formal_companion_annotations" / "validate.py").is_file())
+        self.assertIn("docs/annotations.md", description)
+        self.assertTrue((ROOT / "docs" / "annotations.md").is_file())
+
+    def test_the_packaged_schema_is_the_repositorys_byte_for_byte(self):
+        self.assertEqual(PACKAGED_SCHEMA.read_bytes(), SCHEMA.read_bytes())
+        self.assertEqual(SOURCE_TREE_SCHEMA.read_bytes(), SCHEMA.read_bytes())
+
+    def test_the_format_identifier_keeps_its_name(self):
+        """Only the ``$id`` moved: every existing document still says lean-companion/annotations."""
+        self.assertEqual(vocab.ANNOTATION_SCHEMA, "lean-companion/annotations")
+        self.assertEqual(self.schema()["properties"]["schema"]["const"], "lean-companion/annotations")
 
     def test_it_is_itself_in_canonical_form(self):
         text = SCHEMA.read_text(encoding="utf-8")
@@ -88,7 +118,7 @@ class TestTheSchemaFile(unittest.TestCase):
         root = self.schema()["properties"]
         self.assertEqual(root["schema_version"]["type"], "string")
         self.assertTrue(re.match(root["schema_version"]["pattern"], vocab.ANNOTATION_SCHEMA_VERSION))
-        self.assertEqual(V.schema_path(vocab.ANNOTATION_SCHEMA_MAJOR), SCHEMA)
+        self.assertEqual(V.schema_path(vocab.ANNOTATION_SCHEMA_MAJOR), PACKAGED_SCHEMA)
 
     def test_the_evaluator_refuses_a_keyword_it_does_not_implement(self):
         with self.assertRaises(SchemaError):
@@ -135,7 +165,7 @@ class TestTheSchemaFile(unittest.TestCase):
 
 
 class TestOneVocabulary(unittest.TestCase):
-    """CLAUDE.md S4: the schema's enums are cflib.vocab's, and documented."""
+    """The schema's enums are vocab's, and documented (docs/vocabulary.md)."""
 
     def schema(self) -> dict:
         return json.loads(SCHEMA.read_text(encoding="utf-8"))["$defs"]
@@ -219,7 +249,7 @@ class TestOneVocabulary(unittest.TestCase):
         declared = set()
         for key, values, conditional in found:
             with self.subTest(enum=key, conditional=conditional):
-                self.assertIn(key, self.ENUMS, f"schema enum {key} has no cflib.vocab set in ENUMS")
+                self.assertIn(key, self.ENUMS, f"schema enum {key} has no vocab set in ENUMS")
                 if conditional:
                     self.assertLessEqual(set(values), set(self.ENUMS[key]))
                 else:
@@ -260,8 +290,8 @@ class TestOneVocabulary(unittest.TestCase):
                 self.assertEqual(d[name]["properties"]["type"]["const"], name)
 
     def test_every_value_is_documented(self):
-        text = (SKILL / "references" / "vocabulary.md").read_text(encoding="utf-8")
-        section = text.split("### 1.10 ", 1)[1].split("\n---", 1)[0]
+        text = (ROOT / "docs" / "vocabulary.md").read_text(encoding="utf-8")
+        section = text.split("\n## 1. ", 1)[1].split("\n---", 1)[0]
         for name in dir(vocab):
             value = getattr(vocab, name)
             if not name.startswith("ANNOTATION_") or not isinstance(value, frozenset):
@@ -274,9 +304,51 @@ class TestOneVocabulary(unittest.TestCase):
             with self.subTest(reused=reused):
                 self.assertIn(reused, section)
 
+    def test_every_reused_value_is_documented_here_too(self):
+        """The format owns the sets it shares with the skill: section 2 lists them all."""
+        text = (ROOT / "docs" / "vocabulary.md").read_text(encoding="utf-8")
+        section = text.split("\n## 2. ", 1)[1].split("\n---", 1)[0]
+        for reused in ("SOURCE_ROLES", "LEDGER_VERDICTS", "FINDING_KINDS", "VIEWER_VERDICTS",
+                       "VIEWER_SEVERITIES", "VIEWER_STATUS", "SORRY_CLASSES", "STATIC_RESOLUTIONS",
+                       "RESOLUTION_PREFIXES"):
+            with self.subTest(reused=reused):
+                self.assertIn(f"`{reused}`", section)
+                for entry in getattr(vocab, reused):
+                    self.assertIn(f"`{entry}`", section)
+
+    def test_every_shared_value_has_a_meaning_defined_here(self):
+        """Each shared set, and the resolution states, has its own subsection of section 2
+        with one ``| `value` | meaning |`` row per value: the meaning is the format's, not the skill's."""
+        text = (ROOT / "docs" / "vocabulary.md").read_text(encoding="utf-8")
+        section = text.split("\n## 2. ", 1)[1].split("\n---", 1)[0]
+        subsections = {}
+        for block in section.split("\n### ")[1:]:
+            heading, _, body = block.partition("\n")
+            subsections[heading] = body
+        sets = {name: getattr(vocab, name) for name in (
+            "VIEWER_VERDICTS", "VIEWER_SEVERITIES", "VIEWER_STATUS", "LEDGER_VERDICTS", "FINDING_KINDS",
+            "SOURCE_ROLES", "SORRY_CLASSES")}
+        sets["Resolution states"] = vocab.ANNOTATION_RESOLUTION_STATES
+        for name, values in sets.items():
+            with self.subTest(set=name):
+                title = f"`{name}`" if name.isupper() else name
+                matches = [h for h in subsections if re.match(rf"2\.\d+ {re.escape(title)}(:|$)", h)]
+                self.assertEqual(len(matches), 1, f"no subsection of section 2 defines {name}")
+                rows = {}
+                for line in subsections[matches[0]].splitlines():
+                    m = re.match(r"^\| `([^`]+)` \| (.+) \|$", line)
+                    if m:
+                        rows[m.group(1)] = m.group(2).strip()
+                self.assertEqual(set(rows), set(values), f"{name}: the rows are not the set's values")
+                for value, meaning in rows.items():
+                    self.assertGreaterEqual(len(meaning.split()), 3, f"{name}.{value} has no meaning")
+        self.assertEqual(vocab.ANNOTATION_RESOLUTION_STATES,
+                         {"open"} | vocab.STATIC_RESOLUTIONS | {p.rstrip(":") for p in vocab.RESOLUTION_PREFIXES})
+        self.assertIn("**The format owns every value it uses.**", text)
+
 
 class TestOneIdGrammar(unittest.TestCase):
-    """ids.py (the writer) and validate.py (the checker) share cflib.vocab's grammar."""
+    """ids.py (the writer) and validate.py (the checker) share vocab's grammar."""
 
     def test_both_sides_compile_the_vocab_pattern(self):
         self.assertIn(vocab.DECLARED_ID_PATTERN, ids.DECLARED_ID.pattern)
@@ -396,7 +468,7 @@ class TestTheExamples(unittest.TestCase):
         self.assertGreater(len(pages), len(set(pages)), "no page carries two items")
 
     def test_the_examples_quote_no_real_source(self):
-        """POLICY.md: examples are synthetic; every source title says so."""
+        """Examples are synthetic (README.md); every source title says so."""
         for name in VALID + INVALID:
             for source in load(name)["sources"]:
                 if source["kind"] != "lean":
@@ -1557,7 +1629,7 @@ class TestPassageIds(unittest.TestCase):
 
 
 class TestAgreementWithJsonschema(unittest.TestCase):
-    """Only when the real package is installed; the skill never requires it."""
+    """Only when the real package is installed; this package never requires it."""
 
     def setUp(self):
         try:
@@ -1602,7 +1674,7 @@ class TestAgreementWithJsonschema(unittest.TestCase):
 class TestTheSpec(unittest.TestCase):
 
     def text(self) -> str:
-        return (SKILL / "docs" / "annotations.md").read_text(encoding="utf-8")
+        return (ROOT / "docs" / "annotations.md").read_text(encoding="utf-8")
 
     def test_every_json_block_in_the_spec_parses(self):
         blocks = re.findall(r"```json\n(.*?)```", self.text(), re.S)
@@ -1621,7 +1693,7 @@ class TestTheSpec(unittest.TestCase):
             self.assertIn(f"| I{n} |", text)
 
     def test_the_checkers_invariant_labels_are_the_tables(self):
-        code = (SCRIPTS / "annotations" / "validate.py").read_text(encoding="utf-8")
+        code = (PACKAGE / "validate.py").read_text(encoding="utf-8")
         labels = {int(n) for line in code.splitlines() if line.strip().startswith("# -- I")
                   for n in re.findall(r"I(\d+)", line)}
         self.assertEqual(labels, set(range(1, 14)) - {11})

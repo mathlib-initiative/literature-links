@@ -6,21 +6,40 @@ standard format the adapters, a PDF overlay, a web viewer and a WikiLean-style
 exporter can all read and write.
 
 - Schema: `schema/annotations-v1.schema.json` (JSON Schema 2020-12), for
-  `schema_version` `"1.0"`.
-- Checker: `scripts/annotations/validate.py` (schema plus the invariants in section 6).
-- Mechanical ids: `scripts/annotations/ids.py` (section 5).
+  `schema_version` `"1.0"`; the package ships the same bytes as
+  `src/formal_companion_annotations/schema/annotations-v1.schema.json`.
+- Checker: `src/formal_companion_annotations/validate.py` (schema plus the
+  invariants in section 6), installed as the
+  `formal-companion-annotations-validate` command.
+- Mechanical ids: `src/formal_companion_annotations/ids.py` (section 5).
 - Examples: `examples/annotations/` (all synthetic; two are deliberately invalid).
 
-The ids and the schema's `$id` use the name **lean-companion**. The `$id` is an
-identifier that is never fetched: it names no file on any host, under the
-current name or the new one, and nothing in the skill dereferences it. The
-rename of this repository from companion-faithfulness to lean-companion is
-pending.
+**Normative and informative.** Everything in this document is normative
+except what is marked **Informative**: section 10, the survey and measurement
+figures of section 5.1, the account of today's producers and readers in
+section 11.1, and the notes that say so. Those record what the design survey
+measured, how the existing data maps in and which tools exist; they state no
+requirement, and a figure there may go stale without the format changing.
+The figures are from the two worked companions, measure_theory
+(`github.com/mathlib-initiative/measure_theory`) and tao-measure-lean
+(`github.com/mathlib-initiative/tao-measure-lean`).
+
+The format's own identifiers use the name **lean-companion**: the root `schema`
+value `"lean-companion/annotations"` and the docstring line
+`lean-companion id:` (section 5.1). They are kept although the project is
+named formal-companion-annotations: they are data inside every document and
+docstring producers have already written, so renaming them would invalidate
+all of those for no change in meaning. They name the format, not the
+repository that hosts it. The schema's `$id` names this repository,
+formal-companion-annotations. The `$id` is an identifier that is never
+fetched: nothing in this package dereferences it. The format was written in
+the formal-companion skill, which produces documents in it (sections 10 and
+11.1).
 
 **Contents**: 1 design rules · 2 the document · 3 records · 4 locations and
 selectors · 5 ids · 6 invariants and warnings · 7 canonical form · 8 validating
-· 9 versions and the changelog · 10 how the existing companions map in · 11
-left out of v1
+· 9 versions and the changelog · 10 how the existing companions map in
+(informative) · 11 producers and readers today, and what v1 leaves out
 
 ## 1. Design rules
 
@@ -65,7 +84,7 @@ left out of v1
 | `locations` | no | where items (or declarations) sit in a source |
 | `destinations` | no | where a declaration or artifact is rendered on a companion site |
 | `snippets` | no | statement text for declaration cards |
-| `verdicts` | no | adjudicated faithfulness verdicts on items |
+| `verdicts` | no | adjudicated faithfulness verdicts on items, specific to faithfulness audits (section 3.7) |
 | `unattributed` | no | declarations shown for the book but tied to no item |
 | `clusters` | no | a companion's own coarse nodes (sections, ledger nodes) |
 | `changelog` | no | id events: born, retired, restated, renamed, ordinal_assigned |
@@ -88,10 +107,12 @@ candidate for the next minor version, not a permanent `x_` key.
 
 ## 3. Records
 
-Every enum in the schema is a set in `scripts/cflib/vocab.py`, and a few reuse
-sets from other sections (the verdict vocabulary, source roles, ledger
-verdicts, finding kinds, sorry classes). All are listed in
-`references/vocabulary.md` section 1.10. A test walks every `enum` in the
+Every enum in the schema is a set in `src/formal_companion_annotations/vocab.py`,
+and a few are sets the format shares with the formal-companion skill,
+where they were first written (the verdict vocabulary, source roles, ledger
+verdicts, finding kinds, sorry classes). The format owns all of them: every
+value, and what it means, is defined in `docs/vocabulary.md`, and producers,
+the skill included, conform to that file. A test walks every `enum` in the
 schema and fails when one has no set in that module or the two disagree.
 
 ### 3.1 Sources
@@ -303,9 +324,15 @@ declaration.
 
 **Verdict** `{id, item, sub?, locations?, verdict, severity, status, summary,
 evidence?, declarations?, resolution?, finding_ids?, ledger_verdict?,
-finding_kind?, pinned_commit?, provenance?}`. `verdict`, `severity` and
-`status` are the viewer vocabulary. `locations` lists the regions the verdict
-is about (each must show the item). `evidence` is the ordered list of evidence
+finding_kind?, pinned_commit?, provenance?}`. The verdict record is specific
+to faithfulness audits: it records the adjudicated outcome of checking an
+item's declarations against its source, as the formal-companion skill
+audits them, and no other record does. The `verdicts` array is optional; a
+producer that does not audit faithfulness omits it, and no other record
+depends on it. `verdict`, `severity` and `status` are the viewer vocabulary,
+`ledger_verdict` and `finding_kind` the adjudication's, each defined, value by
+value, in `docs/vocabulary.md` section 2. `locations` lists the regions the
+verdict is about (each must show the item). `evidence` is the ordered list of evidence
 statements. `resolution` `{state, pr?, issue?, commits?, branch?,
 replaced_by?, note?}` replaces "Fixed in PR #N" prose: `state` is `open`,
 `fixed` (needs `pr` or `commits`), `in_progress` (needs `pr` or `branch`),
@@ -610,10 +637,10 @@ The private form is Lean's own `_private.<Module>.0.<Name>` without the
 mangling. The module is part of it because Lean allows the same private name in
 two modules.
 
-**One grammar.** `scripts/cflib/vocab.py` defines the anonymous-id grammar once
-(`HASH_ID_PATTERN`, `DECLARED_ID_PATTERN`) and both `ids.py`, which writes ids,
-and `validate.py`, which checks them, compile it. A declared slug is letters of
-either case, digits, `.`, `_` and `-`, starting with a letter or digit;
+**One grammar.** `src/formal_companion_annotations/vocab.py` defines the
+anonymous-id grammar once (`HASH_ID_PATTERN`, `DECLARED_ID_PATTERN`) and both
+`ids.py`, which writes ids, and `validate.py`, which checks them, compile it. A
+declared slug is letters of either case, digits, `.`, `_` and `-`, starting with a letter or digit;
 capitals are allowed because Lean names are case-sensitive and existing tags
 use them. A slug of exactly 12 lowercase hex digits (with or without `~k`) is
 reserved for statement-hash ids, so the two forms never look alike.
@@ -633,9 +660,9 @@ ends before the next non-blank line indented no deeper than the keyword's
 line. The scanner finds `local` and `scoped` instances and declarations behind
 the one-line prefixes `open ... in`, `set_option ... in`, `variable ... in`,
 `include ... in`, `omit ... in` and `#guard_msgs in`; the hash still starts at
-the keyword. `scripts/annotations/ids.py` is the reference implementation, and
-the checker verifies that the 12 digits are the prefix of `statement_sha256`
-and that the `signature`, when present, hashes to it.
+the keyword. `src/formal_companion_annotations/ids.py` is the reference
+implementation, and the checker verifies that the 12 digits are the prefix of
+`statement_sha256` and that the `signature`, when present, hashes to it.
 
 **Ordinals are positional, so they are recorded.** When two such declarations
 of one companion normalise to the same text, the later ones in (file, line)
@@ -648,7 +675,8 @@ timestamped record on the same day is later) must name the file the declaration 
 added or deleted in another file, which moves the ordinal across files, fails
 until the new assignment is recorded. A record whose id a later entry retires
 or renames stays valid, as history. `ids.ordinal_ids()` lists the ids that
-need a record. measure_theory has 3 such ids today; tao-measure-lean has none.
+need a record. (*Informative*: measure_theory has 3 such ids at `00a2438`;
+tao-measure-lean has none at `f158509`.)
 
 One document holds only the current assignment, so it cannot detect a move
 that keeps every recorded id live in its recorded file: a reorder within one
@@ -661,18 +689,22 @@ moves. For a statement that has, or may get, a textual twin, declare an id
 
 **Why a hash and not a line.** Lean gives an `example` no name at all: it
 leaves no constant and no entry in the `.ilean` declaration tables. A line
-number moves whenever anything above it changes. In the design survey
-(2026-09-26), over the first-parent history of the two worked companions,
-positional ids were retired 72 times over the 22 first-parent commits that
-touch tao-measure-lean's Lean and 361 times over measure_theory's 92 such commits,
-while statement-hash ids were retired 0 and 8 times, and all 8 were real
-restatements or removals. The reference implementation finds the survey
-prototype's anonymous declarations at the same files and lines on both
-companions (38 and 802) and reproduces its statement hashes for all of them
-but one: a measure_theory `example` whose typed header ends at `where`, which
-the prototype cut at the first field's `:=`. An anonymous instance's generated
-name is kept as `lean_name` when a build is available, but it is not the id: it
-can carry a module suffix and an order-dependent `_1`.
+number moves whenever anything above it changes. An anonymous instance's
+generated name is kept as `lean_name` when a build is available, but it is not
+the id: it can carry a module suffix and an order-dependent `_1`.
+
+*Informative*, the survey figures. In the design survey (2026-09-26), over the
+first-parent history of the two worked companions
+(`github.com/mathlib-initiative/measure_theory` and
+`github.com/mathlib-initiative/tao-measure-lean`), positional ids were retired
+72 times over the 22 first-parent commits that touch tao-measure-lean's Lean
+and 361 times over measure_theory's 92 such commits, while statement-hash ids
+were retired 0 and 8 times, and all 8 were real restatements or removals. The
+reference implementation finds the survey prototype's anonymous declarations
+at the same files and lines on both companions (38 and 802) and reproduces its
+statement hashes for all of them but one: a measure_theory `example` whose
+typed header ends at `where`, which the prototype cut at the first field's
+`:=`.
 
 **Declared ids.** An override is accepted from exactly two places: a comment
 directly above the declaration whose whole content is the backticked tag,
@@ -688,11 +720,11 @@ for review. A Lean attribute is deliberately not the mechanism: an unregistered
 attribute is a hard error, so it would add a package every companion must
 depend on.
 
-Measured on measure_theory at `00a2438`: each of its 64 tags is the first
-line of a longer comment (42 block comments, 19 module docs, 3 docstrings)
-whose tag line is followed by prose, so under this rule none of them declares
-an id and all 64 are reported as rejected tags; the 802 anonymous declarations
-keep their statement-hash ids. Each tag becomes a declared id once it is
+*Informative.* Measured on measure_theory at `00a2438`: each of its 64 tags
+is the first line of a longer comment (42 block comments, 19 module docs, 3
+docstrings) whose tag line is followed by prose, so under this rule none of
+them declares an id and all 64 are reported as rejected tags; the 802
+anonymous declarations keep their statement-hash ids. Each tag becomes a declared id once it is
 written as its own comment, ``/- `example:<slug>` -/``, directly above the
 example.
 
@@ -733,7 +765,7 @@ restated declaration.
 
 ## 6. Invariants and warnings
 
-The schema checks shape; `scripts/annotations/validate.py` checks these.
+The schema checks shape; `src/formal_companion_annotations/validate.py` checks these.
 
 | | invariant |
 |---|---|
@@ -828,19 +860,25 @@ JSON does not have.
 ## 8. Validating
 
 ```sh
-python3 scripts/annotations/validate.py examples/annotations/mixed.json --canonical
-python3 scripts/annotations/validate.py <document.json> --print-canonical > <document.json.new>
+formal-companion-annotations-validate examples/annotations/mixed.json --canonical
+formal-companion-annotations-validate <document.json> --print-canonical > <document.json.new>
+python3 -m formal_companion_annotations.validate examples/annotations/mixed.json --canonical
 ```
 
 Exit status 0 means valid, 1 invalid (one `path: message` line per problem), 2
 unreadable. The checker reads `schema_version`, takes its major version and
-loads `schema/annotations-v<major>.schema.json`; a major version it has no
-schema for is a problem. The schema runs first, through the in-repo evaluator
-`scripts/annotations/schemacheck.py`, because the skill is standard library
-only; the invariants run only on a document the schema accepts. When the
-`jsonschema` package is installed, the test suite checks that it agrees with
-the in-repo evaluator on every example and on random mutations of them; one CI
-job (Python 3.13) installs it for that.
+loads `annotations-v<major>.schema.json` from the package's `schema/`
+directory (the same bytes as `schema/annotations-v1.schema.json` here); a
+major version it has no schema for is a problem. A missing schema file for the
+checker's own major version is a broken install, not a problem with the
+document: the command says "schema file not found" and exits 2.
+`--version` prints the package's version. The schema runs first,
+through the package's own evaluator
+`src/formal_companion_annotations/schemacheck.py`, because the package is
+standard library only; the invariants run only on a document the schema
+accepts. When the `jsonschema` package is installed, the test suite checks
+that it agrees with the package's evaluator on every example and on random
+mutations of them; one CI job (Python 3.13) installs it for that.
 
 ## 9. Versions and the changelog
 
@@ -874,15 +912,26 @@ The `changelog` array is the id history the document carries with it:
 
 ## 10. How the existing companions map in
 
-Two exporters, `cf export attribution-table` and `cf export docstring-tags`
-(`docs/exporters.md`), read the worked companions read-only, at measure_theory
-`00a2438` and tao-measure-lean `f158509`, and write version 1.0 documents; the
-documents and the reports written beside them are kept maintainer-side, in
-`CF_M3_REFERENCE_DIR` (`tests/data/m3/README.md`), never in this repository. Both
-validate with `--canonical` and no warnings. The figures below are from those
-documents and reports. (The paragraphs were written from the prototype
-documents the commands replaced; the source ids they mention are now the
-registry's, `docs/exporters.md` section 6.)
+**Informative.** This section describes how the data the two worked
+companions already carry maps into the format, as the skill's exporters
+realise it, and how the skill's adapters and WikiLean would; the viewer
+remark and the figures are measurements at the pinned commits. It states no
+requirement: where it and sections 1 to 9 differ, those sections decide. The
+companions are measure_theory (`github.com/mathlib-initiative/measure_theory`)
+and tao-measure-lean (`github.com/mathlib-initiative/tao-measure-lean`).
+
+Two exporters of the formal-companion skill,
+`cf export attribution-table` and `cf export docstring-tags`
+(`formal-companion/docs/exporters.md`), read the worked companions
+read-only, at measure_theory `00a2438` and tao-measure-lean `f158509`, and
+write version 1.0 documents; the documents and the reports written beside them
+are kept maintainer-side, in the skill's `CF_M3_REFERENCE_DIR`
+(`formal-companion/tests/data/m3/README.md`), never in this repository
+or the skill's. Both validate with `--canonical` and no warnings. The figures
+below are from those documents and reports. (The paragraphs were written from
+the prototype documents the commands replaced; the source ids they mention are
+now the skill registry's, `formal-companion/docs/exporters.md` section
+6.)
 
 | root array | measure_theory | tao-measure-lean |
 |---|---|---|
@@ -993,7 +1042,7 @@ the title of the second tag on the passage two declarations quote
 docstring quotes (not found, ambiguous, or found only on the next or previous
 page) and the 14 of 21 link docstring quotes that could not be verified.
 
-**The skill's adapters.** `docstring_tags`, `attribution_table` and
+**The formal-companion skill's adapters.** `docstring_tags`, `attribution_table` and
 `blueprint_tex` read today's three conventions into `statements.jsonl` rows
 (`adapters.base.ROW_FIELDS`). An `annotations` adapter reading this format
 re-parses the Lean with `adapters.leanparse` for anything the document does not
@@ -1057,18 +1106,59 @@ becomes `link.note`; the provenance string (`ai`, `ai-agent1`, `ai-moderated`,
 agent_annotation`, or `human`); the 12-hex native id can be kept in
 `item.legacy_ids`. Its W3C export is the shape section 4.7 describes.
 
-## 11. Left out of v1
+## 11. Producers, readers, and what v1 leaves out
 
-- An importer, and a W3C exporter. The two companion exporters exist
-  (`cf export`, `docs/exporters.md`); the adapters, the viewer and WikiLean do
-  not read or write this format yet.
-- A `cf` command for the checker, which runs by path, as above (`cf export`
-  and `cf review-tags` exist).
+### 11.1 Producers and readers today
+
+*Informative*: this describes the formal-companion skill at `master`
+`d4deedb`, and will go stale as tools are added.
+
+The skill writes version 1.0 documents in four places, and every one goes
+through the checker before it counts:
+
+- `cf export attribution-table` and `cf export docstring-tags` export the two
+  worked companions' own attribution data (section 10;
+  `formal-companion/docs/exporters.md`). Each validates the document it
+  writes (schema, invariants, canonical bytes) and exits 1 when it fails.
+- `cf ingest`, stage S0 of the skill's PDF-to-companion pipeline, writes
+  `pipelines/<id>/doc.v0.json`: the PDF (and the errata page, when there is
+  one) as sources, with provenance and the generated companion. `cf
+  inventory`, stage S1, writes `doc.v1.json`, which adds the numbered items,
+  the erratum items, the passages and their locations
+  (`formal-companion/docs/pipeline.md`). Each checkpoint is written in
+  canonical form, and a checkpoint the checker would refuse, for a problem or
+  a warning, is not written at all.
+
+Three of its tools read documents: `cf review-tags` checks a document's key
+links against the defect shapes the audits found, `cf inventory` reads
+`doc.v0.json` back, and `formal-companion/scripts/pipeline/derive_truth.py`,
+which the maintainer runs by path, derives the pipeline calibration's truth
+table from a companion's document.
+
+The checker is this package's `formal-companion-annotations-validate` command.
+The skill has no `cf` subcommand for one: its producers call the skill's own
+copy of the checker in-process, and its docs run that copy by path, until the
+skill is switched over to this package (`SWITCHOVER.md` in this repository).
+That copy accepts and rejects exactly what this package's checker does.
+
+### 11.2 Left out of v1
+
+- An importer into the skill's statement rows: the `annotations` adapter of
+  section 10 is a design, not code, and the skill's adapters still read the
+  companions' own conventions.
+- A W3C JSON-LD exporter and importer. Section 4.7 fixes the shape; nothing
+  writes or reads it.
+- The viewer and WikiLean: neither reads or writes this format. The viewer
+  refuses a manifest with graph keys (section 10), and WikiLean keeps its own
+  annotations, which section 10 maps in.
+- Declarations, links and verdicts from the PDF-to-companion pipeline:
+  `formal-companion/docs/proposals/pdf-to-companion.md` designs ten
+  stages, S0 to S9, and only S0 and S1 are built, so a pipeline document holds
+  only the source side (sources, provenance, items, locations).
 - A Lean-side exporter for elaborated-type hashes, and the namespace in the
   statement hash: the normaliser is frozen, and adding context to the hash
   would re-key every anonymous declaration.
 - Book text. A `quote` or a `TextQuoteSelector` holds a short anchor, and the
   document lives in the companion's repository or a workspace, never in this
-  one (`POLICY.md`); the examples here are synthetic.
-- A producer. `docs/proposals/pdf-to-companion.md` proposes the pipeline that
-  would write this format from a PDF; none of it is built.
+  one or the skill's (`formal-companion/POLICY.md`); the examples here
+  are synthetic.

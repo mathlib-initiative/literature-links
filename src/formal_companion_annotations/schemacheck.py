@@ -1,7 +1,8 @@
-"""A small JSON Schema (draft 2020-12) evaluator for the keywords this repo uses.
+"""A small JSON Schema (draft 2020-12) evaluator for the keywords this package uses.
 
-New code.  The repo is standard library only (CLAUDE.md S3), so the
-``jsonschema`` package cannot be assumed; this module evaluates the subset of
+Extracted from the formal-companion skill (scripts/annotations/
+schemacheck.py), where it was new code.  This package is standard library
+only, so the ``jsonschema`` package cannot be assumed; this module evaluates the subset of
 draft 2020-12 that schema/annotations-v1.schema.json is written in, and it
 REFUSES a schema that uses any other keyword, so the schema cannot quietly rely
 on a rule nothing here enforces.  ``tests/test_annotations_schema.py`` checks
