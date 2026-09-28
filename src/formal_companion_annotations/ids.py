@@ -1,6 +1,7 @@
 """Mechanical ids: anonymous Lean declarations and unnumbered passages.
 
-New code, implementing docs/annotations.md section 5.  The declaration rule was
+Extracted from the formal-companion skill (scripts/annotations/ids.py),
+where it was new code, implementing docs/annotations.md section 5.  The declaration rule was
 measured before it was written down: over the full first-parent history of the
 two worked companions, a statement-hash id was retired only when the statement
 itself changed, while line-based ids (``example@<file>:<line>``, the form the
@@ -33,7 +34,7 @@ Declarations (section 5.1):
 * A **declared** id overrides the hash.  It is accepted only from a comment
   directly above the declaration whose whole content is the tag
   (``/- `example:<slug>` -/``), or from a docstring line that is exactly
-  ``lean-companion id: <id>``.  The grammar is ``cflib.vocab``'s, shared with
+  ``lean-companion id: <id>``.  The grammar is :mod:`vocab`'s, shared with
   the checker.  A comment that starts like a tag but breaks a rule is reported
   in ``rejected_tag``, never guessed.
 
@@ -42,7 +43,7 @@ Passages (section 5.2): ``passage-<8 hex>`` of the normalised anchor quote, or
 quote.
 
 The statement normaliser is whitespace only and frozen, for the same reason
-``cflib.items.clean`` is: changing it re-keys every anonymous declaration.  The
+the skill's ``cflib.items.clean`` is: changing it re-keys every anonymous declaration.  The
 hash is syntactic: a binder rename or a notation change retires the id, and
 ``variable`` / ``open`` / namespace context is not seen.
 """
@@ -50,16 +51,10 @@ from __future__ import annotations
 
 import hashlib
 import re
-import sys
 import unicodedata
 from dataclasses import dataclass
-from pathlib import Path
 
-_SCRIPTS = Path(__file__).resolve().parent.parent
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
-
-from cflib import vocab                                              # noqa: E402
+from . import vocab
 
 HASH_ID = re.compile(r"^" + vocab.HASH_ID_PATTERN + r"$")
 DECLARED_ID = re.compile(r"^" + vocab.DECLARED_ID_PATTERN + r"$")
