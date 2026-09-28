@@ -30,11 +30,11 @@ value `"lean-companion/annotations"` and the docstring line
 named formal-companion-annotations: they are data inside every document and
 docstring producers have already written, so renaming them would invalidate
 all of those for no change in meaning. They name the format, not the
-repository that hosts it. The schema's `$id` names this repository,
-formal-companion-annotations. The `$id` is an identifier that is never
-fetched: nothing in this package dereferences it. The format was written in
-the formal-companion skill, which produces documents in it (sections 10 and
-11.1).
+repository that hosts it. The schema's `$id` is the raw URL of the schema
+at a release tag of this repository (section 9.3); it is an identifier that
+is never fetched: nothing in this package dereferences it. The format was
+written in the formal-companion skill, which produces documents in it
+(sections 10 and 11.1).
 
 **Contents**: 1 design rules · 2 the document · 3 records · 4 locations and
 selectors · 5 ids · 6 invariants and warnings · 7 canonical form · 8 validating
@@ -72,7 +72,7 @@ selectors · 5 ids · 6 invariants and warnings · 7 canonical form · 8 validat
 |---|---|---|
 | `schema` | yes | always `"lean-companion/annotations"` |
 | `schema_version` | yes | `"<major>.<minor>"`, `"1.0"` for this schema (section 9) |
-| `$schema` | no | the JSON Schema the document follows, an identifier that is never fetched, so the URL rule (I10) exempts it |
+| `$schema` | no | the JSON Schema the document follows, an identifier that is never fetched, so the URL rule (I10) exempts it; when present it should be the schema's `$id` (section 9.3) |
 | `companion` | yes | `{name, repo, commit, generated_at, generator, graph?}`: which repo and commit the declarations describe, and what wrote the file. `repo` has no scheme (`host/org/name`), see I10. `commit` is a full 40- or 64-hex git id. `graph` pins the companion's own graph authority (a ledger), section 3.3 |
 | `sources` | yes, at least 1 | the editions annotated |
 | `items` | yes | numbered items and unnumbered passages |
@@ -325,7 +325,7 @@ declaration.
 **Verdict** `{id, item, sub?, locations?, verdict, severity, status, summary,
 evidence?, declarations?, resolution?, finding_ids?, ledger_verdict?,
 finding_kind?, pinned_commit?, provenance?}`. The verdict record is specific
-to faithfulness audits: it records the adjudicated outcome of checking an
+to faithfulness audits, and stays in the core format for 1.0: it records the adjudicated outcome of checking an
 item's declarations against its source, as the formal-companion skill
 audits them, and no other record does. The `verdicts` array is optional; a
 producer that does not audit faithfulness omits it, and no other record
@@ -866,7 +866,7 @@ python3 -m formal_companion_annotations.validate examples/annotations/mixed.json
 ```
 
 Exit status 0 means valid, 1 invalid (one `path: message` line per problem), 2
-unreadable. The checker reads `schema_version`, takes its major version and
+unreadable or a usage error. The checker reads `schema_version`, takes its major version and
 loads `annotations-v<major>.schema.json` from the package's `schema/`
 directory (the same bytes as `schema/annotations-v1.schema.json` here); a
 major version it has no schema for is a problem. A missing schema file for the
@@ -882,14 +882,62 @@ mutations of them; one CI job (Python 3.13) installs it for that.
 
 ## 9. Versions and the changelog
 
+### 9.1 The format's version
+
 `schema_version` is `"<major>.<minor>"`. Readers match the major version;
 writers declare the minor they used. A minor version only adds optional keys
-or enum values; a major version changes something a reader of the previous
-major cannot ignore. Every object is closed, so a checker that knows `1.0`
-refuses a key added in `1.1` rather than silently dropping it, and warns that
-the document is newer than the checker. Unknown keys are therefore never
-passed through: update the checker, or keep the new data in `x_` keys until
-then.
+or enum values, so a document valid under X.Y stays valid under X.(Y+1); a
+major version changes something a reader of the previous major cannot ignore
+(a key removed or made required, a value removed or given another meaning).
+Every object is closed, so a checker that knows `1.0` refuses a key added in
+`1.1` rather than silently dropping it, and warns that the document is newer
+than the checker. Unknown keys are therefore never passed through: update the
+checker, or keep the new data in `x_` keys until then.
+
+**A checker selects the schema by the major version alone.** It checks every
+`"1.*"` document against the newest 1.x schema it has, so a checker that
+knows `1.1` accepts a key added in 1.1 in a document that declares `"1.0"`.
+No checker can tell that a declared minor is wrong. A writer must therefore
+declare the minor it wrote against: that is the only way a reader learns
+which keys to expect.
+
+### 9.2 The package's version
+
+The package, formal-companion-annotations, follows semantic versioning, tied
+to the format's version:
+
+- **MAJOR** is the format's major version: package X.* reads documents whose
+  `schema_version` is `"X.*"`, and only those. A new format major is a new
+  package major.
+- **MINOR** is for backward-compatible additions: new optional fields or enum
+  values (a new format minor), or new public Python names. Not every package
+  minor changes the format; every format minor is a package minor.
+- **PATCH** is for checker and documentation fixes that do not change which
+  documents this specification admits. A fix to a checker that wrongly
+  accepted a document this specification forbids is a patch, since the
+  document was never valid; the package's CHANGELOG calls out every such fix,
+  because a document that passed the old checker can fail the new one.
+
+The checker's exit statuses (0 valid, 1 invalid, 2 unreadable, a usage error
+or a broken install, section 8), the shape of its output lines
+(`<file>: <path>: <message>` per problem, `<file>: warning: <message>` per
+warning, `<file>: ok (<counts>)` for a valid document) and the Python API
+(each module's `__all__`) fall under semantic versioning too. The wording of
+a message does not.
+
+### 9.3 The schema's `$id`
+
+The `$id` of `annotations-v<major>.schema.json` is the raw URL of that file
+at the tag of the release that introduced its minor version:
+`https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/v1.0.0/schema/annotations-v1.schema.json`
+for 1.0. A release that introduces a new minor sets the `$id` to its own
+tag; a release that does not keeps the `$id` it had. The URL resolves only
+for clients that can read the repository. Validators never fetch it: this
+package's checker makes no network request, and a validator that needs the
+schema should be given the file. A document need not carry `$schema`; one
+that does should give the `$id` (I10 exempts it).
+
+### 9.4 The changelog
 
 The `changelog` array is the id history the document carries with it:
 
@@ -1138,7 +1186,7 @@ table from a companion's document.
 The checker is this package's `formal-companion-annotations-validate` command.
 The skill has no `cf` subcommand for one: its producers call the skill's own
 copy of the checker in-process, and its docs run that copy by path, until the
-skill is switched over to this package (`SWITCHOVER.md` in this repository).
+skill vendors this package (`SWITCHOVER.md` in this repository).
 That copy accepts and rejects exactly what this package's checker does.
 
 ### 11.2 Left out of v1

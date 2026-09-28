@@ -16,4 +16,10 @@ formal_companion_annotations.validate`` runs without a double import.
 """
 from __future__ import annotations
 
+#: The stable public API (README.md, "Public API"): the version and the four
+#: modules, each of which states its own names in its ``__all__``.  Listing the
+#: modules does not import them; ``from formal_companion_annotations import *``
+#: does.
+__all__ = ["__version__", "ids", "schemacheck", "validate", "vocab"]
+
 __version__ = "1.0.0"

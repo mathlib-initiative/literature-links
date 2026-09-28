@@ -48,8 +48,14 @@ SOURCE_TREE_SCHEMA = SRC / "formal_companion_annotations" / "schema" / "annotati
 #: ... and the copy the imported checker loads (the same file as the one above
 #: when the source tree is what is imported); all three are byte-identical.
 PACKAGED_SCHEMA = PACKAGE / "schema" / "annotations-v1.schema.json"
-#: The schema's ``$id``: a working name, never fetched (README.md).
-SCHEMA_ID = "https://github.com/mathlib-initiative/formal-companion-annotations/schema/annotations-v1.schema.json"
+#: The schema's ``$id``: the raw URL of the schema at the tag of the release that
+#: introduced this minor version (README.md, docs/annotations.md section 9).
+#: Validators never fetch it.
+SCHEMA_ID = ("https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/"
+             "v1.0.0/schema/annotations-v1.schema.json")
+SCHEMA_ID_RULE = re.compile(r"https://raw\.githubusercontent\.com/mathlib-initiative/formal-companion-annotations/"
+                            r"v(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+)/(?P<path>schema/annotations-v"
+                            r"(?P<file_major>[0-9]+)\.schema\.json)")
 VALID = ("ledger-graph.json", "mixed.json", "other-media.json", "pdf-region.json", "site-pages.json",
          "tex-lines.json", "web-passage.json")
 INVALID = ("invalid-dangling-reference.json", "invalid-reversed-line-range.json")
@@ -89,7 +95,33 @@ class TestTheSchemaFile(unittest.TestCase):
         self.assertEqual(schema["$schema"], "https://json-schema.org/draft/2020-12/schema")
         self.assertEqual(schema["$id"], SCHEMA_ID)
         self.assertNotIn("rename", schema["description"], "the rename is no longer pending")
-        self.assertIn("never fetched", schema["description"])
+        self.assertIn("validators never fetch it", schema["description"])
+        self.assertIn("documents need not carry $schema", schema["description"])
+
+    def test_the_id_is_the_raw_url_of_this_file_at_a_release_tag(self):
+        """The rule of section 9: the tag names a release of this major, the path is this file."""
+        m = SCHEMA_ID_RULE.fullmatch(self.schema()["$id"])
+        self.assertIsNotNone(m, self.schema()["$id"])
+        self.assertEqual(int(m["major"]), vocab.ANNOTATION_SCHEMA_MAJOR)
+        self.assertEqual(int(m["file_major"]), vocab.ANNOTATION_SCHEMA_MAJOR)
+        self.assertEqual(ROOT / m["path"], SCHEMA)
+        # The release that introduced this minor version is not later than this one.
+        release = tuple(int(n) for n in formal_companion_annotations.__version__.split("."))
+        self.assertLessEqual((int(m["major"]), int(m["minor"]), int(m["patch"])), release)
+        self.assertEqual(int(m["major"]), release[0], "package MAJOR is the format's major")
+
+    def test_the_checker_never_fetches_anything(self):
+        """No module of the package imports a network library, so no ``$id`` or ``$schema`` is fetched."""
+        for module in sorted(PACKAGE.glob("*.py")):
+            text = module.read_text(encoding="utf-8")
+            with self.subTest(module=module.name):
+                self.assertIsNone(re.search(r"^\s*(import|from)\s+(urllib|http|socket|ssl)\b", text, re.M))
+
+    def test_a_document_need_not_carry_dollar_schema(self):
+        self.assertNotIn("$schema", self.schema()["required"])
+        doc = load("mixed.json")
+        doc.pop("$schema", None)
+        self.assertEqual(problems(doc), [])
 
     def test_the_description_names_this_projects_checker(self):
         """Not the skill's ``scripts/annotations/validate.py``, which is not in this repository."""

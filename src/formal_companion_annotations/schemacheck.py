@@ -23,6 +23,12 @@ import json
 import re
 from typing import Any, Iterator
 
+#: The stable public API of this module (README.md, "Public API"): exactly these
+#: names.  Anything else, underscored or not, is internal and may change in any release.
+__all__ = [
+    "SchemaError", "Validator",
+]
+
 ANNOTATION_KEYWORDS = frozenset({"$schema", "$id", "$defs", "title", "description"})
 ASSERTION_KEYWORDS = frozenset({
     "$ref", "type", "enum", "const", "properties", "required", "additionalProperties",
@@ -83,7 +89,7 @@ def _child(path: str, key: Any) -> str:
 class Validator:
     """Evaluate one schema.  ``errors(instance)`` yields ``(path, message)``."""
 
-    def __init__(self, schema: dict):
+    def __init__(self, schema: dict) -> None:
         self.root = schema
         self._patterns: dict[str, re.Pattern] = {}
         self._check_schema(schema, "#")
