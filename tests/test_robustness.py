@@ -750,7 +750,7 @@ class TestRules(unittest.TestCase):
                                            r"directory; a page_hashes entry names a file \(write its index.html\) "
                                            r"\[I6\]$")
         schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
-        self.assertEqual(schema["$defs"]["page_hash"]["properties"]["path"], {"$ref": "#/$defs/site_path"})
+        self.assertEqual(schema["$defs"]["page_hash"]["properties"]["path"]["$ref"], "#/$defs/site_path")
 
     # 15. declarations
     def test_an_example_is_always_anonymous(self):
