@@ -1486,10 +1486,12 @@ message is not.
 
 ### 12.5 The schema `$id`
 
-The `$id` of a schema is
-`https://w3id.org/formal-companion/annotations/v<major>.<minor>/schema.json`:
-one `$id` per format minor, never changed after release. It is an identifier
-and is never fetched. A document need not carry `$schema`; one that does
+The `$id` of a schema is the raw URL of its file on this repository's
+default branch,
+`https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/annotations-v<major>.<minor>.schema.json`:
+one `$id` per format minor, never changed after release. A released schema
+file never changes, so the URL always serves the bytes it names. It is an
+identifier and is never fetched, and it needs no registration anywhere. A document need not carry `$schema`; one that does
 SHOULD give the `$id` of its declared minor, and the checker reports any
 other value with warning `W-SCHEMA-ID`.
 

@@ -12,7 +12,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "formal-companion-annotations"
-version = "1.0.0rc1"                     # kept in step with src/formal_companion_annotations/__init__.py
+version = "1.0.0rc2"                     # kept in step with src/formal_companion_annotations/__init__.py
 description = "The formal-companion annotation format: which Lean declarations formalise which items of which sources, with a standard-library validator."
 readme = "README.md"
 # 3.11 is the floor the checker is written and tested against; the tests

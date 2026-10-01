@@ -1,6 +1,6 @@
 {
   "name": "formal-companion-annotations-conformance",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "private": true,
   "description": "Runs the formal-companion annotations conformance suite under Node: the documents against the JSON Schema with ajv, the canonical-form cases against a reference writer, and the statement-hash vectors against sha256.",
   "license": "Apache-2.0",

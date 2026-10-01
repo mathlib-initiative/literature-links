@@ -51,9 +51,9 @@ SOURCE_TREE_SCHEMA = SRC / "formal_companion_annotations" / "schema" / SCHEMA_FI
 PACKAGED_SCHEMA = PACKAGE / "schema" / SCHEMA_FILE
 #: The schema's ``$id``: one per format minor, never changed after release,
 #: never fetched (docs/annotations.md section 12.5).
-SCHEMA_ID = "https://w3id.org/formal-companion/annotations/v1.0/schema.json"
-SCHEMA_ID_RULE = re.compile(r"https://w3id\.org/formal-companion/annotations/v(?P<major>[0-9]+)\.(?P<minor>[0-9]+)"
-                            r"/schema\.json")
+SCHEMA_ID = "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/annotations-v1.0.schema.json"
+SCHEMA_ID_RULE = re.compile(r"https://raw\.githubusercontent\.com/mathlib-initiative/formal-companion-annotations/main"
+                            r"/schema/annotations-v(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.schema\.json")
 VALID = ("graph-profile.json", "minimal.json", "mixed.json", "other-media.json", "pdf-region.json",
          "site-pages.json", "tex-lines.json", "web-passage.json")
 INVALID = ("invalid-dangling-reference.json", "invalid-reversed-line-range.json", "invalid-undeclared-profile.json")
@@ -2212,7 +2212,7 @@ class TestProfilesAndVersions(unittest.TestCase):
         self.assertFalse(V.select_schema(doc).forward)
         self.assertEqual(V.schema_path(1, 0).name, "annotations-v1.0.schema.json")
         self.assertEqual(V.schema_id(1, 0), SCHEMA_ID)
-        self.assertEqual(V.schema_id(1, 7), "https://w3id.org/formal-companion/annotations/v1.7/schema.json")
+        self.assertEqual(V.schema_id(1, 7), "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/annotations-v1.7.schema.json")
         doc["schema_version"] = "1.0\n"
         self.assertEqual([(p.code, p.path) for p in V.check(doc).problems], [("SCHEMA", "$.schema_version")])
         doc["schema_version"] = 1

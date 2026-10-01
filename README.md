@@ -24,7 +24,7 @@ This repository is the format and nothing else:
 
 ## Status
 
-**Release candidate (`1.0.0rc1`).** The format's version is `1.0`. The
+**Release candidate (`1.0.0rc2`).** The format's version is `1.0`. The
 package and the format follow the compatibility rules in
 [`docs/annotations.md`](docs/annotations.md) section 12, but until `1.0.0`
 is released a release candidate may still change the format. `1.0.0` will
@@ -162,7 +162,7 @@ Releases and release candidates are published to PyPI as
 python3 -m pip install --pre formal-companion-annotations
 ```
 
-From a checkout, and until `1.0.0rc1` is tagged and published:
+From a checkout, until a release candidate is on PyPI:
 
 ```sh
 python3 -m pip install .
@@ -253,7 +253,6 @@ docs/id-algorithm.md                     the id rules, as an algorithm
 docs/vocabulary.md                       every enum value and its meaning
 docs/mapping-notes.md                    how common attribution conventions map in (informative)
 docs/history.md                          where the code came from (informative)
-docs/w3id/                               the redirect that gives the schema its permanent $id
 schema/annotations-v1.0.schema.json      the JSON Schema (the package ships the same bytes)
 src/formal_companion_annotations/        the package: validate, schemacheck, ids, vocab, schema/
 examples/annotations/                    synthetic documents; invalid-*.json fail on purpose
