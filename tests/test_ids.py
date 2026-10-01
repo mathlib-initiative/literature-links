@@ -37,6 +37,8 @@ SAME_HASH_FORM = [
     (["example : f = (fun x => x)", "example : f = (fun x = > x)"], "example:f=(fun x=>x)"),
     (["example : «x»r\"a\" = 1"], "example:«x» r\"a\"=1"),
     (["example : s = s!\"a {x} b\"", "example : s = s! \"a {x} b\""], 'example:s=s! "a {x} b"'),
+    (['example : s!"{ {a} "b" }" = 1', 'example : s!"{ {a} "b" }"=1'], 'example:s! "{ {a} "b" }"=1'),
+    (['example : s!"{ /- " -/ x}" y = 1', 'example : s!"{ /- " -/ x}" y=1'], 'example:s! "{ /- " -/ x}" y=1'),
 ]
 #: Signatures whose hash forms all differ: the hash is syntactic.
 DISTINCT = [
@@ -64,6 +66,8 @@ DISPLAY = [
     ("example : '\\n'  = «a  b»", "example : '\\n' = «a  b»"),
     ("x\u000by  z", "x\u000by z"),
     ("x  y", "x  y"),
+    ("a /--/ b", "a"), ("a /-- c -/ b", "a b"), ("a /-! c -/ b", "a b"), ("example : a /- b", "example : a"),
+    ('s!"{ /- " -/ x}  c"  y', 's!"{ /- " -/ x}  c" y'), ("example : « a /- c -/ b", "example : « a b"),
 ]
 #: (quote, id): the quote_hash id.
 QUOTES = [
@@ -78,7 +82,8 @@ TITLES = [(151, "Maximal inequality", "passage-p151-cabb8ef1"), (7, "a  title", 
 #: (kind, number, sub, id): the label id.
 LABELS = [("Exercise", "1.2.3", None, "exercise-1.2.3"), ("In-text Definition", "4", "ii", "in-text-definition-4-ii"),
           ("  Théorème (main) ", "2", None, "th-or-me-main-2"), ("Section 2 Lemma", "5", None, "section-2-lemma-5"),
-          ("Lemma", "1", "", "lemma-1"), ("Exercise", "1.4", "b'", "exercise-1.4-b'"), ("Lemma", "3", "f''", "lemma-3-f''")]
+          ("Lemma", "1", "", "lemma-1"), ("Exercise", "1.4", "b'", "exercise-1.4-b'"), ("Lemma", "3", "f''", "lemma-3-f''"),
+          ("İx", "1", None, "i-x-1")]
 
 
 class TestTheStatementHash(unittest.TestCase):
