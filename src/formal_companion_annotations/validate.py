@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a formal-companion annotation document: I-JSON, schema, then invariants.
 
-Implements docs/annotations.md (sections 9 to 12).  Usage::
+Implements docs/annotations.md (sections 4 to 7).  Usage::
 
     formal-companion-annotations-validate <document.json> [...] [--canonical] [--lint NAME]
     formal-companion-annotations-validate <document.json> --print-canonical
@@ -9,7 +9,7 @@ Implements docs/annotations.md (sections 9 to 12).  Usage::
     python3 -m formal_companion_annotations.validate <document.json> [...]
 
 A document is read as bytes and decoded as strict UTF-8; :func:`loads` then
-refuses anything that is not I-JSON (RFC 7493) with the limits of section 9.1:
+refuses anything that is not I-JSON (RFC 7493) with the limits of section 4.1:
 a byte-order mark, a duplicate key, ``NaN``/``Infinity``, a number that is not
 finite, an integer-valued number outside +-(2^53 - 1), a numeric literal of
 more than 400 characters, a lone surrogate in a string or key, or nesting
@@ -17,8 +17,8 @@ deeper than 64 levels.  :func:`check` runs the same tests on an in-memory
 object first (code ``IJSON``), so nothing later can crash on such input.
 
 The document's ``schema_version`` (``"<major>.<minor>"``) selects the JSON
-Schema of the minor it declares (annotations-v<major>.<minor>.schema.json,
-shipped in this package's ``schema/`` directory), so a document that says
+Schema of the minor it declares (annotations-v<major>.<minor>.schema.json in
+:data:`SCHEMA_DIR`), so a document that says
 ``"1.0"`` and uses a key added in 1.1 fails.  A document that declares a core
 or profile minor newer than this checker knows is checked in *forward mode*
 against the newest schema of that major: an unknown key of a closed object
@@ -31,7 +31,7 @@ resolve, the anchoring and coverage rules for items, the item and declaration
 id rules, selector grammars against their ``conformsTo``, the changelog's
 rules and the profile gating.  Every problem and warning is a :class:`Problem`
 with a stable code: ``IJSON``, ``SCHEMA``, ``I1``..``I9`` and ``I11``..``I14``
-for the invariants of the specification's section 9.3 table (``I10`` is
+for the invariants of the specification's section 4.3 table (``I10`` is
 retired), ``L1`` for the ``external-urls`` lint, and the warnings
 ``W-CONFORMS`` (an unknown or missing ``conformsTo`` IRI), ``W-MEDIA`` (a
 Media Fragments name that is no dimension, or a repeated one), ``W-RELATION``
@@ -40,7 +40,7 @@ Media Fragments name that is no dimension, or a repeated one), ``W-RELATION``
 keys ignored) and ``W-SCHEMA-ID`` (a root ``$schema`` that is not the declared
 minor's ``$id``).
 ``--canonical`` also requires the file's exact bytes to be the canonical
-serialisation (section 10: RFC 8785 order and numbers, two-space indent, LF).
+serialisation (section 6: RFC 8785 order and numbers, two-space indent, LF).
 ``--print-canonical`` sorts the document's arrays, validates the result, and
 then writes the canonical form as UTF-8 bytes.  ``--version`` prints the package version.
 Exit status: 0 every document valid, 1 at least one invalid, 2 at least one
@@ -77,9 +77,9 @@ __all__ = [
 ]
 
 HERE = Path(__file__).resolve().parent
-#: The schema files ship inside the package (package data), so an installed
-#: copy finds them without the repository's top-level ``schema/`` directory.
-SCHEMA_DIR = HERE / "schema"
+#: The schema files.  A wheel ships the repository's ``schema/`` directory as
+#: the package's ``schema/``; a source checkout uses ``schema/`` itself.
+SCHEMA_DIR = HERE / "schema" if (HERE / "schema").is_dir() else HERE.parent.parent / "schema"
 _KNOWN_MAJOR = vocab.ANNOTATION_SCHEMA_MAJOR
 _KNOWN_MINOR = int(vocab.ANNOTATION_SCHEMA_VERSION.split(".")[1])
 _KNOWN_PROFILE_MINOR = {name: int(version.split(".")[1])
@@ -107,7 +107,7 @@ RECORD_ARRAYS = ("sources", "provenance", "clusters", "items", "declarations", "
                  "memberships", "locations", "links", "destinations", "snippets", "verdicts",
                  "unattributed", "changelog")
 
-#: What each profile owns (docs/annotations.md section 4.2), the complete list:
+#: What each profile owns (docs/annotations.md section 3), the complete list:
 #: its root arrays, and the fields it owns on other records as ``<root
 #: array>.<field>`` (or ``companion.<field>``).  Invariant I14: an owned array
 #: or field appears only in a document whose ``profiles`` declares the profile.
@@ -152,14 +152,14 @@ KEYED_LISTS = {
 
 #: Which rules a source follows, by kind or (for ``other``) by media type.
 FAMILY_BY_KIND = {"pdf": "pdf", "web": "html", "tex": "text", "lean": "text"}
-#: Selector types each family may use (docs/annotations.md section 6.2).
+#: Selector types each family may use (docs/annotations.md section 4.6).
 ALLOWED_SELECTORS = {
     "pdf": {"FragmentSelector", "TextQuoteSelector", "PdfRegionSelector"},
     "html": {"FragmentSelector", "TextQuoteSelector", "CssSelector", "SitePageSelector"},
     "text": {"FragmentSelector", "TextQuoteSelector"},
     "generic": {"FragmentSelector", "TextQuoteSelector", "CssSelector"},
 }
-#: A ``refinedBy`` chain is at most this many selectors deep (section 6.6).
+#: A ``refinedBy`` chain is at most this many selectors deep (section 4.6).
 MAX_REFINEMENT_DEPTH = 8
 #: Known conformsTo IRIs: the grammar their value follows and the families they fit.
 CONFORMS = {
@@ -170,7 +170,7 @@ CONFORMS = {
     vocab.CONFORMS_TO_MEDIA: ("media", {"html", "generic"}),
 }
 
-# I-JSON limits (docs/annotations.md section 9.1).
+# I-JSON limits (docs/annotations.md section 4.1).
 _MAX_INT = 2 ** 53 - 1
 _MAX_NUMBER_CHARS = 400
 _MAX_DEPTH = 64
@@ -372,7 +372,7 @@ def _integral_to_int(value: Any) -> Any:
 
 
 def loads(text: str | bytes) -> Any:
-    """Parse strictly as I-JSON (section 9.1).
+    """Parse strictly as I-JSON (section 4.1).
 
     ``bytes`` are decoded as strict UTF-8.  Refused with :class:`LoadError`: a
     byte-order mark, a duplicate key, ``NaN``/``Infinity``, a number that is not
@@ -411,7 +411,7 @@ def jcs_number(value: int | float) -> str:
     stays ``0.00001``); exponent form ``1e+21`` / ``1e-7`` outside that range.
     An integer beyond 2**53 is written as the double it becomes; one beyond
     the range of a double raises ``ValueError`` (a valid document has neither:
-    section 9.1 keeps integers within 2^53 - 1).
+    section 4.1 keeps integers within 2^53 - 1).
     """
     if isinstance(value, bool):
         raise TypeError("a boolean is not a number")
@@ -452,7 +452,7 @@ def _utf16_key(key: str) -> bytes:
 
 
 def order_key(value: Any) -> Any:
-    """The section 10 order: strings by UTF-16 code units (RFC 8785), numbers by value.
+    """The section 6 order: strings by UTF-16 code units (RFC 8785), numbers by value.
 
     One order for object keys, record ids, id lists and keyed lists, so a
     producer that sorts as JavaScript's default ``Array.prototype.sort`` does
@@ -465,7 +465,7 @@ def order_key(value: Any) -> Any:
 
 
 def _sort_key(value: Any) -> tuple:
-    """A total order for the sorts of :func:`canonicalize`: strings in the section 10
+    """A total order for the sorts of :func:`canonicalize`: strings in the section 6
     order, then numbers by value, then anything else by its ``repr``.
 
     A valid document has only strings where these sorts look (ids, paths,
@@ -539,7 +539,7 @@ def _emit(value: Any, depth: int, out: list[str]) -> None:
 
 
 def canonical_dumps(doc: Any) -> str:
-    """The canonical text (docs/annotations.md section 10).
+    """The canonical text (docs/annotations.md section 6).
 
     RFC 8785 (JCS) for key order (UTF-16 code units) and for numbers
     (:func:`jcs_number`); strings escaped as ECMAScript ``JSON.stringify``
@@ -575,7 +575,7 @@ def _set(rec: dict, dotted: str, value: Any) -> None:
 def canonicalize(doc: dict) -> dict:
     """A copy with every record array sorted by id and every set field sorted.
 
-    Everything sorts in the section 10 order (:func:`order_key`): UTF-16 code
+    Everything sorts in the section 6 order (:func:`order_key`): UTF-16 code
     units, the order RFC 8785 gives object keys.  ``doc`` is a value
     :func:`loads` would return; a set field whose elements are not all strings
     is left as it is, for the schema to report.
@@ -604,11 +604,11 @@ def canonicalize(doc: dict) -> dict:
 
 
 def site_sha256(page_hashes: list[dict]) -> str:
-    """The sha256 of a ``scope: site`` source (section 5.1).
+    """The sha256 of a ``scope: site`` source (section 4.5).
 
     The sha256 of the manifest with one line ``"<sha256 of the page's bytes>  <path>\\n"``
     per listed page (two spaces, as ``sha256sum`` writes it), the lines ordered
-    by path in the section 10 order, encoded as UTF-8.
+    by path in the section 6 order, encoded as UTF-8.
     """
     lines = sorted(page_hashes, key=lambda p: order_key(p["path"]))
     manifest = "".join(f"{p['sha256']}  {p['path']}\n" for p in lines)
@@ -782,7 +782,7 @@ PAGE_FRAGMENT = "page="
 
 @dataclass
 class _Ctx:
-    """Where a selector sits (section 6.6).
+    """Where a selector sits (section 4.6).
 
     ``page`` is the page the nearest enclosing ``page=`` fragment chose, at any
     depth.  ``parent`` is the structural parent: None for a top-level
@@ -1095,7 +1095,7 @@ class Checker:
                 self.check_pages(f"{path}.pages", link["pages"], source)
 
     def check_coverage(self, path: str, item: dict, links: list[dict]) -> None:
-        """I5 (section 5.4): the coverage class and the item's non-orphaned links agree.
+        """I5 (section 4.4): the coverage class and the item's non-orphaned links agree.
 
         1. A key link says the declaration states the whole item.
         2. An item with links and no key link carries ``coverage``.
@@ -1143,7 +1143,7 @@ class Checker:
             self.fail("I5", f"{path}.coverage_note", "coverage_note needs coverage")
 
     def check_item_id(self, path: str, item: dict, source: dict | None) -> None:
-        """I12: an item id follows its id_source (section 7.2)."""
+        """I12: an item id follows its id_source (section 5.5)."""
         rid, how = item["id"], item["id_source"]
         if how == "label":
             try:
@@ -1198,7 +1198,7 @@ class Checker:
                                            f"a declared id may not take it")
 
     def passage_quote(self, item: dict) -> tuple[str | None, str]:
-        """The quote a quote_hash id hashes, and where it came from (section 7.2).
+        """The quote a quote_hash id hashes, and where it came from (section 5.5).
 
         ``item.quote.exact`` when the item has one; otherwise the first
         TextQuoteSelector of the item's first location (locations in id order;
@@ -1635,7 +1635,7 @@ class Checker:
                                                f"statement: record retired (and the new id), not restated")
         elif decl is None:
             gone, when = self.gone_at.get(subject), _parse_at(change["at"])
-            # "by a later entry" (8.4): the same instant is not later.  The ordinal_assigned
+            # "by a later entry" (4.8): the same instant is not later.  The ordinal_assigned
             # rule above says "no earlier" instead, and so accepts the same instant.
             if when is not None and (gone is None or gone <= when):
                 self.fail("I9", f"{path}.subject", f"{subject!r} is not a live declaration id, and no later "
@@ -1684,7 +1684,7 @@ _L1_RULE = ("the external-urls lint allows a URL only in sources[].url, sources[
 
 
 def lint_external_urls(doc: Any) -> list[Problem]:
-    """``L1``: no URL-like string value or key anywhere but at the exempt paths (section 9.5).
+    """``L1``: no URL-like string value or key anywhere but at the exempt paths (section 4.10).
 
     URL-like: ``<scheme>://`` for any RFC 3986 scheme anywhere in the string;
     a protocol-relative ``//host`` or a ``javascript:``/``data:``/``mailto:``/
@@ -1748,7 +1748,7 @@ class _Selection:
 
 
 def select_schema(doc: Any) -> _Selection:
-    """The schema of the minor ``doc`` declares (section 12.3), and how to apply it.
+    """The schema of the minor ``doc`` declares (section 7), and how to apply it.
 
     A document whose ``schema_version`` cannot be read is checked against the
     newest schema, so the schema reports the malformed value.  An unknown major,
@@ -1905,10 +1905,10 @@ def _check_file(path: Path, args: argparse.Namespace, schema: dict | None) -> in
         else:
             print(f"{path}: cannot read: {exc}", file=sys.stderr)
         return 2
-    if args.print_canonical:            # stdout carries the canonical bytes and nothing else (11.6)
+    if args.print_canonical:            # stdout carries the canonical bytes and nothing else (section 8)
         # Order first, then validate: the record arrays, id lists and keyed
         # lists are sorted here, so an unsorted document is repaired, not
-        # refused (section 10: a producer never has to hand-sort). Everything
+        # refused (section 6: a producer never has to hand-sort). Everything
         # else must be valid before anything is written.
         try:
             ordered = canonicalize(doc) if isinstance(doc, dict) else doc

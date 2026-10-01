@@ -1,18 +1,8 @@
-# What the sdist carries beyond what setuptools adds on its own (the package,
-# README.md, LICENSE, pyproject.toml and tests/test*.py): everything the test
-# suite reads, so an unpacked sdist runs `python -m pytest` and
-# `python -m unittest discover -s tests` green, with or without the package
-# installed.  None of it is inside the package, so the wheel is unchanged: the
-# package and its packaged schema only.
+# The sdist carries what the tests read, so an unpacked sdist runs its own
+# suite with nothing installed. The wheel is the package and its schema only.
 include CHANGELOG.md CONTRIBUTING.md MANIFEST.in
 graft docs
 graft examples
 graft schema
-graft conformance
-# `npm ci` leaves conformance/js/node_modules/ in a maintainer's tree (git ignores it);
-# the sdist carries no copy of it.
-prune conformance/js/node_modules
 graft tests
-# conformance/README.md cites the workflow, and tests/test_packaging.py requires it.
-graft .github
 global-exclude __pycache__ *.py[cod] .DS_Store

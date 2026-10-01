@@ -1,16 +1,15 @@
 """The vocabulary of the annotation format: the enums, the id grammar, the IRIs.
 
-Every closed set of values the format uses is defined here, once, and
-documented value by value in docs/vocabulary.md.  The schema file repeats
-every enum because it is data a non-Python consumer reads;
-``tests/test_annotations_schema.py`` walks every ``enum`` in the schema and
-fails when one has no set here or the two disagree, so this module stays the
-one definition.
+Every closed set of values the format uses is defined here, once.  The
+schema repeats every enum, with each value's meaning in its description,
+because it is data a reader in any language uses; ``tests/test_checker.py``
+walks every ``enum`` in the schema and fails when one has no set here or the
+two disagree.
 
 The format owns every value it uses.  A change to a set is a change to the
 format: a new value is a new minor version at least, and a value removed or
 given another meaning is a new major version (docs/annotations.md, section
-12).  A producer that writes a value this module does not list writes an
+7).  A producer that writes a value this module does not list writes an
 invalid document.
 """
 from __future__ import annotations
@@ -42,7 +41,7 @@ __all__ = [
     "PASSAGE_QUOTE_ID_PATTERN",
 ]
 
-# --- the format and its versions (docs/annotations.md, sections 4 and 12)
+# --- the format and its versions (docs/annotations.md, sections 3 and 7)
 #: The root ``schema`` value: the format identifier.  No other value is accepted.
 ANNOTATION_SCHEMA = "formal-companion/annotations"
 #: ``"<major>.<minor>"``.  Readers match the major version; a writer declares the
@@ -54,12 +53,12 @@ ANNOTATION_SCHEMA_MAJOR = 1
 #: minor, never changed after release, an identifier that is never fetched.
 ANNOTATION_SCHEMA_ID_BASE = "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema"
 #: The four optional profiles and the version of each that this package knows
-#: (docs/annotations.md, section 4.2).  Each profile is versioned on its own;
+#: (docs/annotations.md, section 3).  Each profile is versioned on its own;
 #: a document declares the ones it uses in its root ``profiles`` object.
 ANNOTATION_PROFILE_VERSIONS = {"audit": "1.0", "graph": "1.0", "history": "1.0", "site": "1.0"}
 ANNOTATION_PROFILES = frozenset(ANNOTATION_PROFILE_VERSIONS)
 
-# --- sources (section 5.1)
+# --- sources
 #: ``other`` names any other medium by its IANA ``media_type`` (markdown, EPUB,
 #: video); the four named kinds are presets for the common ones.
 ANNOTATION_SOURCE_KINDS = frozenset({"pdf", "web", "tex", "lean", "other"})
@@ -69,17 +68,17 @@ ANNOTATION_SOURCE_SCOPES = frozenset({"page", "site"})
 #: A source's ``role``: ``audited`` (a companion is checked against it) or
 #: ``reference`` (kept only so a page map to a sibling edition can be checked).
 #: A core field: a document with no verdicts may still say which source it
-#: audits (section 5.1).
+#: audits.
 ANNOTATION_SOURCE_ROLES = frozenset({"audited", "reference"})
-#: A source's ``text_layer``: how quotes on it are matched (section 6.7).
+#: A source's ``text_layer``: how quotes on it are matched.
 ANNOTATION_TEXT_UNICODE = frozenset({"none", "nfc", "nfkc"})
 ANNOTATION_TEXT_WHITESPACE = frozenset({"exact", "collapse", "ignore"})
 ANNOTATION_TEXT_CASE = frozenset({"sensitive", "insensitive"})
 
-# --- items (section 5.2)
+# --- items
 #: The discriminator of an item record.
 ANNOTATION_ITEM_FORMS = frozenset({"numbered", "passage"})
-#: How an item id was formed (section 7.2).
+#: How an item id was formed (section 5.5).
 ANNOTATION_ITEM_ID_SOURCES = frozenset({"label", "quote_hash", "page_title_hash", "declared"})
 #: Whose words an item's ``kind`` or ``title`` are.
 ANNOTATION_TEXT_ORIGINS = frozenset({"source", "producer"})
@@ -105,7 +104,7 @@ ANNOTATION_PAGE_BASES = frozenset({"printed", "physical"})
 #: inferred from a neighbour.
 ANNOTATION_PAGE_ANCHORS = frozenset({"own", "crossref", "inferred"})
 
-# --- declarations (section 5.3)
+# --- declarations
 #: The Lean keyword, or the member kind.  A member (``field``, ``projection``,
 #: ``constructor``, ``recursor``) names the declaration it belongs to in
 #: ``parent``; ANNOTATION_MEMBER_PARENT_KINDS says which kinds a parent may have.
@@ -121,12 +120,12 @@ ANNOTATION_MEMBER_PARENT_KINDS = {
     "constructor": frozenset({"inductive", "structure", "class"}),
     "recursor": frozenset({"inductive", "structure", "class"}),
 }
-#: How a declaration id was formed (section 7.1).
+#: How a declaration id was formed (section 5.1).
 ANNOTATION_ID_SOURCES = frozenset({"name", "private", "statement_hash", "declared"})
 #: A declaration's ``sorry``: whether its proof holds a ``sorry``, and why.
 ANNOTATION_SORRY_CLASSES = frozenset({"exercise", "gap", "none"})
 
-# --- links (section 5.4)
+# --- links
 ANNOTATION_LINK_ROLES = frozenset({"key", "attributed", "support", "example", "helper"})
 #: The documented core of a link's ``relation``: how the declaration relates to
 #: the item's text.  The field is an open lower-case snake_case token (the
@@ -135,7 +134,7 @@ ANNOTATION_LINK_ROLES = frozenset({"key", "attributed", "support", "example", "h
 ANNOTATION_LINK_RELATIONS = frozenset({"exact", "generalization", "special_case", "part",
                                        "invocation", "related"})
 
-# --- provenance and unattributed (sections 5.6 and 5.8)
+# --- provenance and unattributed
 ANNOTATION_PROVENANCE_ACTORS = frozenset({"author", "agent", "human", "tool"})
 ANNOTATION_PROVENANCE_METHODS = frozenset({"docstring_tag", "curation", "blueprint_macro",
                                            "lean_scan", "layout_extraction", "text_match",
@@ -143,19 +142,19 @@ ANNOTATION_PROVENANCE_METHODS = frozenset({"docstring_tag", "curation", "bluepri
                                            "adjudication", "site_index"})
 ANNOTATION_UNATTRIBUTED_CLAIMS = frozenset({"unattributed", "api", "infrastructure"})
 
-# --- the graph profile (section 8.1)
+# --- the graph profile
 #: Formalization artifacts that are not declarations.
 ANNOTATION_ARTIFACT_KINDS = frozenset({"module_doc", "check", "figure", "other"})
 #: A cluster member's role, as the companion's own graph gives it.
 ANNOTATION_MEMBERSHIP_ROLES = frozenset({"primary", "support", "consumer"})
 
-# --- the site profile (section 8.2)
+# --- the site profile
 ANNOTATION_DESTINATION_SITES = frozenset({"verso_literate", "doc_gen4", "blueprint", "other"})
 #: A destination's ``resolution``: ``exact`` needs a ``fragment``, ``fallback`` a
 #: ``fallback_label``.
 ANNOTATION_DESTINATION_RESOLUTIONS = frozenset({"exact", "fallback"})
 
-# --- the audit profile (section 8.3): a verdict's vocabulary is the format's own
+# --- the audit profile: a verdict's vocabulary is the format's own
 #: A verdict's ``verdict`` and each ``declarations[].verdict``.
 ANNOTATION_VERDICTS = frozenset({"faithful", "convention", "attribution_gap", "proxy", "deviation"})
 #: A verdict's ``severity``, ordered ``none`` < ``low`` < ``medium`` < ``high``.
@@ -167,17 +166,17 @@ ANNOTATION_VERDICT_STATUSES = frozenset({"unconfirmed", "contested", "human_conf
 ANNOTATION_RESOLUTION_STATES = frozenset({"open", "fixed", "in_progress", "refuted",
                                           "argued_correct", "out_of_scope"})
 
-# --- the history profile (section 8.4)
+# --- the history profile
 #: ``ordinal_assigned`` records which declaration took a ``~k`` statement-hash
 #: ordinal, by its file; without it a ``~k`` id is refused, and so is a live id
-#: whose latest record names another file (section 7.1.3).
+#: whose latest record names another file (section 5.4).
 ANNOTATION_CHANGELOG_EVENTS = frozenset({"born", "retired", "restated", "renamed",
                                          "ordinal_assigned"})
 ANNOTATION_CHANGELOG_SUBJECTS = frozenset({"declaration", "item", "location", "artifact"})
 ANNOTATION_CHANGELOG_REASONS = frozenset({"statement_changed", "removed", "renamed", "moved",
                                           "other"})
 
-# --- locations and selectors (section 6)
+# --- locations and selectors (section 4.6)
 #: The five selector types of version 1.0: three W3C Web Annotation classes and
 #: the two extensions (``PdfRegionSelector``, ``SitePageSelector``).
 ANNOTATION_SELECTOR_TYPES = frozenset({"FragmentSelector", "TextQuoteSelector", "CssSelector",
@@ -203,7 +202,7 @@ CONFORMS_TO_MEDIA = "http://www.w3.org/TR/media-frags/"
 ANNOTATION_CONFORMS_TO = frozenset({CONFORMS_TO_PDF, CONFORMS_TO_PDF_RFC3778, CONFORMS_TO_TEXT,
                                     CONFORMS_TO_HTML, CONFORMS_TO_MEDIA})
 
-# --- the id grammar (section 7.1), used by ids.py (which writes ids) and
+# --- the id grammar (section 5.1), used by ids.py (which writes ids) and
 # validate.py (which checks them), both with full-match semantics.
 #: A statement-hash id is ``<keyword>:<12 hex>`` with an optional ``~k``
 #: (k >= 2).  A declared id is ``<keyword>:<slug>``: letters of either case,
@@ -214,7 +213,7 @@ ANONYMOUS_KEYWORDS = ("example", "instance")
 HASH_ID_PATTERN = r"(?P<kw>example|instance):(?P<hex>[0-9a-f]{12})(?:~(?P<k>[2-9]|[1-9][0-9]+))?"
 DECLARED_SLUG_PATTERN = r"(?![0-9a-f]{12}(?:~[0-9]+)?(?![A-Za-z0-9._~-]))[A-Za-z0-9][A-Za-z0-9._-]*"
 DECLARED_ID_PATTERN = r"(?P<kw>example|instance):(?P<slug>" + DECLARED_SLUG_PATTERN + r")"
-#: The two mechanical passage-id forms (section 7.2); a declared item id may
+#: The two mechanical passage-id forms (section 5.5); a declared item id may
 #: not take either shape.
 PASSAGE_QUOTE_ID_PATTERN = r"passage-[0-9a-f]{8}"
 PASSAGE_PAGE_ID_PATTERN = r"passage-p[1-9][0-9]*-[0-9a-f]{8}"

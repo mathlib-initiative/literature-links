@@ -1,5 +1,0 @@
-blank_issues_enabled: true
-contact_links:
-  - name: Question about the format
-    url: https://github.com/mathlib-initiative/formal-companion-annotations/discussions
-    about: Ask how to express something, or whether a document is right, in Discussions.
