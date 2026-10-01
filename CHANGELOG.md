@@ -5,7 +5,7 @@
 First release: the annotation format, `schema_version` `"1.0"`, extracted with
 its history from the formal-companion skill at `d4deedb`.
 
-- Checker behaviour, messages, exit statuses and canonical bytes are unchanged from the skill's copy.
+- Checker behaviour, problem messages and canonical bytes are unchanged from the skill's copy; only the program name and the missing-schema exit status differ.
 - Package `formal_companion_annotations`, console script `formal-companion-annotations-validate`, `python3 -m` entry points, `--version`.
 - A missing packaged schema exits 2 ("schema file not found") instead of blaming the document.
 - The schema's `$id` is its raw URL at the `v1.0.0` tag (spec section 9.3).

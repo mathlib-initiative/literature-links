@@ -861,11 +861,14 @@ mutations of them; one CI job (Python 3.13) installs it for that.
 writers declare the minor they used. A minor version only adds optional keys
 or enum values, so a document valid under X.Y stays valid under X.(Y+1); a
 major version changes something a reader of the previous major cannot ignore
-(a key removed or made required, a value removed or given another meaning).
+(a key removed or made required, a value removed or given another meaning, or a
+change to the canonical form or to an id rule).
 Every object is closed, so a checker that knows `1.0` refuses a key added in
 `1.1` rather than silently dropping it, and warns that the document is newer
 than the checker. Unknown keys are therefore never passed through: update the
-checker, or keep the new data in `x_` keys until then.
+checker, or keep the new data in `x_` keys until then. A minor release raises
+`vocab.ANNOTATION_SCHEMA_VERSION` and the schema title's minor; a new major is
+a new `annotations-v<major>.schema.json` beside the old one.
 
 **A checker selects the schema by the major version alone**, so it cannot
 tell that a declared minor is wrong: writers must declare the minor they wrote
@@ -877,7 +880,9 @@ Package MAJOR is the format's major (package X.* reads `"X.*"` only); MINOR
 is backward-compatible additions (every format minor is one); PATCH changes no
 admitted document, and the CHANGELOG calls out a fix that rejects a document
 the old checker wrongly accepted. Exit statuses, output line shapes and each
-module's `__all__` are under semver; message wording is not.
+module's `__all__` are under semver; message wording is not. The lines are
+`<file>: ok (<counts>)`, `<file>: <json path>: <message>` and
+`<file>: warning: <message>`.
 
 ### 9.3 The schema's `$id`
 
