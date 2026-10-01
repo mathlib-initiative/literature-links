@@ -2,14 +2,18 @@
   "$defs": {
     "CssSelector": {
       "additionalProperties": false,
+      "description": "W3C CssSelector: an element of an HTML page, chosen by a CSS selector.",
       "properties": {
         "refinedBy": {
-          "$ref": "#/$defs/selector"
+          "$ref": "#/$defs/selector",
+          "description": "A selector that narrows this one."
         },
         "type": {
-          "const": "CssSelector"
+          "const": "CssSelector",
+          "description": "The selector type."
         },
         "value": {
+          "description": "The CSS selector.",
           "minLength": 1,
           "type": "string"
         }
@@ -22,6 +26,7 @@
     },
     "FragmentSelector": {
       "additionalProperties": false,
+      "description": "W3C FragmentSelector: a fragment of the source in the grammar that conformsTo names.",
       "properties": {
         "conformsTo": {
           "description": "The IRI of the fragment grammar. Open: RFC 8118 (or its synonym RFC 3778) for PDF, RFC 5147 for text, RFC 3236 for HTML ids and Media Fragments get grammar checks; any other IRI passes with a warning.",
@@ -30,10 +35,12 @@
           "type": "string"
         },
         "refinedBy": {
-          "$ref": "#/$defs/selector"
+          "$ref": "#/$defs/selector",
+          "description": "A selector that narrows this one, such as a quote or a region inside a page= fragment."
         },
         "type": {
-          "const": "FragmentSelector"
+          "const": "FragmentSelector",
+          "description": "The selector type."
         },
         "value": {
           "description": "The fragment without its leading #.",
@@ -64,7 +71,8 @@
       ],
       "properties": {
         "coordinate_space": {
-          "$ref": "#/$defs/coordinate_space"
+          "$ref": "#/$defs/coordinate_space",
+          "description": "The coordinate system of rect or quads."
         },
         "page": {
           "description": "1-based physical PDF page.",
@@ -72,6 +80,7 @@
           "type": "integer"
         },
         "quads": {
+          "description": "Quadrilaterals that together cover the region.",
           "items": {
             "$ref": "#/$defs/quad"
           },
@@ -79,10 +88,12 @@
           "type": "array"
         },
         "rect": {
-          "$ref": "#/$defs/rect"
+          "$ref": "#/$defs/rect",
+          "description": "One rectangle that covers the region."
         },
         "type": {
-          "const": "PdfRegionSelector"
+          "const": "PdfRegionSelector",
+          "description": "The selector type."
         }
       },
       "required": [
@@ -97,13 +108,16 @@
       "description": "formal-companion extension: one page of a site source. An exporter composes the page IRI from the source and the path and drops this selector.",
       "properties": {
         "path": {
-          "$ref": "#/$defs/site_path"
+          "$ref": "#/$defs/site_path",
+          "description": "The page, relative to the site root. A path ending in / names its index.html."
         },
         "refinedBy": {
-          "$ref": "#/$defs/selector"
+          "$ref": "#/$defs/selector",
+          "description": "The place on the page."
         },
         "type": {
-          "const": "SitePageSelector"
+          "const": "SitePageSelector",
+          "description": "The selector type."
         }
       },
       "required": [
@@ -114,22 +128,28 @@
     },
     "TextQuoteSelector": {
       "additionalProperties": false,
+      "description": "W3C TextQuoteSelector: a span named by its exact text, with optional context.",
       "properties": {
         "exact": {
+          "description": "The quoted text, matched under the source's text_layer rules.",
           "minLength": 1,
           "type": "string"
         },
         "prefix": {
+          "description": "The text just before the quote.",
           "type": "string"
         },
         "refinedBy": {
-          "$ref": "#/$defs/selector"
+          "$ref": "#/$defs/selector",
+          "description": "A selector that narrows this one."
         },
         "suffix": {
+          "description": "The text just after the quote.",
           "type": "string"
         },
         "type": {
-          "const": "TextQuoteSelector"
+          "const": "TextQuoteSelector",
+          "description": "The selector type."
         }
       },
       "required": [
@@ -146,12 +166,15 @@
       },
       "properties": {
         "file": {
-          "$ref": "#/$defs/repo_path"
+          "$ref": "#/$defs/repo_path",
+          "description": "The file it is in, relative to the companion's repository."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "kind": {
+          "description": "What it is: module_doc (a module docstring), check (a #check or similar command), figure (a figure or diagram), other (anything else).",
           "enum": [
             "check",
             "figure",
@@ -161,15 +184,18 @@
           "type": "string"
         },
         "line": {
+          "description": "The 1-based line it starts on.",
           "minimum": 1,
           "type": "integer"
         },
         "module": {
+          "description": "The Lean module it is in.",
           "minLength": 1,
           "pattern": "^[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff.]+(\\.[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff.]+)*$",
           "type": "string"
         },
         "title": {
+          "description": "A short title.",
           "minLength": 1,
           "type": "string"
         }
@@ -267,12 +293,15 @@
       },
       "properties": {
         "at": {
-          "$ref": "#/$defs/date_or_timestamp"
+          "$ref": "#/$defs/date_or_timestamp",
+          "description": "When the event happened: a date or a UTC timestamp."
         },
         "commit": {
-          "$ref": "#/$defs/git_sha"
+          "$ref": "#/$defs/git_sha",
+          "description": "ordinal_assigned: the companion commit at which the ordinal was assigned."
         },
         "event": {
+          "description": "What happened to the subject: born (the id appeared), retired (the id is gone for good; links to a retired declaration stay as orphaned), restated (the statement of a declared, named or private declaration id changed), renamed (the same thing under a new id, the successor), ordinal_assigned (which declaration, by its file, took a ~k statement-hash id).",
           "enum": [
             "born",
             "ordinal_assigned",
@@ -291,26 +320,33 @@
           "description": "ordinal_assigned: the file of the declaration that took the ~k id; the checker compares the latest record with the live declaration's file."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "line": {
+          "description": "The subject's 1-based line, when it has one.",
           "minimum": 1,
           "type": "integer"
         },
         "new_statement_sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "restated: the statement hash after the change."
         },
         "note": {
+          "description": "A free-text note.",
           "minLength": 1,
           "type": "string"
         },
         "old_statement_sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "restated: the statement hash before the change."
         },
         "possible_successor": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "A live id that may replace the subject. A suggestion: nothing moves automatically."
         },
         "reason": {
+          "description": "retired: why. statement_changed (the statement changed, and with it a statement-hash id), removed (deleted), renamed (renamed with no renamed record), moved (moved elsewhere), other.",
           "enum": [
             "moved",
             "other",
@@ -321,9 +357,11 @@
           "type": "string"
         },
         "subject": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The id the event is about."
         },
         "subject_kind": {
+          "description": "The array the subject's id is in: declaration, item, location or artifact.",
           "enum": [
             "artifact",
             "declaration",
@@ -333,7 +371,8 @@
           "type": "string"
         },
         "successor": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "renamed: the new id, live in the document."
         }
       },
       "required": [
@@ -353,19 +392,24 @@
       },
       "properties": {
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "items": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "The items the node covers."
         },
         "locator": {
+          "description": "Where the node sits in the source, in the graph's own words.",
           "minLength": 1,
           "type": "string"
         },
         "related_to": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "Other clusters this one is related to."
         },
         "title": {
+          "description": "The node's title.",
           "minLength": 1,
           "type": "string"
         }
@@ -377,15 +421,18 @@
     },
     "companion": {
       "additionalProperties": false,
+      "description": "The companion repository and the commit the document describes.",
       "patternProperties": {
         "^x_[a-z0-9_]+$": {}
       },
       "properties": {
         "commit": {
-          "$ref": "#/$defs/git_sha"
+          "$ref": "#/$defs/git_sha",
+          "description": "The commit the declarations describe."
         },
         "generated_at": {
-          "$ref": "#/$defs/timestamp"
+          "$ref": "#/$defs/timestamp",
+          "description": "When the document was written."
         },
         "generator": {
           "description": "The tool, with its version, that wrote the document, or 'hand'.",
@@ -414,7 +461,8 @@
           "type": "array"
         },
         "repo": {
-          "$ref": "#/$defs/repo_ref"
+          "$ref": "#/$defs/repo_ref",
+          "description": "The repository, as host/org/name with no scheme."
         },
         "toolchain": {
           "description": "The Lean toolchain, e.g. leanprover/lean4:v4.24.0.",
@@ -436,6 +484,7 @@
       "description": "top_left pairs with down, bottom_left with up. normalized means [0, 1] of the page box.",
       "properties": {
         "origin": {
+          "description": "The corner the coordinates count from: top_left (y grows down) or bottom_left (y grows up).",
           "enum": [
             "bottom_left",
             "top_left"
@@ -443,6 +492,7 @@
           "type": "string"
         },
         "page_box": {
+          "description": "The PDF page box the coordinates are relative to.",
           "enum": [
             "ArtBox",
             "BleedBox",
@@ -453,6 +503,7 @@
           "type": "string"
         },
         "units": {
+          "description": "normalized (fractions of the page box, in [0, 1]) or pt (points, 1/72 inch, from the origin).",
           "enum": [
             "normalized",
             "pt"
@@ -460,12 +511,14 @@
           "type": "string"
         },
         "x_axis": {
+          "description": "The direction x grows: right.",
           "enum": [
             "right"
           ],
           "type": "string"
         },
         "y_axis": {
+          "description": "The direction y grows: down (with top_left) or up (with bottom_left).",
           "enum": [
             "down",
             "up"
@@ -483,6 +536,7 @@
       "type": "object"
     },
     "date_or_timestamp": {
+      "description": "A calendar date (the start of that day, UTC) or a UTC timestamp written with Z.",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z)?$",
       "type": "string"
     },
@@ -670,12 +724,15 @@
       },
       "properties": {
         "anchors": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "Locations that show the declaration's own text, on a lean, web or other text source."
         },
         "anonymous": {
+          "description": "Lean gives it no name: an example, or an instance without a name.",
           "type": "boolean"
         },
         "doc_line": {
+          "description": "The 1-based line its docstring starts on.",
           "minimum": 1,
           "type": "integer"
         },
@@ -687,12 +744,15 @@
             {
               "pattern": "\\.lean$"
             }
-          ]
+          ],
+          "description": "The .lean file it is in, relative to the companion's repository (or to package)."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id, formed as id_source says."
         },
         "id_source": {
+          "description": "How the id was formed: name (the fully qualified name), private (private:<module>:<name>), statement_hash (<keyword>:<12 hex of statement_sha256>, with ~k for the k-th duplicate), declared (<keyword>:<slug>, an id the companion declares for an anonymous declaration).",
           "enum": [
             "declared",
             "name",
@@ -702,6 +762,7 @@
           "type": "string"
         },
         "kind": {
+          "description": "The Lean keyword (theorem, lemma, def, abbrev, structure, class, inductive, instance, example, opaque, axiom, alias, irreducible_def) or a member's kind: field and projection (of a structure or class), constructor and recursor (of an inductive, structure or class).",
           "enum": [
             "abbrev",
             "alias",
@@ -729,13 +790,16 @@
           "type": "string"
         },
         "legacy_ids": {
-          "$ref": "#/$defs/string_set"
+          "$ref": "#/$defs/string_set",
+          "description": "Ids the declaration had in older formats."
         },
         "line": {
+          "description": "The 1-based line of its keyword. Never part of the id.",
           "minimum": 1,
           "type": "integer"
         },
         "module": {
+          "description": "The Lean module it is in.",
           "minLength": 1,
           "pattern": "^[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff.]+(\\.[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff.]+)*$",
           "type": "string"
@@ -765,6 +829,7 @@
           "description": "Members only: the structure or class a field or projection belongs to; the inductive, structure or class a constructor or recursor belongs to."
         },
         "private": {
+          "description": "It is declared private.",
           "type": "boolean"
         },
         "replaced_by": {
@@ -776,11 +841,12 @@
           "description": "history profile: the declaration that supersedes this one."
         },
         "signature": {
-          "description": "The display form of the header (docs section 7.1.2): from the keyword to the end of the header, comments replaced by one space, whitespace collapsed. statement_sha256 hashes its hash form. Omitted when no := or where ends the header.",
+          "description": "The display form of the header (specification section 5.2): from the keyword to the end of the header, each comment replaced by one space, whitespace collapsed. statement_sha256 hashes its hash form. Omitted when no := or where ends the header.",
           "minLength": 1,
           "type": "string"
         },
         "sorry": {
+          "description": "Whether its proof holds a sorry: exercise (left on purpose, for the reader to do), gap (work not done yet), none (no sorry).",
           "enum": [
             "exercise",
             "gap",
@@ -789,7 +855,8 @@
           "type": "string"
         },
         "statement_sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the signature's hash form (specification section 5.3). Required on an anonymous declaration unless it is unlocated."
         },
         "unlocated": {
           "description": "graph profile: a declared id not yet found in the Lean at companion.commit: no statement, line or anchors yet.",
@@ -865,16 +932,20 @@
       },
       "properties": {
         "artifact": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The artifact rendered. Needs the graph profile too."
         },
         "declaration": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The declaration rendered."
         },
         "fallback_label": {
+          "description": "With resolution fallback: what to show in place of an anchor.",
           "minLength": 1,
           "type": "string"
         },
         "fragment": {
+          "description": "With resolution exact: the element id on the page, without #.",
           "minLength": 1,
           "pattern": "^[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff#]+$",
           "type": "string"
@@ -892,9 +963,11 @@
           "description": "A site-relative path (the site_path grammar that SitePageSelector.path uses) or an https URL."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "resolution": {
+          "description": "exact (the page has an anchor for the target, given in fragment) or fallback (it has none; fallback_label says what to show).",
           "enum": [
             "exact",
             "fallback"
@@ -902,6 +975,7 @@
           "type": "string"
         },
         "site": {
+          "description": "The kind of site: verso_literate (a Verso literate page), doc_gen4 (doc-gen4 API documentation), blueprint (a blueprint site), other.",
           "enum": [
             "blueprint",
             "doc_gen4",
@@ -934,17 +1008,21 @@
       "description": "graph profile: the companion's own dependency graph that memberships were read from, pinned by bytes; snapshot_commit is the commit its graph describes when that is not companion.commit.",
       "properties": {
         "bytes": {
+          "description": "The graph file's size in bytes.",
           "minimum": 0,
           "type": "integer"
         },
         "path": {
-          "$ref": "#/$defs/repo_path"
+          "$ref": "#/$defs/repo_path",
+          "description": "The graph file, relative to the companion's repository."
         },
         "sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the graph file's bytes."
         },
         "snapshot_commit": {
-          "$ref": "#/$defs/git_sha"
+          "$ref": "#/$defs/git_sha",
+          "description": "The commit the graph describes, when it lags companion.commit."
         }
       },
       "required": [
@@ -954,6 +1032,7 @@
       "type": "object"
     },
     "http_url": {
+      "description": "An http or https URL.",
       "pattern": "^https?://[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff]+$",
       "type": "string"
     },
@@ -991,6 +1070,7 @@
           "type": "string"
         },
         "doi": {
+          "description": "A DOI: 10.<registrant>/<suffix>.",
           "pattern": "^10\\.[0-9]{4,9}/[!-~]+$",
           "type": "string"
         },
@@ -1054,20 +1134,25 @@
       ],
       "properties": {
         "bytes": {
+          "description": "The file's size in bytes.",
           "minimum": 0,
           "type": "integer"
         },
         "commit": {
-          "$ref": "#/$defs/git_sha"
+          "$ref": "#/$defs/git_sha",
+          "description": "The commit the file was read at."
         },
         "path": {
-          "$ref": "#/$defs/repo_path"
+          "$ref": "#/$defs/repo_path",
+          "description": "A file of the companion, relative to its repository."
         },
         "sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the file's bytes."
         },
         "source": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "A source of this document."
         }
       },
       "type": "object"
@@ -1217,7 +1302,7 @@
           "description": "graph profile: the coarse nodes the item belongs to."
         },
         "coverage": {
-          "description": "The curator's class for the item: what its links state (docs section 5.2; invariant I5 ties the class to the links).",
+          "description": "The curator's class for the item; invariant I5 ties it to the item's links. formalized (a key link states the whole item), partial_only (the linked declarations state a special case or one part, none all of it), support_only (only a neighbouring item is stated), example_only (only anonymous examples, linked with role example, state it), private_only (only a private declaration states it), not_formalized (nothing states it), out_of_scope (the companion does not set out to formalise it).",
           "enum": [
             "example_only",
             "formalized",
@@ -1243,10 +1328,11 @@
           "type": "string"
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id, formed as id_source says."
         },
         "id_source": {
-          "description": "How the id was formed (docs section 7.2).",
+          "description": "How the id was formed (specification section 5.5): label (<kind>-<number>[-<sub>]), quote_hash (passage-<8 hex of the normalised quote>), page_title_hash (passage-p<printed page>-<8 hex of the normalised title>), declared (chosen by the producer).",
           "enum": [
             "declared",
             "label",
@@ -1261,7 +1347,7 @@
           "type": "string"
         },
         "kind_source": {
-          "description": "Whose word kind is. Default source.",
+          "description": "Whose word kind is: source (the source's, the default) or producer (the producer's).",
           "enum": [
             "producer",
             "source"
@@ -1274,22 +1360,26 @@
           "type": "string"
         },
         "legacy_ids": {
-          "$ref": "#/$defs/string_set"
+          "$ref": "#/$defs/string_set",
+          "description": "Ids the item had in older formats."
         },
         "number": {
-          "description": "The source's number, e.g. 1.1.21.",
+          "description": "The source's number, e.g. 1.1.21. Numbered items only.",
           "minLength": 1,
           "pattern": "^[0-9A-Za-z]+(\\.[0-9A-Za-z]+)*$",
           "type": "string"
         },
         "pages": {
-          "$ref": "#/$defs/pages"
+          "$ref": "#/$defs/pages",
+          "description": "A page span without geometry. Required for a page_title_hash id."
         },
         "quote": {
-          "$ref": "#/$defs/quote"
+          "$ref": "#/$defs/quote",
+          "description": "A quote that anchors the item on its whole source."
         },
         "relations": {
-          "$ref": "#/$defs/relations"
+          "$ref": "#/$defs/relations",
+          "description": "Typed relations to other items."
         },
         "section": {
           "description": "The source's own section the item sits in, as the source names it.",
@@ -1297,7 +1387,8 @@
           "type": "string"
         },
         "source": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The source the item is in."
         },
         "sub": {
           "description": "A part the source numbers or locates separately, written without parentheses: ii, 3, ix,x, b'. A prime stays.",
@@ -1306,11 +1397,12 @@
           "type": "string"
         },
         "title": {
+          "description": "The item's title. Required on a passage.",
           "minLength": 1,
           "type": "string"
         },
         "title_source": {
-          "description": "Whose words title is. Default source.",
+          "description": "Whose words title is: source (the source's, the default) or producer (the producer's).",
           "enum": [
             "producer",
             "source"
@@ -1318,7 +1410,7 @@
           "type": "string"
         },
         "xrefs": {
-          "description": "Cross-references to public databases, sorted by (database, tag), no duplicates.",
+          "description": "The same statement in public databases, sorted by (database, tag), no duplicates: the cross-document pairing key.",
           "items": {
             "$ref": "#/$defs/xref"
           },
@@ -1364,16 +1456,20 @@
           "description": "graph profile: the cluster the link targets."
         },
         "declaration": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The declaration the link targets."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id. Recommended: <item>/<role>/<target>."
         },
         "item": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The item attributed."
         },
         "locations": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "Locations for this link alone, on the item's source."
         },
         "note": {
           "description": "A short free-text note on the link.",
@@ -1385,10 +1481,12 @@
           "type": "boolean"
         },
         "pages": {
-          "$ref": "#/$defs/pages"
+          "$ref": "#/$defs/pages",
+          "description": "The page the link's own tag gives; it may differ from the item's."
         },
         "provenance": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The provenance record of the link."
         },
         "raw_label": {
           "description": "The companion's own tag, verbatim.",
@@ -1402,6 +1500,7 @@
           "type": "string"
         },
         "role": {
+          "description": "What the link claims: key (the target states the whole item), attributed (shown for the item, not key), support (a supporting result), example (a worked example), helper (a helper used in the proof).",
           "enum": [
             "attributed",
             "example",
@@ -1434,25 +1533,32 @@
       },
       "properties": {
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id. Recommended for a PDF location: <item>@p<page>."
         },
         "items": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "The items the location shows, on its source. May be empty when a declaration's anchors or a link's locations name the location."
         },
         "legacy_ids": {
-          "$ref": "#/$defs/string_set"
+          "$ref": "#/$defs/string_set",
+          "description": "Ids the location had in older formats."
         },
         "pages": {
-          "$ref": "#/$defs/pages"
+          "$ref": "#/$defs/pages",
+          "description": "The PDF pages the selectors name, as a structured mirror."
         },
         "provenance": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The provenance record of the location."
         },
         "signoff": {
-          "$ref": "#/$defs/signoff"
+          "$ref": "#/$defs/signoff",
+          "description": "Who checked the location against the source."
         },
         "target": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The W3C target: the source and the selectors."
         }
       },
       "required": [
@@ -1487,21 +1593,27 @@
       },
       "properties": {
         "artifact": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The artifact that belongs to the cluster."
         },
         "cluster": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The cluster."
         },
         "declaration": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The declaration that belongs to the cluster."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "provenance": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The provenance record of the membership."
         },
         "role": {
+          "description": "The role the companion's graph gives the member: primary (it states the node), support (it supports the node), consumer (it uses the node).",
           "enum": [
             "consumer",
             "primary",
@@ -1523,11 +1635,13 @@
       "description": "A dependency of the companion: its Lake package name and the full git id it is pinned to.",
       "properties": {
         "name": {
+          "description": "The Lake package name.",
           "minLength": 1,
           "type": "string"
         },
         "rev": {
-          "$ref": "#/$defs/git_sha"
+          "$ref": "#/$defs/git_sha",
+          "description": "The full git id it is pinned to."
         }
       },
       "required": [
@@ -1541,10 +1655,12 @@
       "description": "One page of a site source: its path relative to the site root and the sha256 of its bytes.",
       "properties": {
         "path": {
-          "$ref": "#/$defs/site_path"
+          "$ref": "#/$defs/site_path",
+          "description": "The page file, relative to the site root."
         },
         "sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the page's bytes."
         }
       },
       "required": [
@@ -1558,10 +1674,12 @@
       "description": "The page box's size in points (1/72 inch).",
       "properties": {
         "height_pt": {
+          "description": "The page box's height in points.",
           "minimum": 1,
           "type": "number"
         },
         "width_pt": {
+          "description": "The page box's width in points.",
           "minimum": 1,
           "type": "number"
         }
@@ -1577,18 +1695,22 @@
       "description": "Physical pages first..last that differ from page_size.",
       "properties": {
         "first": {
+          "description": "The range's first physical page.",
           "minimum": 1,
           "type": "integer"
         },
         "height_pt": {
+          "description": "The page box's height in points.",
           "minimum": 1,
           "type": "number"
         },
         "last": {
+          "description": "The range's last physical page.",
           "minimum": 1,
           "type": "integer"
         },
         "width_pt": {
+          "description": "The page box's width in points.",
           "minimum": 1,
           "type": "number"
         }
@@ -1606,7 +1728,7 @@
       "description": "A page span without geometry, on a PDF source. last defaults to first.",
       "properties": {
         "anchor": {
-          "description": "Where the page came from: own anchor, a cross-reference, or inferred from a neighbour.",
+          "description": "Where the page came from: own (the thing's own anchor), crossref (a cross-reference to it), inferred (from a neighbour).",
           "enum": [
             "crossref",
             "inferred",
@@ -1615,6 +1737,7 @@
           "type": "string"
         },
         "basis": {
+          "description": "The numbering first and last use: printed (the numbers the source prints) or physical (the 1-based pages of the file).",
           "enum": [
             "physical",
             "printed"
@@ -1622,10 +1745,12 @@
           "type": "string"
         },
         "first": {
+          "description": "The first page.",
           "minimum": 1,
           "type": "integer"
         },
         "last": {
+          "description": "The last page. Defaults to first.",
           "minimum": 1,
           "type": "integer"
         },
@@ -1643,11 +1768,13 @@
     },
     "provenance": {
       "additionalProperties": false,
+      "description": "How links, locations or memberships were produced: who, how, and from what.",
       "patternProperties": {
         "^x_[a-z0-9_]+$": {}
       },
       "properties": {
         "actor": {
+          "description": "Who produced the records: author (the companion's author), agent (an AI agent), human (another person), tool (a program).",
           "enum": [
             "agent",
             "author",
@@ -1657,16 +1784,20 @@
           "type": "string"
         },
         "agents": {
-          "$ref": "#/$defs/string_set"
+          "$ref": "#/$defs/string_set",
+          "description": "The agents involved."
         },
         "at": {
-          "$ref": "#/$defs/date_or_timestamp"
+          "$ref": "#/$defs/date_or_timestamp",
+          "description": "When: a date or a UTC timestamp."
         },
         "confirmed_by_human": {
+          "description": "A human confirmed the records.",
           "type": "boolean"
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "inputs": {
           "description": "Sorted: file entries by path, then source entries by source; one entry each.",
@@ -1677,6 +1808,7 @@
           "type": "array"
         },
         "method": {
+          "description": "How: docstring_tag (tags in docstrings), curation (a person's curation), blueprint_macro (a blueprint's \\lean{} macros), lean_scan (a scan of the Lean source), layout_extraction (the source's page layout), text_match (matching text), manual (written by hand), agent_annotation (an agent's annotation), pipeline (a multi-step pipeline), adjudication (an adjudicated audit), site_index (a rendered site's index).",
           "enum": [
             "adjudication",
             "agent_annotation",
@@ -1693,20 +1825,25 @@
           "type": "string"
         },
         "note": {
+          "description": "A free-text note.",
           "minLength": 1,
           "type": "string"
         },
         "tool": {
           "additionalProperties": false,
+          "description": "The program that produced the records.",
           "properties": {
             "name": {
+              "description": "The program's name.",
               "minLength": 1,
               "type": "string"
             },
             "path": {
-              "$ref": "#/$defs/repo_path"
+              "$ref": "#/$defs/repo_path",
+              "description": "The program's path, relative to the companion's repository."
             },
             "version": {
+              "description": "The program's version.",
               "minLength": 1,
               "type": "string"
             }
@@ -1776,7 +1913,7 @@
     },
     "quote": {
       "additionalProperties": false,
-      "description": "Shorthand for a TextQuoteSelector over the whole item source (docs section 5.2).",
+      "description": "Shorthand for a location on the item's source with one TextQuoteSelector and no page (specification section 5.5).",
       "properties": {
         "exact": {
           "description": "The quoted text, matched under the source's text_layer rules.",
@@ -1784,9 +1921,11 @@
           "type": "string"
         },
         "prefix": {
+          "description": "The text just before the quote.",
           "type": "string"
         },
         "suffix": {
+          "description": "The text just after the quote.",
           "type": "string"
         }
       },
@@ -1861,13 +2000,16 @@
       "description": "Typed links between items: same_as (the same content, e.g. another edition), part_of (contained in), near (the numbered neighbour a passage sits beside, as its tag names it; the passage's page may be inferred from it).",
       "properties": {
         "near": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "The numbered neighbours a passage sits beside, as its tag names them; its page may be inferred from them."
         },
         "part_of": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "The items that contain this one."
         },
         "same_as": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "Items with the same content: an entry in another edition or an errata list."
         }
       },
       "required": [],
@@ -1943,6 +2085,7 @@
       "description": "How a verdict was resolved. A verdict without one is open.",
       "properties": {
         "branch": {
+          "description": "The branch a fix is under way on.",
           "minLength": 1,
           "type": "string"
         },
@@ -1956,14 +2099,17 @@
           "uniqueItems": true
         },
         "issue": {
+          "description": "The issue number.",
           "minimum": 1,
           "type": "integer"
         },
         "note": {
+          "description": "A free-text note.",
           "minLength": 1,
           "type": "string"
         },
         "pr": {
+          "description": "The pull request number.",
           "minimum": 1,
           "type": "integer"
         },
@@ -1975,9 +2121,11 @@
             {
               "minItems": 1
             }
-          ]
+          ],
+          "description": "Every declaration that replaces the item's declarations."
         },
         "state": {
+          "description": "open (nobody has resolved the verdict), fixed (the defect is fixed; names pr or commits), in_progress (a fix is under way; names pr or branch), refuted (the suspected defect's premise was wrong), argued_correct (the statement is argued to be right as it stands), out_of_scope (closed without a fix: outside what the companion sets out to formalise).",
           "enum": [
             "argued_correct",
             "fixed",
@@ -2075,6 +2223,7 @@
       "description": "A selector, discriminated by type: the W3C Web Annotation classes FragmentSelector, TextQuoteSelector and CssSelector, and the two formal-companion extensions PdfRegionSelector and SitePageSelector.",
       "properties": {
         "type": {
+          "description": "The selector type: FragmentSelector, TextQuoteSelector and CssSelector (the W3C classes), PdfRegionSelector and SitePageSelector (the two extensions).",
           "enum": [
             "CssSelector",
             "FragmentSelector",
@@ -2091,6 +2240,7 @@
       "type": "object"
     },
     "sha256": {
+      "description": "A sha256 digest: 64 lowercase hex digits.",
       "pattern": "^[0-9a-f]{64}$",
       "type": "string"
     },
@@ -2099,7 +2249,8 @@
       "description": "Who checked this location against the source, and how.",
       "properties": {
         "at": {
-          "$ref": "#/$defs/date_or_timestamp"
+          "$ref": "#/$defs/date_or_timestamp",
+          "description": "When it was checked."
         },
         "evidence_id": {
           "description": "The producer's own id for the evidence.",
@@ -2107,13 +2258,16 @@
           "type": "string"
         },
         "evidence_sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the evidence."
         },
         "method": {
+          "description": "How it was checked.",
           "minLength": 1,
           "type": "string"
         },
         "verifier": {
+          "description": "Who checked it.",
           "minLength": 1,
           "type": "string"
         }
@@ -2138,20 +2292,25 @@
       },
       "properties": {
         "declaration": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The declaration the snippet shows. At most one snippet per declaration."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "line": {
+          "description": "The 1-based line the text starts on.",
           "minimum": 1,
           "type": "integer"
         },
         "text": {
+          "description": "The statement text.",
           "minLength": 1,
           "type": "string"
         },
         "truncated": {
+          "description": "The text is cut short.",
           "type": "boolean"
         }
       },
@@ -2432,10 +2591,12 @@
           "uniqueItems": true
         },
         "bytes": {
+          "description": "The file's size in bytes.",
           "minimum": 0,
           "type": "integer"
         },
         "edition": {
+          "description": "The edition, as the source names it.",
           "minLength": 1,
           "type": "string"
         },
@@ -2445,13 +2606,15 @@
           "type": "string"
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "identifiers": {
-          "$ref": "#/$defs/identifiers"
+          "$ref": "#/$defs/identifiers",
+          "description": "Bibliographic identifiers of the edition: the identity of a pdf or other source whose bytes the producer does not hold."
         },
         "kind": {
-          "description": "pdf, web, tex and lean are presets; other names its medium in media_type.",
+          "description": "The medium: pdf (a PDF file), web (a web page, or with scope site a rendered site), tex (a LaTeX file), lean (a Lean file), other (any other medium, named by media_type).",
           "enum": [
             "lean",
             "other",
@@ -2462,10 +2625,11 @@
           "type": "string"
         },
         "media_type": {
-          "$ref": "#/$defs/media_type"
+          "$ref": "#/$defs/media_type",
+          "description": "With kind other: the medium's IANA media type."
         },
         "page_hashes": {
-          "description": "scope site only: the pages the producer pins, {path, sha256}, sorted by path, each path a file. Required when the site source has a sha256, which is then the sha256 of the manifest these entries give (docs section 5.1). Must list every page a SitePageSelector on the source names.",
+          "description": "scope site only: the pages the producer pins, {path, sha256}, sorted by path, each path a file. Required when the site source has a sha256, which is then the sha256 of the manifest these entries give (specification section 4.5). Must list every page a SitePageSelector on the source names.",
           "items": {
             "$ref": "#/$defs/page_hash"
           },
@@ -2473,10 +2637,11 @@
           "type": "array"
         },
         "page_size": {
-          "$ref": "#/$defs/page_size"
+          "$ref": "#/$defs/page_size",
+          "description": "PDF only: the page box's size."
         },
         "page_sizes": {
-          "description": "Exceptions to page_size, sorted by first.",
+          "description": "PDF only: exceptions to page_size, sorted by first.",
           "items": {
             "$ref": "#/$defs/page_size_range"
           },
@@ -2484,18 +2649,21 @@
           "type": "array"
         },
         "path": {
-          "$ref": "#/$defs/repo_path"
+          "$ref": "#/$defs/repo_path",
+          "description": "The file or site root, relative to the companion's repository."
         },
         "physical_page_count": {
+          "description": "PDF only: the number of pages in the file.",
           "minimum": 1,
           "type": "integer"
         },
         "printed_page_offset": {
-          "description": "physical page = printed page + offset.",
+          "description": "PDF only: physical page = printed page + offset.",
           "type": "integer"
         },
         "retrieved_at": {
-          "$ref": "#/$defs/timestamp"
+          "$ref": "#/$defs/timestamp",
+          "description": "When the source was fetched. Never part of its identity."
         },
         "revision": {
           "description": "An immutable revision: a wiki oldid, a git commit, an edition stamp.",
@@ -2511,7 +2679,7 @@
           "type": "string"
         },
         "scope": {
-          "description": "site: one source for a whole rendered site, pages chosen by SitePageSelector; its sha256 is the sha256 of the page manifest (docs section 3.1). Default page.",
+          "description": "page (the default: one page or file) or site (one web source for a whole rendered site; each location chooses its page with a SitePageSelector, and sha256 is the sha256 of the page manifest).",
           "enum": [
             "page",
             "site"
@@ -2519,17 +2687,21 @@
           "type": "string"
         },
         "sha256": {
-          "$ref": "#/$defs/sha256"
+          "$ref": "#/$defs/sha256",
+          "description": "The sha256 of the source's bytes; for a site, of its page manifest."
         },
         "text_layer": {
-          "$ref": "#/$defs/text_layer"
+          "$ref": "#/$defs/text_layer",
+          "description": "How quotes on this source are matched."
         },
         "title": {
+          "description": "The source's title.",
           "minLength": 1,
           "type": "string"
         },
         "url": {
-          "$ref": "#/$defs/http_url"
+          "$ref": "#/$defs/http_url",
+          "description": "Where the bytes were fetched."
         }
       },
       "required": [
@@ -2561,7 +2733,8 @@
           "type": "array"
         },
         "source": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The location's source."
         }
       },
       "required": [
@@ -2601,6 +2774,7 @@
       "description": "How quotes on this source are matched. extractor and version come together: both or neither.",
       "properties": {
         "case": {
+          "description": "Letter case when matching: sensitive or insensitive.",
           "enum": [
             "insensitive",
             "sensitive"
@@ -2613,6 +2787,7 @@
           "type": "string"
         },
         "unicode": {
+          "description": "The normalisation applied before matching: none, nfc or nfkc.",
           "enum": [
             "nfc",
             "nfkc",
@@ -2626,6 +2801,7 @@
           "type": "string"
         },
         "whitespace": {
+          "description": "How whitespace is compared: exact (as written), collapse (each run as one space), ignore (not at all).",
           "enum": [
             "collapse",
             "exact",
@@ -2654,6 +2830,7 @@
       },
       "properties": {
         "claim": {
+          "description": "Why it is tied to no item: unattributed (nobody has attributed it), api (library API that states no item), infrastructure (machinery that states no item).",
           "enum": [
             "api",
             "infrastructure",
@@ -2662,13 +2839,16 @@
           "type": "string"
         },
         "declaration": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The declaration."
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "signals": {
-          "$ref": "#/$defs/string_set"
+          "$ref": "#/$defs/string_set",
+          "description": "What suggested the claim."
         }
       },
       "required": [
@@ -2686,17 +2866,21 @@
       },
       "properties": {
         "declarations": {
+          "description": "A verdict per declaration, sorted by declaration, one each.",
           "items": {
             "additionalProperties": false,
             "properties": {
               "declaration": {
-                "$ref": "#/$defs/ref"
+                "$ref": "#/$defs/ref",
+                "description": "The declaration."
               },
               "note": {
+                "description": "A note on this declaration.",
                 "minLength": 1,
                 "type": "string"
               },
               "verdict": {
+                "description": "The verdict on this declaration, in the values of the verdict's own verdict.",
                 "enum": [
                   "attribution_gap",
                   "convention",
@@ -2725,21 +2909,27 @@
           "type": "array"
         },
         "id": {
-          "$ref": "#/$defs/id"
+          "$ref": "#/$defs/id",
+          "description": "The record's id."
         },
         "item": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The item the verdict is on."
         },
         "locations": {
-          "$ref": "#/$defs/ref_list"
+          "$ref": "#/$defs/ref_list",
+          "description": "The regions the verdict is about. Each shows the item."
         },
         "provenance": {
-          "$ref": "#/$defs/ref"
+          "$ref": "#/$defs/ref",
+          "description": "The provenance record of the verdict."
         },
         "resolution": {
-          "$ref": "#/$defs/resolution"
+          "$ref": "#/$defs/resolution",
+          "description": "How the verdict was resolved. Absent means open."
         },
         "severity": {
+          "description": "The defect's weight, ordered none < low < medium < high: none (no defect to weigh), low, medium and high (a real defect of the least, middle or greatest weight).",
           "enum": [
             "high",
             "low",
@@ -2749,6 +2939,7 @@
           "type": "string"
         },
         "status": {
+          "description": "unconfirmed (as a machine pass wrote it), contested (the adjudication recorded dissent it did not settle), human_confirmed (a human confirmed it), fixed (the defect is fixed; the resolution's state is fixed).",
           "enum": [
             "contested",
             "fixed",
@@ -2758,15 +2949,18 @@
           "type": "string"
         },
         "sub": {
+          "description": "The part of the item, written as item.sub.",
           "minLength": 1,
           "pattern": "^[0-9A-Za-z]+'*([.,-][0-9A-Za-z]+'*)*$",
           "type": "string"
         },
         "summary": {
+          "description": "A one-line summary.",
           "minLength": 1,
           "type": "string"
         },
         "verdict": {
+          "description": "faithful (the declarations state what the item says), convention (they differ only by a documented encoding or degenerate-case choice, or the printed text diverges and an errata entry says so), attribution_gap (a faithful statement exists, but not in the declaration attributed), proxy (they are about a stand-in for the item's notion), deviation (they assert something materially different, or leave out a main clause).",
           "enum": [
             "attribution_gap",
             "convention",
@@ -2792,10 +2986,12 @@
       "description": "The same statement in a public database: database is an open lower-case snake_case token (the core is stacks, kerodon, wikidata, lmfdb; another passes with a warning), tag the entry's tag.",
       "properties": {
         "database": {
+          "description": "The database: an open lower-case snake_case token. The core is stacks, kerodon, wikidata and lmfdb; another token passes with warning W-XREF.",
           "pattern": "^[a-z][a-z0-9_]*$",
           "type": "string"
         },
         "tag": {
+          "description": "The entry's tag, without whitespace.",
           "minLength": 1,
           "pattern": "^[^\\u0000-\\u0020\\u007f\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028-\\u2029\\u202f\\u205f\\u3000\\ufeff]+$",
           "type": "string"
@@ -2821,66 +3017,67 @@
       "type": "string"
     },
     "artifacts": {
-      "description": "graph profile. Sorted by id.",
+      "description": "graph profile: formalization artifacts that are not declarations. Sorted by id.",
       "items": {
         "$ref": "#/$defs/artifact"
       },
       "type": "array"
     },
     "changelog": {
-      "description": "history profile. Sorted by id.",
+      "description": "history profile: id events. Sorted by id.",
       "items": {
         "$ref": "#/$defs/change"
       },
       "type": "array"
     },
     "clusters": {
-      "description": "graph profile. Sorted by id.",
+      "description": "graph profile: the companion's own coarse nodes. Sorted by id.",
       "items": {
         "$ref": "#/$defs/cluster"
       },
       "type": "array"
     },
     "companion": {
-      "$ref": "#/$defs/companion"
+      "$ref": "#/$defs/companion",
+      "description": "The companion repository and the commit the document describes."
     },
     "declarations": {
-      "description": "Sorted by id.",
+      "description": "Every declaration the document names. Sorted by id.",
       "items": {
         "$ref": "#/$defs/declaration"
       },
       "type": "array"
     },
     "destinations": {
-      "description": "site profile. Sorted by id.",
+      "description": "site profile: where declarations and artifacts are rendered. Sorted by id.",
       "items": {
         "$ref": "#/$defs/destination"
       },
       "type": "array"
     },
     "items": {
-      "description": "Sorted by id.",
+      "description": "The numbered items and passages of the sources. Sorted by id.",
       "items": {
         "$ref": "#/$defs/item"
       },
       "type": "array"
     },
     "links": {
-      "description": "Sorted by id.",
+      "description": "Attributions of items to declarations (or, with the graph profile, to clusters). Sorted by id.",
       "items": {
         "$ref": "#/$defs/link"
       },
       "type": "array"
     },
     "locations": {
-      "description": "Sorted by id.",
+      "description": "Where items, and the declarations' own text, sit in the sources. Sorted by id.",
       "items": {
         "$ref": "#/$defs/location"
       },
       "type": "array"
     },
     "memberships": {
-      "description": "graph profile. Sorted by id.",
+      "description": "graph profile: the declarations and artifacts each cluster holds. Sorted by id.",
       "items": {
         "$ref": "#/$defs/membership"
       },
@@ -2891,18 +3088,22 @@
       "description": "The profiles the document uses, each with its own <major>.<minor>. A root array or field a profile owns appears only when that profile is declared (invariant I14). May be absent or empty.",
       "properties": {
         "audit": {
+          "description": "The audit profile's version (verdicts).",
           "pattern": "^1\\.(0|[1-9][0-9]*)$",
           "type": "string"
         },
         "graph": {
+          "description": "The graph profile's version (clusters, memberships, artifacts and the fields they need).",
           "pattern": "^1\\.(0|[1-9][0-9]*)$",
           "type": "string"
         },
         "history": {
+          "description": "The history profile's version (changelog, link.orphaned, declaration.replaced_by).",
           "pattern": "^1\\.(0|[1-9][0-9]*)$",
           "type": "string"
         },
         "site": {
+          "description": "The site profile's version (destinations, snippets).",
           "pattern": "^1\\.(0|[1-9][0-9]*)$",
           "type": "string"
         }
@@ -2910,14 +3111,15 @@
       "type": "object"
     },
     "provenance": {
-      "description": "Sorted by id.",
+      "description": "How the links, locations and memberships were produced. Sorted by id.",
       "items": {
         "$ref": "#/$defs/provenance"
       },
       "type": "array"
     },
     "schema": {
-      "const": "formal-companion/annotations"
+      "const": "formal-companion/annotations",
+      "description": "The format identifier. No other value is accepted."
     },
     "schema_version": {
       "description": "<major>.<minor> of the core. Readers match the major; a writer declares the lowest minor whose schema admits the document.",
@@ -2925,14 +3127,14 @@
       "type": "string"
     },
     "snippets": {
-      "description": "site profile. Sorted by id.",
+      "description": "site profile: statement text for declaration cards. Sorted by id.",
       "items": {
         "$ref": "#/$defs/snippet"
       },
       "type": "array"
     },
     "sources": {
-      "description": "Sorted by id.",
+      "description": "The editions annotated, at least one. Sorted by id.",
       "items": {
         "$ref": "#/$defs/source"
       },
@@ -2940,14 +3142,14 @@
       "type": "array"
     },
     "unattributed": {
-      "description": "Sorted by id.",
+      "description": "Declarations tied to no item, with the reason. Sorted by id.",
       "items": {
         "$ref": "#/$defs/unattributed"
       },
       "type": "array"
     },
     "verdicts": {
-      "description": "audit profile. Sorted by id.",
+      "description": "audit profile: adjudicated verdicts on items. Sorted by id.",
       "items": {
         "$ref": "#/$defs/verdict"
       },

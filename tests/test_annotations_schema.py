@@ -175,7 +175,8 @@ class TestTheSchemaFile(unittest.TestCase):
         self.assertNotIn("required", profiles)
         for name, sub in profiles["properties"].items():
             with self.subTest(profile=name):
-                self.assertEqual(sub, {"pattern": "^1\\.(0|[1-9][0-9]*)$", "type": "string"})
+                self.assertEqual({k: v for k, v in sub.items() if k != "description"},
+                                 {"pattern": "^1\\.(0|[1-9][0-9]*)$", "type": "string"})
                 self.assertTrue(re.fullmatch(sub["pattern"], vocab.ANNOTATION_PROFILE_VERSIONS[name]))
 
     def test_the_evaluator_refuses_a_keyword_it_does_not_implement(self):
@@ -202,7 +203,7 @@ class TestTheSchemaFile(unittest.TestCase):
 
     def test_a_site_page_path_and_a_relative_href_share_one_grammar(self):
         d = self.schema()["$defs"]
-        self.assertEqual(d["SitePageSelector"]["properties"]["path"], {"$ref": "#/$defs/site_path"})
+        self.assertEqual(d["SitePageSelector"]["properties"]["path"]["$ref"], "#/$defs/site_path")
         self.assertIn({"$ref": "#/$defs/site_path"}, d["destination"]["properties"]["href"]["anyOf"])
         ours = Validator(self.schema())
         for path in ("Notes/Section_2/", "a/b.html", "a:b.html", "/abs", "../up", "a#frag", "a b"):
