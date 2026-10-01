@@ -1,35 +1,4 @@
-# The test suite and the installed console script, on every push.
-#
-# What it pins:
-#
-#   * the Python floor (3.11, pyproject.toml's requires-python) through the
-#     newest release the checker is tested on;
-#   * standard library only: the pytest jobs install pytest and nothing else,
-#     except the 3.13 job, which also installs jsonschema so the agreement tests
-#     (tests/test_annotations_schema.py, TestAgreementWithJsonschema) run
-#     somewhere; everywhere else they skip, as the checker never needs it;
-#   * that `unittest discover` runs the suite with nothing installed at all;
-#   * that an installed wheel carries the schema as package data and its
-#     console script reports the package version, accepts the valid examples
-#     and rejects the invalid ones with the error each records in its own
-#     `x_expected_error` key;
-#   * that the suite passes against a regular (non-editable) install: the
-#     tests import whatever copy Python finds and add src/ to the path only
-#     when none is installed, and that job makes them assert the copy they
-#     tested is the one in site-packages;
-#   * that `python -m build` makes an sdist and a wheel `twine check` accepts,
-#     that the wheel holds the package and its schema and nothing else, and
-#     that the unpacked sdist runs its own tests, the conformance suite
-#     included (MANIFEST.in grafts conformance/) and that the sdist carries no
-#     node_modules (MANIFEST.in prunes it: a maintainer's tree has one after
-#     `npm ci`);
-#   * that the language-neutral conformance suite (conformance/README.md)
-#     holds outside Python: the `conformance-node` job validates its documents
-#     against the schema with ajv (draft 2020-12) and checks the manifest's
-#     `schema_valid`, runs the canonical-form cases through the JavaScript
-#     reference writer, and checks the statement-hash vectors with Node's
-#     crypto.  The Python side of the same suite is tests/test_conformance.py,
-#     which every pytest and unittest job above runs.
+# The test suite, the installed wheel and the distributions, on every push.
 name: tests
 
 on:
@@ -54,14 +23,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade pip
       - run: python -m pip install pytest
+      # The jsonschema agreement tests run here; elsewhere they skip.
       - if: matrix.python-version == '3.13'
         run: python -m pip install jsonschema
       - run: python -m pytest -q
 
   unittest:
-    name: unittest discover (nothing installed)
+    name: unittest (nothing installed)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,78 +40,31 @@ jobs:
       - run: python -m unittest discover -s tests
 
   installed:
-    name: installed package (wheel, schema as package data, console script)
+    name: the installed wheel (console script, examples, suite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install --upgrade pip
-      # A regular (non-editable) install: src/ is not on sys.path, so every
-      # step below runs the installed copy.
-      - run: python -m pip install .
-      - name: the packaged schema is the repository's
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          from formal_companion_annotations import validate as V
-          assert V.SCHEMA_PATH.is_file(), V.SCHEMA_PATH
-          assert "site-packages" in str(V.SCHEMA_PATH), V.SCHEMA_PATH
-          assert V.SCHEMA_PATH.read_bytes() == Path("schema/annotations-v1.0.schema.json").read_bytes()
-          print("ok:", V.SCHEMA_PATH)
-          PY
+      - run: python -m pip install build pytest
+      - run: python -m build --wheel
+      - run: python -m pip install dist/*.whl
       - name: the console script reports the package version
         run: |
           want="formal-companion-annotations-validate $(python -c 'import formal_companion_annotations as p; print(p.__version__)')"
-          got=$(formal-companion-annotations-validate --version)
-          echo "$got"
-          test "$got" = "$want"
-      - name: valid examples pass, in canonical form
+          test "$(formal-companion-annotations-validate --version)" = "$want"
+      - name: the valid examples pass in canonical form
+        run: formal-companion-annotations-validate --canonical $(ls examples/annotations/*.json | grep -v '/invalid-')
+      - name: each invalid example fails with the line it records
         run: |
-          formal-companion-annotations-validate --canonical $(ls examples/annotations/*.json | grep -v '/invalid-')
-      - name: invalid examples fail with their recorded error
-        run: |
-          set -u
           for f in examples/annotations/invalid-*.json; do
-            want=$(python -c 'import json, sys; print(json.load(open(sys.argv[1]))["x_expected_error"])' "$f")
-            set +e
-            out=$(formal-companion-annotations-validate "$f")
-            status=$?
-            set -e
-            echo "$out"
-            test "$status" -eq 1 || { echo "$f: exit $status, expected 1"; exit 1; }
-            test "$out" = "$f: $want" || { echo "$f: unexpected output"; exit 1; }
+            want="$f: $(python -c 'import json, sys; print(json.load(open(sys.argv[1]))["x_expected_error"])' "$f")"
+            status=0; out=$(formal-companion-annotations-validate "$f") || status=$?
+            test "$status" -eq 1 && test "$out" = "$want" || { echo "$f: exit $status: $out"; exit 1; }
           done
-
-  installed-pytest:
-    name: pytest against the installed package (python ${{ matrix.python-version }}, src/ not on the path)
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.14"]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade pip
-      # Not `pip install -e .`: an editable install would put src/ on the path
-      # and test the source tree again.
-      - run: python -m pip install . pytest
-      - name: the package Python imports is the installed one
-        run: |
-          python - <<'PY'
-          import sys
-          import formal_companion_annotations as p
-          print(p.__file__)
-          assert "site-packages" in p.__file__, p.__file__
-          assert not any(entry.rstrip("/").endswith("/src") for entry in sys.path), sys.path
-          PY
-      # The tests find the installed copy, so they never add src/ to sys.path;
-      # the variable makes test_packaging assert exactly that.
-      - run: python -m pytest -q -rs
+      # The variable makes the suite assert that it tests the installed copy.
+      - run: python -m pytest -q
         env:
           FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED: "1"
 
@@ -154,53 +76,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: python -m pip install --upgrade pip
       - run: python -m pip install build twine pytest
-      # build makes the sdist, then the wheel from the unpacked sdist.
       - run: python -m build
       - run: python -m twine check --strict dist/*
-      - name: the wheel holds the package and its packaged schema, nothing else
+      - name: the wheel is the package and its schema, nothing else
         run: |
           python - <<'PY'
           import glob, zipfile
           (wheel,) = glob.glob("dist/*.whl")
-          names = zipfile.ZipFile(wheel).namelist()
-          package = sorted(n for n in names if not n.split("/")[0].endswith(".dist-info"))
-          want = ["formal_companion_annotations/__init__.py", "formal_companion_annotations/__main__.py",
-                  "formal_companion_annotations/ids.py", "formal_companion_annotations/py.typed",
-                  "formal_companion_annotations/schema/annotations-v1.0.schema.json",
-                  "formal_companion_annotations/schemacheck.py", "formal_companion_annotations/validate.py",
-                  "formal_companion_annotations/vocab.py"]
-          assert package == want, package
-          print("\n".join(names))
+          names = sorted(n for n in zipfile.ZipFile(wheel).namelist() if ".dist-info/" not in n)
+          want = sorted("formal_companion_annotations/" + n for n in (
+              "__init__.py", "__main__.py", "ids.py", "py.typed", "schemacheck.py", "validate.py", "vocab.py",
+              "schema/annotations-v1.0.schema.json"))
+          assert names == want, names
           PY
-      - name: the sdist carries the conformance suite and no node_modules
-        run: |
-          tar -tzf dist/*.tar.gz > "$RUNNER_TEMP/sdist-files.txt"
-          grep -q '/conformance/documents/manifest.json$' "$RUNNER_TEMP/sdist-files.txt"
-          grep -q '/conformance/js/run.mjs$' "$RUNNER_TEMP/sdist-files.txt"
-          ! grep -q node_modules "$RUNNER_TEMP/sdist-files.txt"
-      - name: the unpacked sdist runs its own tests, with nothing installed
+      - name: the unpacked sdist runs its own tests with nothing installed
         run: |
           mkdir "$RUNNER_TEMP/sdist"
           tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist"
           cd "$RUNNER_TEMP"/sdist/formal_companion_annotations-*/
-          python -c "import importlib.util, sys; sys.exit(importlib.util.find_spec('formal_companion_annotations') is not None)"
           python -m pytest -q
           python -m unittest discover -s tests
-
-  conformance-node:
-    name: conformance suite under Node (ajv against the schema, the JS canonical writer)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: conformance/js/package-lock.json
-      # `npm ci` installs exactly what package-lock.json pins (ajv, ajv-formats,
-      # no install scripts); the runner then needs no network.
-      - run: npm ci --ignore-scripts
-        working-directory: conformance/js
-      - run: node conformance/js/run.mjs

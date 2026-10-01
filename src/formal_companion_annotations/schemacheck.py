@@ -4,9 +4,9 @@ This package is standard library only, so the ``jsonschema`` package cannot be
 assumed; this module evaluates the subset of draft 2020-12 that the shipped
 schema is written in, and it REFUSES a schema that uses any other keyword, so
 the schema cannot quietly rely on a rule nothing here enforces.
-``tests/test_annotations_schema.py`` checks that the real ``jsonschema``
-package, when it is installed, agrees with this evaluator on every shipped
-example.
+``tests/test_checker.py`` checks that the real ``jsonschema`` package, when
+it is installed, agrees with this evaluator on the examples and on mutations
+of them.
 
 Supported: ``$ref`` (local ``#/$defs/...`` only), ``type``, ``enum``, ``const``,
 ``properties``, ``required``, ``additionalProperties``, ``patternProperties``,
@@ -34,9 +34,8 @@ import json
 import re
 from typing import Any, Iterator
 
-#: The stable public API of this module (README.md "From Python"; docs/annotations.md
-#: section 11.6): exactly these names.  Anything else, underscored or not, is internal
-#: and may change in any release.
+#: The stable public API of this module: exactly these names.  Anything else,
+#: underscored or not, is internal and may change in any release.
 __all__ = [
     "SchemaError", "Validator",
 ]

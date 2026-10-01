@@ -1,5 +1,77 @@
 {
+  "artifacts": [
+    {
+      "file": "Notes/Basic.lean",
+      "id": "check:Notes.Basic:52",
+      "kind": "check",
+      "line": 52,
+      "module": "Notes.Basic"
+    },
+    {
+      "file": "Notes/Unions.lean",
+      "id": "figure:Notes.Unions:boxes",
+      "kind": "figure",
+      "line": 8,
+      "module": "Notes.Unions",
+      "title": "Two overlapping boxes"
+    },
+    {
+      "file": "Notes/Basic.lean",
+      "id": "module_doc:Notes.Basic",
+      "kind": "module_doc",
+      "line": 1,
+      "module": "Notes.Basic",
+      "title": "Boxes"
+    }
+  ],
   "changelog": [
+    {
+      "at": "2026-09-01",
+      "commit": "2bd082dc9254c707c153eeab645cbbd5931ac307",
+      "event": "ordinal_assigned",
+      "file": "Notes/Basic.lean",
+      "id": "2026-09-01/ordinal/example:7c01be3bbde5~2",
+      "line": 64,
+      "note": "The second copy of the statement, below the first in the same file.",
+      "subject": "example:7c01be3bbde5~2",
+      "subject_kind": "declaration"
+    },
+    {
+      "at": "2026-09-01",
+      "commit": "2bd082dc9254c707c153eeab645cbbd5931ac307",
+      "event": "ordinal_assigned",
+      "file": "Notes/Basic.lean",
+      "id": "2026-09-01/ordinal/example:7c01be3bbde5~3",
+      "line": 68,
+      "note": "A third copy, deleted on 2026-09-04; the record stays as history.",
+      "subject": "example:7c01be3bbde5~3",
+      "subject_kind": "declaration"
+    },
+    {
+      "at": "2026-09-02",
+      "commit": "46e8b2fffdb9a1336797580e833b1f1506226b4b",
+      "event": "renamed",
+      "id": "2026-09-02/renamed/Notes.Box.make",
+      "subject": "Notes.Box.make",
+      "subject_kind": "declaration",
+      "successor": "Notes.Box.mk"
+    },
+    {
+      "at": "2026-09-03",
+      "event": "born",
+      "id": "2026-09-03/born/figure:Notes.Unions:boxes",
+      "subject": "figure:Notes.Unions:boxes",
+      "subject_kind": "artifact"
+    },
+    {
+      "at": "2026-09-04",
+      "commit": "46e8b2fffdb9a1336797580e833b1f1506226b4b",
+      "event": "retired",
+      "id": "2026-09-04/retired/example:7c01be3bbde5~3",
+      "reason": "removed",
+      "subject": "example:7c01be3bbde5~3",
+      "subject_kind": "declaration"
+    },
     {
       "at": "2026-09-24",
       "commit": "1503b44127e4d11f5c6e7f28b1f0e07a159848f3",
@@ -31,13 +103,27 @@
         "passage-remark-unions"
       ],
       "locator": "printed pp. 3-9",
+      "related_to": [
+        "section-2"
+      ],
       "title": "Section 1: Boxes"
+    },
+    {
+      "id": "section-2",
+      "locator": "printed p. 10",
+      "title": "Section 2: Unions of boxes"
     }
   ],
   "companion": {
     "commit": "ed00b5dc6b11040ed2f9baf475edc9b48e1c7f4a",
     "generated_at": "2026-09-26T12:00:00Z",
     "generator": "notes exporter 0.1",
+    "graph": {
+      "bytes": 90412,
+      "path": "data/dependency-graph.json",
+      "sha256": "65d83e0e8c05fe7a5bb3ad6c7b6249805c5ef65008d7ae90fccdb506b7096312",
+      "snapshot_commit": "70c17b8858df2272d37b2f18f1ad8a182aa8e4b5"
+    },
     "name": "notes-companion",
     "packages": [
       {
@@ -193,6 +279,40 @@
     },
     {
       "anonymous": true,
+      "file": "Notes/Basic.lean",
+      "id": "example:7c01be3bbde5",
+      "id_source": "statement_hash",
+      "kind": "example",
+      "line": 60,
+      "module": "Notes.Basic",
+      "private": false,
+      "signature": "example : Box.unit 0 = Box.unit 0",
+      "statement_sha256": "7c01be3bbde5c1ff76d6d2275e81f1ee95c71f40b50e6971c2648be4b53e6ce9"
+    },
+    {
+      "anonymous": true,
+      "file": "Notes/Basic.lean",
+      "id": "example:7c01be3bbde5~2",
+      "id_source": "statement_hash",
+      "kind": "example",
+      "line": 64,
+      "module": "Notes.Basic",
+      "private": false,
+      "signature": "example : Box.unit 0 = Box.unit 0",
+      "statement_sha256": "7c01be3bbde5c1ff76d6d2275e81f1ee95c71f40b50e6971c2648be4b53e6ce9"
+    },
+    {
+      "anonymous": true,
+      "file": "Notes/Unions.lean",
+      "id": "example:Unions-of-boxes-are-elementary",
+      "id_source": "declared",
+      "kind": "example",
+      "module": "Notes.Unions",
+      "private": false,
+      "unlocated": true
+    },
+    {
+      "anonymous": true,
       "file": "Notes/Exercises.lean",
       "id": "example:boxes-are-elementary",
       "id_source": "declared",
@@ -231,6 +351,22 @@
       "fallback_label": "module page (fallback: no anchor for this declaration)",
       "href": "Notes/Basic/index.html",
       "id": "Notes.simp_volume@site",
+      "resolution": "fallback",
+      "site": "verso_literate"
+    },
+    {
+      "declaration": "example:Unions-of-boxes-are-elementary",
+      "fallback_label": "module page (not yet tagged in the Lean)",
+      "href": "Notes/Unions/index.html",
+      "id": "example:Unions-of-boxes-are-elementary@site",
+      "resolution": "fallback",
+      "site": "verso_literate"
+    },
+    {
+      "artifact": "figure:Notes.Unions:boxes",
+      "fallback_label": "module page (figure)",
+      "href": "Notes/Unions/index.html",
+      "id": "figure:Notes.Unions:boxes@site",
       "resolution": "fallback",
       "site": "verso_literate"
     }
@@ -461,16 +597,16 @@
             "coordinate_space": {
               "origin": "top_left",
               "page_box": "CropBox",
-              "units": "normalized",
+              "units": "pt",
               "x_axis": "right",
               "y_axis": "down"
             },
             "page": 7,
             "rect": {
-              "x0": 0.147059,
-              "x1": 0.653595,
-              "y0": 0.290404,
-              "y1": 0.325758
+              "x0": 90,
+              "x1": 400,
+              "y0": 230,
+              "y1": 258
             },
             "type": "PdfRegionSelector"
           }
@@ -546,6 +682,50 @@
       }
     }
   ],
+  "memberships": [
+    {
+      "artifact": "check:Notes.Basic:52",
+      "cluster": "section-1",
+      "id": "section-1/consumer/check:Notes.Basic:52",
+      "provenance": "prov-graph",
+      "role": "consumer"
+    },
+    {
+      "artifact": "module_doc:Notes.Basic",
+      "cluster": "section-1",
+      "id": "section-1/consumer/module_doc:Notes.Basic",
+      "provenance": "prov-graph",
+      "role": "consumer"
+    },
+    {
+      "cluster": "section-1",
+      "declaration": "Notes.Box",
+      "id": "section-1/primary/Notes.Box",
+      "provenance": "prov-graph",
+      "role": "primary"
+    },
+    {
+      "cluster": "section-1",
+      "declaration": "private:Notes.Basic:Notes.Box.volume_aux",
+      "id": "section-1/support/private:Notes.Basic:Notes.Box.volume_aux",
+      "provenance": "prov-graph",
+      "role": "support"
+    },
+    {
+      "artifact": "figure:Notes.Unions:boxes",
+      "cluster": "section-2",
+      "id": "section-2/primary/figure:Notes.Unions:boxes",
+      "provenance": "prov-graph",
+      "role": "primary"
+    },
+    {
+      "cluster": "section-2",
+      "declaration": "example:Unions-of-boxes-are-elementary",
+      "id": "section-2/support/example:Unions-of-boxes-are-elementary",
+      "provenance": "prov-graph",
+      "role": "support"
+    }
+  ],
   "profiles": {
     "audit": "1.0",
     "graph": "1.0",
@@ -563,6 +743,31 @@
       "confirmed_by_human": false,
       "id": "prov-curation",
       "method": "curation"
+    },
+    {
+      "actor": "tool",
+      "confirmed_by_human": false,
+      "id": "prov-graph",
+      "inputs": [
+        {
+          "bytes": 90412,
+          "commit": "70c17b8858df2272d37b2f18f1ad8a182aa8e4b5",
+          "path": "data/dependency-graph.json",
+          "sha256": "65d83e0e8c05fe7a5bb3ad6c7b6249805c5ef65008d7ae90fccdb506b7096312"
+        },
+        {
+          "path": "data/target-refinement.json",
+          "sha256": "1686d1ebb881b96622f8699d179fbc49e25097f6e14a6e76022c23042164dba8"
+        },
+        {
+          "source": "notes-pdf"
+        }
+      ],
+      "method": "pipeline",
+      "tool": {
+        "name": "graph exporter",
+        "version": "0.2"
+      }
     },
     {
       "actor": "human",
@@ -660,6 +865,7 @@
           "8ac319fe88cc24171f977efc916b1270f4be94a4",
           "d7f2e2305f202e798beb519d54075d3f6f2475ba"
         ],
+        "issue": 11,
         "pr": 12,
         "replaced_by": [
           "Notes.Box.ofLE"

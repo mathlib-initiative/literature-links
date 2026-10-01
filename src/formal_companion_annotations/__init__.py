@@ -2,13 +2,12 @@
 
 The format is specified in docs/annotations.md and its JSON Schema is
 schema/annotations-v1.0.schema.json (one file per format minor; schema_version
-"1.0"), shipped inside this package as ``schema/annotations-v1.0.schema.json``.
-``validate`` is the checker (and a CLI) and the RFC 8785 canonicaliser,
-``schemacheck`` the small JSON Schema evaluator it runs, because this package
-is standard library only, ``ids`` the mechanical id rules of
-docs/id-algorithm.md (statement-hash ids for anonymous declarations, and
-quote- or page-and-title-hash ids for unnumbered passages), and ``vocab`` the
-format's enums and id grammar.
+"1.0"), which a wheel ships as this package's ``schema/``.  ``validate`` is
+the checker (and a CLI) and the RFC 8785 canonicaliser, ``schemacheck`` the
+small JSON Schema evaluator it runs, because this package is standard library
+only, ``ids`` the format's mechanical id rules (statement hashes of anonymous
+declarations, passage and label ids), and ``vocab`` the format's enums and id
+grammar.
 
 The submodules are not imported here, so ``python3 -m
 formal_companion_annotations.validate`` runs without a double import.

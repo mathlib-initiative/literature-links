@@ -1,10 +1,6 @@
 # The formal-companion annotation format as an installable package: the JSON
-# Schema (shipped as package data), the checker and its console script, the
-# mechanical id rules and the format's vocabulary.
-#
-# Standard library only at run time: `dependencies` is empty on purpose.
-# `jsonschema` is used by the test suite when it is importable (the agreement
-# tests), never by the checker.
+# Schema, the checker and its console script, the id rules and the vocabulary.
+# Standard library only at run time; the tests use jsonschema when it is there.
 
 [build-system]
 requires = ["setuptools>=77"]
@@ -15,8 +11,6 @@ name = "formal-companion-annotations"
 version = "1.0.0rc2"                     # kept in step with src/formal_companion_annotations/__init__.py
 description = "The formal-companion annotation format: which Lean declarations formalise which items of which sources, with a standard-library validator."
 readme = "README.md"
-# 3.11 is the floor the checker is written and tested against; the tests
-# use `tomllib` (3.11).
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -44,18 +38,20 @@ Changelog = "https://github.com/mathlib-initiative/formal-companion-annotations/
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
-# Only for TestAgreementWithJsonschema: the package's evaluator against the real one.
 jsonschema = ["jsonschema>=4.18"]
 
 [project.scripts]
 formal-companion-annotations-validate = "formal_companion_annotations.validate:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+# The one schema file lives in schema/; the wheel ships that directory as the
+# package's schema/ (validate.SCHEMA_DIR), so there is no second copy.
+packages = ["formal_companion_annotations", "formal_companion_annotations.schema"]
+package-dir = { "" = "src", "formal_companion_annotations.schema" = "schema" }
 
 [tool.setuptools.package-data]
-# py.typed: the public API is fully annotated (tests/test_public_api.py checks it).
-formal_companion_annotations = ["schema/*.json", "py.typed"]
+formal_companion_annotations = ["py.typed"]
+"formal_companion_annotations.schema" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
