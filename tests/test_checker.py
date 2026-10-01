@@ -878,7 +878,7 @@ class TestIdsReferencesAndProfiles(Case):
 
     def test_i3_references_resolve(self):
         self.assertEqual(lines(load("invalid-dangling-reference.json")),
-                         ["$.links[2].declaration: 'Notes.Box.volume_pos' is not an id in declarations[] [I3]"])
+                         ["$.links[0].declaration: 'Notes.Box.volume_pos' is not an id in declarations[] [I3]"])
         doc = load("mixed.json")
         by_id(doc["items"], "passage-boxes-motivation")["relations"]["near"] = ["passage-boxes-motivation"]
         self.assertProblem(doc, "an item is not related to itself", "I3")
@@ -1984,7 +1984,7 @@ class TestTheCli(Temp):
                                                                      (str(unreadable), False)])
         self.assertEqual(records[0]["warnings"][0]["code"], "W-CONFORMS")
         self.assertEqual(set(records[0]), {"file", "ok", "problems", "warnings"})
-        self.assertEqual(records[1]["problems"], [{"code": "I3", "path": "$.links[2].declaration",
+        self.assertEqual(records[1]["problems"], [{"code": "I3", "path": "$.links[0].declaration",
                                                    "message": "'Notes.Box.volume_pos' is not an id in declarations[]"}])
         self.assertEqual(records[2]["problems"][0]["code"], "IJSON")
 
@@ -2079,7 +2079,7 @@ class TestTheCli(Temp):
         self.assertEqual(status, 2)
         self.assertIn("invalid choice", err)
         bad = load("invalid-dangling-reference.json")
-        self.assertEqual(V.validate(bad), ["$.links[2].declaration: 'Notes.Box.volume_pos' is not an id in declarations[]"])
+        self.assertEqual(V.validate(bad), ["$.links[0].declaration: 'Notes.Box.volume_pos' is not an id in declarations[]"])
 
 
 class TestScaling(unittest.TestCase):
