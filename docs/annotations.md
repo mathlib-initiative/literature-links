@@ -341,6 +341,8 @@ Whitespace here is exactly U+0009, U+000A, U+000D and U+0020.
 Scan from the start. At each step find the next `/-`, `--`, `"`, `'` or `«`.
 
 - `/-` opens a block comment: `/--` a doc comment, `/-!` a module doc.
+  The body starts after the opener: three code points for `/--` and `/-!`,
+  two for `/-`. So `/-- -/` is a closed doc comment and `/--/` is not.
   Nested `/-` and `-/` count; the comment ends after the `-/` that closes
   the first, or at the end of the text.
 - `--` opens a line comment, which runs to the next U+000A, exclusive.
@@ -435,10 +437,11 @@ for a statement that has, or may get, a textual twin, declare an id.
 | `page_title_hash` (passage) | `passage-p<printed page>-<first 8 hex of the sha256 of the normalised title>` |
 | `declared` | any id but the two `passage-` shapes above |
 
-The **slug** is the `kind` lower-cased, every run of code points outside
-`a-z` and `0-9` replaced by one `-`, and `-` removed from both ends. It
-MUST NOT be empty; otherwise declare the id. `number` and `sub` are copied
-verbatim, a prime included: `exercise-1.4-b'`.
+The **slug** is the `kind` lower-cased by Unicode default (full) case
+mapping, every run of code points outside `a-z` and `0-9` replaced by one
+`-`, and `-` removed from both ends. It MUST NOT be empty; otherwise
+declare the id. `number` and `sub` are copied verbatim, a prime included:
+`exercise-1.4-b'`.
 
 The **normaliser** (`ids.normalize_text`) is Unicode NFKC, then every run of
 `White_Space` code points replaced by one U+0020, then `White_Space`
