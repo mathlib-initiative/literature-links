@@ -1,33 +1,8 @@
 # Vocabulary of the annotation format
 
-Every enum of `schema/annotations-v1.schema.json` is defined once, in
-`src/formal_companion_annotations/vocab.py`. The schema repeats the values
-because it is data a non-Python consumer reads, and
-`tests/test_annotations_schema.py` walks every `enum` in the schema and fails
-when one has no set in that module or the two disagree. This file documents
-the values; a test fails when one is missing here, or when a value of section
-2 has no meaning.
-
-**The format owns every value it uses.** That includes the sets of section 2,
-which the format shares with the formal-companion skill, where they were
-first written: their values and their meanings are the ones defined in this
-repository. A change to one is a change to the format, made here first: a new
-value is a new minor version at least, and a value removed or given another
-meaning is a new major version (section 9 of `docs/annotations.md`).
-Producers conform to it, the skill included: a producer that writes a value
-this file does not list writes an invalid document, and a producer that keeps
-its own copy of a set (as the skill does, for its own stages) keeps it equal
-to this one.
-
-Section 1 began as section 1.10 of the skill's `references/vocabulary.md`,
-where the format was written. Section 2 defines the shared sets, with a
-meaning for each value, taken from that file (sections 1.2 to 1.7, and the
-ledger-to-viewer mapping of its section 2.5) and, for the sorry classes, from
-the skill's adapter contract (`references/onboarding-contract.md` section 6).
-
-**Contents**: 1 the annotation enums · 2 the shared sets: 2.1 viewer verdicts
-· 2.2 severities · 2.3 statuses · 2.4 ledger verdicts · 2.5 finding kinds · 2.6
-source roles · 2.7 sorry classes · 2.8 resolution states
+Every enum of `schema/annotations-v1.schema.json` is a set in
+`src/formal_companion_annotations/vocab.py`. **The format owns every value it uses.**
+A new value is a minor version; a value removed or given another meaning is a major version.
 
 ---
 
@@ -84,29 +59,9 @@ core passes with a warning.
 
 ## 2. The shared sets
 
-These sets were first written for the formal-companion skill's own
-stages (findings, the adjudication ledger, the viewer, sources, sorry
-classes), and the format uses them unchanged. They are defined here, values
-and meanings, and `vocab.py` writes them out as literals, so this package
-imports nothing from the skill. The `verdicts` record that uses five of them
-is specific to faithfulness audits (section 3.7 of `docs/annotations.md`); a
-producer that does not audit omits it.
-
-| set | where the format uses it | first written in the skill's vocabulary |
-|---|---|---|
-| `VIEWER_VERDICTS` | a verdict's `verdict` and each `declarations[].verdict` (2.1) | section 1.7, viewer layer |
-| `VIEWER_SEVERITIES` | a verdict's `severity` (2.2) | sections 1.3 and 1.7 |
-| `VIEWER_STATUS` | a verdict's `status` (2.3) | section 1.7 |
-| `LEDGER_VERDICTS` | a verdict's `ledger_verdict` (2.4) | section 1.4, ledger verdicts |
-| `FINDING_KINDS` | a verdict's `finding_kind` (2.5) | section 1.2, finding kinds |
-| `SOURCE_ROLES` | a source's `role` (2.6) | section 1.6, the source model |
-| `SORRY_CLASSES` | a declaration's `sorry` (2.7) | the adapter contract (`cflib.vocab`) |
-| `STATIC_RESOLUTIONS`, `RESOLUTION_PREFIXES` | the values of a verdict's `resolution.state` (2.8) | section 1.5, resolutions |
+Shared with the formal-companion skill; defined here.
 
 ### 2.1 `VIEWER_VERDICTS`: a verdict's `verdict`
-
-The verdict on an item, and on each declaration it names. The skill derives
-it from its ledger verdict (in brackets); a ledger `UNSURE` has none.
 
 | value | meaning |
 |---|---|
@@ -118,9 +73,7 @@ it from its ledger verdict (in brackets); a ledger `UNSURE` has none.
 
 ### 2.2 `VIEWER_SEVERITIES`: a verdict's `severity`
 
-Four levels, ordered `none` < `low` < `medium` < `high`. The format fixes the
-levels and their order; how a producer weighs a defect is its own method,
-which the verdict's `provenance` names.
+Ordered `none` < `low` < `medium` < `high`.
 
 | value | meaning |
 |---|---|
@@ -140,8 +93,6 @@ which the verdict's `provenance` names.
 
 ### 2.4 `LEDGER_VERDICTS`: a verdict's `ledger_verdict`
 
-The outcome of adjudicating one finding.
-
 | value | meaning |
 |---|---|
 | `CONFIRMED_CONTENT` | the Lean asserts something materially different from the source, or a main clause is missing |
@@ -152,8 +103,6 @@ The outcome of adjudicating one finding.
 | `UNSURE` | adjudicated and undecided; the verdict's `summary` says what would decide it |
 
 ### 2.5 `FINDING_KINDS`: a verdict's `finding_kind`
-
-The kind of the finding the verdict adjudicated.
 
 | value | meaning |
 |---|---|
@@ -181,12 +130,8 @@ The kind of the finding the verdict adjudicated.
 
 ### 2.8 Resolution states: a verdict's `resolution.state`
 
-`vocab.ANNOTATION_RESOLUTION_STATES`: `open`, the values of
-`STATIC_RESOLUTIONS` (`refuted`, `argued_correct`, `out_of_scope`), and the
-values of `RESOLUTION_PREFIXES` (`fixed:`, `in_progress:`) without the colon.
-The skill writes the last two as strings (`fixed:PR#8`,
-`in_progress:<branch>`); the format writes them as a `state` with `pr`,
-`commits` or `branch` beside it.
+`open`, `STATIC_RESOLUTIONS` (`refuted`, `argued_correct`, `out_of_scope`), and
+`RESOLUTION_PREFIXES` (`fixed:`, `in_progress:`) without the colon.
 
 | value | meaning |
 |---|---|

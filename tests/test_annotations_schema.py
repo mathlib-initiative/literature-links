@@ -1,12 +1,4 @@
-"""The formal-companion annotation format: schema, invariants, ids, canonical form.
-
-Extracted from the formal-companion skill (tests/test_annotations_schema.py),
-testing docs/annotations.md.  The shipped examples must validate, the
-two deliberately broken ones must fail with exactly the message they record in
-their own ``x_expected_error`` key, and a shuffled document must canonicalise
-back to the same bytes.  When the ``jsonschema`` package is importable the
-package's own evaluator is also checked against it; the suite never needs it.
-"""
+"""The annotation format (docs/annotations.md): schema, invariants, ids, canonical form."""
 from __future__ import annotations
 
 import copy
@@ -25,10 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 SRC = ROOT / "src"
-# The copy under test is the one Python imports: an installed package when
-# there is one (a wheel, an sdist install, an editable install of src/).
-# Only when none is importable does the suite fall back to the source tree, so
-# a checkout still runs with nothing installed.
+# Test the installed copy when there is one, else src/.
 if importlib.util.find_spec("formal_companion_annotations") is None:
     sys.path.insert(0, str(SRC))
 
@@ -38,19 +27,12 @@ from formal_companion_annotations import validate as V                          
 from formal_companion_annotations import vocab                                      # noqa: E402
 from formal_companion_annotations.schemacheck import SchemaError, Validator         # noqa: E402
 
-#: The imported package's directory, wherever it was installed.
 PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
 EXAMPLES = ROOT / "examples" / "annotations"
-#: The repository's copy, for readers and non-Python consumers ...
+#: The three schema copies, byte-identical: repository, source-tree package data, imported package.
 SCHEMA = ROOT / "schema" / "annotations-v1.schema.json"
-#: ... the package-data copy in the source tree, which a build packages ...
 SOURCE_TREE_SCHEMA = SRC / "formal_companion_annotations" / "schema" / "annotations-v1.schema.json"
-#: ... and the copy the imported checker loads (the same file as the one above
-#: when the source tree is what is imported); all three are byte-identical.
 PACKAGED_SCHEMA = PACKAGE / "schema" / "annotations-v1.schema.json"
-#: The schema's ``$id``: the raw URL of the schema at the tag of the release that
-#: introduced this minor version (README.md, docs/annotations.md section 9).
-#: Validators never fetch it.
 SCHEMA_ID = ("https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/"
              "v1.0.0/schema/annotations-v1.schema.json")
 SCHEMA_ID_RULE = re.compile(r"https://raw\.githubusercontent\.com/mathlib-initiative/formal-companion-annotations/"
@@ -349,8 +331,7 @@ class TestOneVocabulary(unittest.TestCase):
                     self.assertIn(f"`{entry}`", section)
 
     def test_every_shared_value_has_a_meaning_defined_here(self):
-        """Each shared set, and the resolution states, has its own subsection of section 2
-        with one ``| `value` | meaning |`` row per value: the meaning is the format's, not the skill's."""
+        """Each shared set has a section-2 subsection with one ``| `value` | meaning |`` row per value."""
         text = (ROOT / "docs" / "vocabulary.md").read_text(encoding="utf-8")
         section = text.split("\n## 2. ", 1)[1].split("\n---", 1)[0]
         subsections = {}
