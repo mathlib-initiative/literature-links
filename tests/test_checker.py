@@ -1819,6 +1819,21 @@ class TestCodes(unittest.TestCase):
                                    "I12", "I13", "I14", "L1", "W-CONFORMS", "W-MEDIA", "W-RELATION", "W-XREF",
                                    "W-NEWER", "W-SCHEMA-ID"})
 
+    def test_the_specification_states_every_code_and_the_profile_table(self):
+        text = (ROOT / "docs" / "annotations.md").read_text(encoding="utf-8")
+        for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14):
+            self.assertIn(f"| I{n} |", text)
+        self.assertNotIn("| I10 |", text)
+        for code in ("IJSON", "SCHEMA", "L1", "W-CONFORMS", "W-MEDIA", "W-RELATION", "W-XREF", "W-NEWER", "W-SCHEMA-ID"):
+            self.assertIn(f"`{code}`", text)
+        for name, owned in V.PROFILES.items():
+            (row,) = [line for line in text.splitlines() if line.startswith(f"| `{name}` |")]
+            for key in owned["arrays"] + owned["fields"]:
+                head, _, field = key.partition(".")
+                self.assertIn(f"`{head}[].{field}`" if field and head != "companion" else f"`{key}`", row)
+        for block in re.findall(r"```json\n(.*?)```", text, re.S):
+            json.loads(block)
+
 
 class TestTheExternalUrlsLint(Case):
     """L1: opt-in; no URL outside the exempt paths, in values, keys and x_ values at any depth."""
