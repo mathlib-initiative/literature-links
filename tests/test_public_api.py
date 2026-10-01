@@ -84,7 +84,7 @@ class TestAll(unittest.TestCase):
 
     def test_the_package_exports_its_version_and_modules(self):
         self.assertEqual(formal_companion_annotations.__all__, ["__version__", *MODULES])
-        self.assertEqual(formal_companion_annotations.__version__, "1.0.0rc1")
+        self.assertEqual(formal_companion_annotations.__version__, "1.0.0rc2")
         namespace: dict = {}
         exec(f"from {PACKAGE} import *", namespace)
         for attr in formal_companion_annotations.__all__:

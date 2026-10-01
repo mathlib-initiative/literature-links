@@ -5,13 +5,23 @@ versioning tied to the format's version (`docs/annotations.md` section 12).
 The format's own version is a document's `schema_version`; each profile has
 its own version in `profiles`.
 
-## 1.0.0rc1 (unreleased)
+## 1.0.0rc2 (unreleased)
+
+- **The schema's `$id`** is the raw URL of the schema file on this
+  repository's default branch,
+  `https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/annotations-v1.0.schema.json`,
+  in place of a `w3id.org` identifier. The format depends on no external
+  registration; `docs/w3id/` is removed. `vocab.ANNOTATION_SCHEMA_ID_BASE`
+  and `validate.schema_id()` follow. A document that carries `$schema` with
+  the rc1 value gets warning `W-SCHEMA-ID`; nothing else changes.
+
+## 1.0.0rc1 (2026-10-01, tag only)
 
 The first release candidate of the format, `schema_version` `"1.0"`,
 identifier `formal-companion/annotations`. It replaces the private `v1.0.0`
 tag of 2026-09-28, which was cut before the format had a reader and is
-withdrawn: do not use it. The tag is deleted from the repository and its
-remote when this candidate is published. Nothing public consumed that tag,
+withdrawn: do not use it. The tag was deleted from the repository on
+2026-10-01. Nothing public consumed that tag,
 and this release is not compatible with it: the identifier, the id rules,
 the vocabulary and several fields changed.
 
