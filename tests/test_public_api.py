@@ -1,22 +1,4 @@
-"""The stable Python API: exactly each module's ``__all__``, and nothing the skill uses is missing.
-
-New code for 1.0.0.  README.md ("Public API") says the stable API of each
-module is its ``__all__``; a name leaves it only in a major release.  The
-formal-companion skill is the first consumer, so ``SKILL_USES`` records every
-name it takes from the format, read from its imports at ``master`` ``d4deedb``:
-
-    git grep -nE "from annotations(\\.[a-z_]+)? import" -- scripts tests
-    git grep -ohE "\\b(ids|V|annotations_validate)\\.[A-Za-z_]+" -- <the importing files>
-
-(the importing files are ``scripts/annotations/export/{common,attribution_table,
-docstring_tags}.py``, ``scripts/cfcmd/{export,review_tags}.py``,
-``scripts/pipeline/{document,inventory,recall}.py`` and
-``tests/test_{export,review_tags,m1_source_side}.py``), plus the ``cflib.vocab``
-constants those modules read that SWITCHOVER.md section 4 moves to this
-package's ``vocab``, and the names SWITCHOVER.md section 8's skill test reads.
-A name the skill uses that is not exported fails here, before a release can
-break the skill.
-"""
+"""The stable API is each module's ``__all__``; every name formal-companion imports (at d4deedb) must be in it."""
 from __future__ import annotations
 
 import dataclasses
@@ -29,7 +11,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
-# The copy under test is the one Python imports (see test_packaging.py).
 if importlib.util.find_spec("formal_companion_annotations") is None:
     sys.path.insert(0, str(SRC))
 
@@ -38,11 +19,9 @@ import formal_companion_annotations                                  # noqa: E40
 PACKAGE = "formal_companion_annotations"
 MODULES = ("ids", "schemacheck", "validate", "vocab")
 
-#: The shared sets the skill keeps copies of (SWITCHOVER.md sections 5 and 8).
 SHARED_SETS = ("FINDING_KINDS", "LEDGER_VERDICTS", "RESOLUTION_PREFIXES", "SORRY_CLASSES", "SOURCE_ROLES",
                "STATIC_RESOLUTIONS", "VIEWER_SEVERITIES", "VIEWER_STATUS", "VIEWER_VERDICTS")
 
-#: Every name the formal-companion skill takes from the format, by module.
 SKILL_USES = {
     "ids": (
         "AnonymousDecl", "DECLARED_ID", "assign_ids", "blank_literals", "item_label_id", "named_signature",
@@ -53,13 +32,9 @@ SKILL_USES = {
         "LoadError", "RECORD_ARRAYS", "canonical_dumps", "canonicalize", "check", "loads", "order_key",
         "site_sha256", "validate",
     ),
-    # The skill's own checker and schema tests imported these; they moved here
-    # with those files, and a producer that evaluates the schema alone uses them.
     "schemacheck": ("SchemaError", "Validator"),
     "vocab": (
-        # read through cflib.vocab by the exporters and pipeline/document.py
         "ANNOTATION_SCHEMA", "ANNOTATION_SCHEMA_VERSION", "CONFORMS_TO_HTML", "CONFORMS_TO_PDF",
-        # read by the skill's dependency test (SWITCHOVER.md section 8)
         "ANNOTATION_RESOLUTION_STATES", "ANNOTATION_SCHEMA_MAJOR", *SHARED_SETS,
     ),
 }
@@ -112,7 +87,6 @@ class TestAll(unittest.TestCase):
 
 
 class TestTyped(unittest.TestCase):
-    """The package ships ``py.typed``, so every public function and method is fully annotated."""
 
     def test_py_typed_ships_with_the_package(self):
         marker = Path(formal_companion_annotations.__file__).resolve().parent / "py.typed"
@@ -150,7 +124,6 @@ class TestTheSkillsImports(unittest.TestCase):
                     self.assertIn(attr, exported, f"the skill uses {name}.{attr}, which is not in __all__")
 
     def test_the_record_types_keep_their_fields(self):
-        """The skill reads these fields of the records the API returns."""
         ids, validate = module("ids"), module("validate")
         self.assertEqual([f.name for f in dataclasses.fields(ids.AnonymousDecl)],
                          ["file", "line", "keyword", "statement_sha256", "typed", "declared_id", "signature",

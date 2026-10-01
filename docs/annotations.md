@@ -6,35 +6,19 @@ standard format the adapters, a PDF overlay, a web viewer and a WikiLean-style
 exporter can all read and write.
 
 - Schema: `schema/annotations-v1.schema.json` (JSON Schema 2020-12), for
-  `schema_version` `"1.0"`; the package ships the same bytes as
-  `src/formal_companion_annotations/schema/annotations-v1.schema.json`.
+  `schema_version` `"1.0"`.
 - Checker: `src/formal_companion_annotations/validate.py` (schema plus the
   invariants in section 6), installed as the
   `formal-companion-annotations-validate` command.
 - Mechanical ids: `src/formal_companion_annotations/ids.py` (section 5).
 - Examples: `examples/annotations/` (all synthetic; two are deliberately invalid).
 
-**Normative and informative.** Everything in this document is normative
-except what is marked **Informative**: section 10, the survey and measurement
-figures of section 5.1, the account of today's producers and readers in
-section 11.1, and the notes that say so. Those record what the design survey
-measured, how the existing data maps in and which tools exist; they state no
-requirement, and a figure there may go stale without the format changing.
-The figures are from the two worked companions, measure_theory
-(`github.com/mathlib-initiative/measure_theory`) and tao-measure-lean
-(`github.com/mathlib-initiative/tao-measure-lean`).
+Text marked *Informative* states no requirement.
 
-The format's own identifiers use the name **lean-companion**: the root `schema`
-value `"lean-companion/annotations"` and the docstring line
-`lean-companion id:` (section 5.1). They are kept although the project is
-named formal-companion-annotations: they are data inside every document and
-docstring producers have already written, so renaming them would invalidate
-all of those for no change in meaning. They name the format, not the
-repository that hosts it. The schema's `$id` is the raw URL of the schema
-at a release tag of this repository (section 9.3); it is an identifier that
-is never fetched: nothing in this package dereferences it. The format was
-written in the formal-companion skill, which produces documents in it
-(sections 10 and 11.1).
+The identifiers `"lean-companion/annotations"` and `lean-companion id:`
+(section 5.1) are kept under the project name formal-companion-annotations,
+because existing documents carry them. The schema's `$id` (section 9.3) is
+never fetched.
 
 **Contents**: 1 design rules · 2 the document · 3 records · 4 locations and
 selectors · 5 ids · 6 invariants and warnings · 7 canonical form · 8 validating
@@ -108,11 +92,9 @@ candidate for the next minor version, not a permanent `x_` key.
 ## 3. Records
 
 Every enum in the schema is a set in `src/formal_companion_annotations/vocab.py`,
-and a few are sets the format shares with the formal-companion skill,
-where they were first written (the verdict vocabulary, source roles, ledger
-verdicts, finding kinds, sorry classes). The format owns all of them: every
-value, and what it means, is defined in `docs/vocabulary.md`, and producers,
-the skill included, conform to that file. A test walks every `enum` in the
+and a few reuse sets shared with the formal-companion skill (the verdict
+vocabulary, source roles, ledger verdicts, finding kinds, sorry classes). Every
+value and its meaning is in `docs/vocabulary.md`. A test walks every `enum` in the
 schema and fails when one has no set in that module or the two disagree.
 
 ### 3.1 Sources
@@ -324,15 +306,10 @@ declaration.
 
 **Verdict** `{id, item, sub?, locations?, verdict, severity, status, summary,
 evidence?, declarations?, resolution?, finding_ids?, ledger_verdict?,
-finding_kind?, pinned_commit?, provenance?}`. The verdict record is specific
-to faithfulness audits, and stays in the core format for 1.0: it records the adjudicated outcome of checking an
-item's declarations against its source, as the formal-companion skill
-audits them, and no other record does. The `verdicts` array is optional; a
-producer that does not audit faithfulness omits it, and no other record
-depends on it. `verdict`, `severity` and `status` are the viewer vocabulary,
-`ledger_verdict` and `finding_kind` the adjudication's, each defined, value by
-value, in `docs/vocabulary.md` section 2. `locations` lists the regions the
-verdict is about (each must show the item). `evidence` is the ordered list of evidence
+finding_kind?, pinned_commit?, provenance?}`. It is specific to faithfulness
+audits; a producer that does not audit omits `verdicts`. `verdict`, `severity`
+and `status` are the viewer vocabulary (`docs/vocabulary.md` section 2).
+`locations` lists the regions the verdict is about (each must show the item). `evidence` is the ordered list of evidence
 statements. `resolution` `{state, pr?, issue?, commits?, branch?,
 replaced_by?, note?}` replaces "Fixed in PR #N" prose: `state` is `open`,
 `fixed` (needs `pr` or `commits`), `in_progress` (needs `pr` or `branch`),
@@ -866,16 +843,12 @@ python3 -m formal_companion_annotations.validate examples/annotations/mixed.json
 ```
 
 Exit status 0 means valid, 1 invalid (one `path: message` line per problem), 2
-unreadable or a usage error. The checker reads `schema_version`, takes its major version and
-loads `annotations-v<major>.schema.json` from the package's `schema/`
-directory (the same bytes as `schema/annotations-v1.schema.json` here); a
-major version it has no schema for is a problem. A missing schema file for the
-checker's own major version is a broken install, not a problem with the
-document: the command says "schema file not found" and exits 2.
-`--version` prints the package's version. The schema runs first,
-through the package's own evaluator
-`src/formal_companion_annotations/schemacheck.py`, because the package is
-standard library only; the invariants run only on a document the schema
+unreadable, a usage error or a broken install ("schema file not found"). The
+checker reads `schema_version`, takes its major version and loads
+`annotations-v<major>.schema.json` from the package's `schema/` directory; a
+major version it has no schema for is a problem. The schema runs first,
+through `src/formal_companion_annotations/schemacheck.py`, because the package
+is standard library only; the invariants run only on a document the schema
 accepts. When the `jsonschema` package is installed, the test suite checks
 that it agrees with the package's evaluator on every example and on random
 mutations of them; one CI job (Python 3.13) installs it for that.
@@ -894,47 +867,24 @@ Every object is closed, so a checker that knows `1.0` refuses a key added in
 than the checker. Unknown keys are therefore never passed through: update the
 checker, or keep the new data in `x_` keys until then.
 
-**A checker selects the schema by the major version alone.** It checks every
-`"1.*"` document against the newest 1.x schema it has, so a checker that
-knows `1.1` accepts a key added in 1.1 in a document that declares `"1.0"`.
-No checker can tell that a declared minor is wrong. A writer must therefore
-declare the minor it wrote against: that is the only way a reader learns
-which keys to expect.
+**A checker selects the schema by the major version alone**, so it cannot
+tell that a declared minor is wrong: writers must declare the minor they wrote
+against.
 
 ### 9.2 The package's version
 
-The package, formal-companion-annotations, follows semantic versioning, tied
-to the format's version:
-
-- **MAJOR** is the format's major version: package X.* reads documents whose
-  `schema_version` is `"X.*"`, and only those. A new format major is a new
-  package major.
-- **MINOR** is for backward-compatible additions: new optional fields or enum
-  values (a new format minor), or new public Python names. Not every package
-  minor changes the format; every format minor is a package minor.
-- **PATCH** is for checker and documentation fixes that do not change which
-  documents this specification admits. A fix to a checker that wrongly
-  accepted a document this specification forbids is a patch, since the
-  document was never valid; the package's CHANGELOG calls out every such fix,
-  because a document that passed the old checker can fail the new one.
-
-The checker's exit statuses (0 valid, 1 invalid, 2 unreadable, a usage error
-or a broken install, section 8), the shape of its output lines
-(`<file>: <path>: <message>` per problem, `<file>: warning: <message>` per
-warning, `<file>: ok (<counts>)` for a valid document) and the Python API
-(each module's `__all__`) fall under semantic versioning too. The wording of
-a message does not.
+Package MAJOR is the format's major (package X.* reads `"X.*"` only); MINOR
+is backward-compatible additions (every format minor is one); PATCH changes no
+admitted document, and the CHANGELOG calls out a fix that rejects a document
+the old checker wrongly accepted. Exit statuses, output line shapes and each
+module's `__all__` are under semver; message wording is not.
 
 ### 9.3 The schema's `$id`
 
 The `$id` of `annotations-v<major>.schema.json` is the raw URL of that file
 at the tag of the release that introduced its minor version:
 `https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/v1.0.0/schema/annotations-v1.schema.json`
-for 1.0. A release that introduces a new minor sets the `$id` to its own
-tag; a release that does not keeps the `$id` it had. The URL resolves only
-for clients that can read the repository. Validators never fetch it: this
-package's checker makes no network request, and a validator that needs the
-schema should be given the file. A document need not carry `$schema`; one
+for 1.0. Validators never fetch it. A document need not carry `$schema`; one
 that does should give the `$id` (I10 exempts it).
 
 ### 9.4 The changelog
@@ -960,13 +910,8 @@ The `changelog` array is the id history the document carries with it:
 
 ## 10. How the existing companions map in
 
-**Informative.** This section describes how the data the two worked
-companions already carry maps into the format, as the skill's exporters
-realise it, and how the skill's adapters and WikiLean would; the viewer
-remark and the figures are measurements at the pinned commits. It states no
-requirement: where it and sections 1 to 9 differ, those sections decide. The
-companions are measure_theory (`github.com/mathlib-initiative/measure_theory`)
-and tao-measure-lean (`github.com/mathlib-initiative/tao-measure-lean`).
+*Informative.* The companions are `github.com/mathlib-initiative/measure_theory`
+and `github.com/mathlib-initiative/tao-measure-lean`.
 
 Two exporters of the formal-companion skill,
 `cf export attribution-table` and `cf export docstring-tags`
@@ -1158,51 +1103,18 @@ agent_annotation`, or `human`); the 12-hex native id can be kept in
 
 ### 11.1 Producers and readers today
 
-*Informative*: this describes the formal-companion skill at `master`
-`d4deedb`, and will go stale as tools are added.
-
-The skill writes version 1.0 documents in four places, and every one goes
-through the checker before it counts:
-
-- `cf export attribution-table` and `cf export docstring-tags` export the two
-  worked companions' own attribution data (section 10;
-  `formal-companion/docs/exporters.md`). Each validates the document it
-  writes (schema, invariants, canonical bytes) and exits 1 when it fails.
-- `cf ingest`, stage S0 of the skill's PDF-to-companion pipeline, writes
-  `pipelines/<id>/doc.v0.json`: the PDF (and the errata page, when there is
-  one) as sources, with provenance and the generated companion. `cf
-  inventory`, stage S1, writes `doc.v1.json`, which adds the numbered items,
-  the erratum items, the passages and their locations
-  (`formal-companion/docs/pipeline.md`). Each checkpoint is written in
-  canonical form, and a checkpoint the checker would refuse, for a problem or
-  a warning, is not written at all.
-
-Three of its tools read documents: `cf review-tags` checks a document's key
-links against the defect shapes the audits found, `cf inventory` reads
-`doc.v0.json` back, and `formal-companion/scripts/pipeline/derive_truth.py`,
-which the maintainer runs by path, derives the pipeline calibration's truth
-table from a companion's document.
-
-The checker is this package's `formal-companion-annotations-validate` command.
-The skill has no `cf` subcommand for one: its producers call the skill's own
-copy of the checker in-process, and its docs run that copy by path, until the
-skill vendors this package (`SWITCHOVER.md` in this repository).
-That copy accepts and rejects exactly what this package's checker does.
+*Informative.* The formal-companion skill vendors this package. It writes
+documents with `cf export attribution-table`, `cf export docstring-tags`,
+`cf ingest` (`doc.v0.json`) and `cf inventory` (`doc.v1.json`), validating
+each, and reads them with `cf review-tags` and `cf inventory`.
 
 ### 11.2 Left out of v1
 
-- An importer into the skill's statement rows: the `annotations` adapter of
-  section 10 is a design, not code, and the skill's adapters still read the
-  companions' own conventions.
-- A W3C JSON-LD exporter and importer. Section 4.7 fixes the shape; nothing
-  writes or reads it.
-- The viewer and WikiLean: neither reads or writes this format. The viewer
-  refuses a manifest with graph keys (section 10), and WikiLean keeps its own
-  annotations, which section 10 maps in.
-- Declarations, links and verdicts from the PDF-to-companion pipeline:
-  `formal-companion/docs/proposals/pdf-to-companion.md` designs ten
-  stages, S0 to S9, and only S0 and S1 are built, so a pipeline document holds
-  only the source side (sources, provenance, items, locations).
+- An importer into the skill's statement rows (the `annotations` adapter of
+  section 10 is a design only), and a W3C JSON-LD exporter or importer.
+- The viewer and WikiLean do not read or write this format.
+- Declarations, links and verdicts from the PDF-to-companion pipeline: only
+  its stages S0 and S1 are built, so its documents hold the source side only.
 - A Lean-side exporter for elaborated-type hashes, and the namespace in the
   statement hash: the normaliser is frozen, and adding context to the hash
   would re-key every anonymous declaration.
