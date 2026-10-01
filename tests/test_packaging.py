@@ -1,11 +1,4 @@
-"""The package as a package: its entry points, its imports, its version and its docs.
-
-New code for the standalone project (the skill ran the checker by path, so none
-of this existed there).  It checks that the package imports nothing but the
-standard library and itself (so nothing from the formal-companion skill),
-that the console script and ``python3 -m`` both reach the checker, that the
-version is stated once, and that every repository path the docs cite exists.
-"""
+"""Packaging: stdlib-only imports, entry points, version, and paths the docs cite."""
 from __future__ import annotations
 
 import ast
@@ -26,21 +19,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 SRC = ROOT / "src"
-# The copy under test is the one Python imports: an installed package when
-# there is one.  Only when none is importable does the suite fall back to the
-# source tree, so a checkout still runs with nothing installed.
+# Test the installed copy when there is one, else src/.
 if importlib.util.find_spec("formal_companion_annotations") is None:
     sys.path.insert(0, str(SRC))
 
 import formal_companion_annotations                                  # noqa: E402
 from formal_companion_annotations import validate as V               # noqa: E402
 
-#: The imported package's directory, wherever it was installed.
 PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
-#: The directory it was imported from (``src/`` or a ``site-packages``).
 IMPORT_ROOT = PACKAGE.parent
 EXAMPLES = ROOT / "examples" / "annotations"
-#: Set by the CI job that installs the package and runs the suite against it.
 EXPECT_INSTALLED = os.environ.get("FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED") == "1"
 
 
@@ -57,7 +45,6 @@ def pyproject() -> dict:
 class TestStandalone(unittest.TestCase):
 
     def test_the_package_imports_only_the_standard_library_and_itself(self):
-        """The imported copy, and the source tree's when that is another copy."""
         copies = {PACKAGE, (SRC / "formal_companion_annotations").resolve()}
         modules = sorted(m for copy in copies for m in copy.glob("*.py"))
         self.assertGreaterEqual(len(modules), 6)
@@ -88,7 +75,6 @@ class TestStandalone(unittest.TestCase):
         released = [h for h in headings if h != "Unreleased"]
         self.assertTrue(released)
         self.assertEqual(released[0], formal_companion_annotations.__version__)
-        # An "Unreleased" entry, when there is one, comes first and only once.
         self.assertLessEqual(headings.count("Unreleased"), 1)
         if "Unreleased" in headings:
             self.assertEqual(headings[0], "Unreleased")
@@ -103,7 +89,6 @@ class TestStandalone(unittest.TestCase):
                             "the checker must load its own package data, not the repository's schema/")
 
     def test_the_copy_under_test_is_the_installed_one_when_ci_says_so(self):
-        """The CI job that installs the package sets FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED=1."""
         if not EXPECT_INSTALLED:
             self.skipTest("FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED is not set")
         self.assertFalse(PACKAGE.is_relative_to(SRC.resolve()), f"imported from the source tree: {PACKAGE}")
@@ -176,7 +161,6 @@ class TestEntryPoints(unittest.TestCase):
                 self.assertEqual((child.returncode, child.stdout, child.stderr), (0, out, ""))
 
     def test_a_missing_packaged_schema_is_a_broken_install_exit_2(self):
-        """Not exit 1 with "no schema for major version 1", which blames the document."""
         good = EXAMPLES / "mixed.json"
         with tempfile.TemporaryDirectory() as tmp:
             tmp = str(Path(tmp).resolve())         # the checker reports its resolved path
@@ -200,11 +184,9 @@ class TestEntryPoints(unittest.TestCase):
                     self.assertEqual(printed.stdout, good.read_text(encoding="utf-8"))
 
 
-#: A backticked token is read as a path in this repository when it starts with one of these.
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
-REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SWITCHOVER.md", "LICENSE", "pyproject.toml")
-#: Documents about THIS repository.  SWITCHOVER.md and CHANGELOG.md are about the
-#: skill's tree too, so they cite paths that are not here by design.
+REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
+#: CHANGELOG.md is excluded: it cites the skill's paths by design.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md")
 
 
@@ -227,7 +209,7 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
 
     def test_no_em_dash_in_the_docs(self):
-        for name in DOCS + ("CHANGELOG.md", "SWITCHOVER.md"):
+        for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
                 self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
 
