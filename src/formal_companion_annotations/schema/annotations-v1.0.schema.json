@@ -492,7 +492,7 @@
           "type": "string"
         },
         "page_box": {
-          "description": "The PDF page box the coordinates are relative to.",
+          "description": "The PDF page box the coordinates are relative to: MediaBox, CropBox, BleedBox, TrimBox or ArtBox.",
           "enum": [
             "ArtBox",
             "BleedBox",
@@ -2880,7 +2880,7 @@
                 "type": "string"
               },
               "verdict": {
-                "description": "The verdict on this declaration, in the values of the verdict's own verdict.",
+                "description": "The verdict on this declaration: faithful, convention, attribution_gap, proxy or deviation, as the verdict's own verdict.",
                 "enum": [
                   "attribution_gap",
                   "convention",
