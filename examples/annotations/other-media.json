@@ -41,7 +41,8 @@
       "title": "Sums of squares"
     },
     {
-      "coverage": "not_formalized",
+      "coverage": "out_of_scope",
+      "coverage_note": "The e-book repeats the Markdown notes; the companion formalises the notes, not the e-book.",
       "form": "numbered",
       "id": "theorem-3-epub",
       "id_source": "declared",
@@ -140,7 +141,7 @@
       "method": "manual"
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {

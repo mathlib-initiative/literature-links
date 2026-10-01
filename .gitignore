@@ -6,3 +6,4 @@ build/
 dist/
 .venv/
 .DS_Store
+conformance/js/node_modules/

@@ -1,152 +1,137 @@
 # Changelog
 
 Releases of formal-companion-annotations. The package follows semantic
-versioning tied to the format's version (README.md, "Versions and
-compatibility"; `docs/annotations.md` section 9). The format's own version is
-the document's `schema_version`.
+versioning tied to the format's version (`docs/annotations.md` section 12).
+The format's own version is a document's `schema_version`; each profile has
+its own version in `profiles`.
 
-## 1.0.0 (2026-09-28)
+## 1.0.0rc1 (unreleased)
 
-The first release: the formal-companion annotation format, `schema_version`
-`"1.0"`, as a standalone, standard-library-only Python package, extracted
-from the formal-companion skill (`github.com/mathlib-initiative/formal-companion`)
-at `master` `d4deedb`.
+The first release candidate of the format, `schema_version` `"1.0"`,
+identifier `formal-companion/annotations`. It replaces the private `v1.0.0`
+tag of 2026-09-28, which was cut before the format had a reader and is
+withdrawn: do not use it. The tag is deleted from the repository and its
+remote when this candidate is published. Nothing public consumed that tag,
+and this release is not compatible with it: the identifier, the id rules,
+the vocabulary and several fields changed.
+
+### The format
+
+- **Identifier.** The root `schema` is `"formal-companion/annotations"` and
+  the docstring id line is `formal-companion id: <id>`. The schema's `$id`
+  is `https://w3id.org/formal-companion/annotations/v1.0/schema.json`, one per
+  format minor (`docs/w3id/` holds the redirect to register).
+- **Core and profiles.** The core is the header plus `sources`, `items`,
+  `declarations`, `links`, `provenance`, `locations` and `unattributed`.
+  Four optional profiles, declared in the new root `profiles` object and
+  versioned on their own, hold the rest: `graph` (`clusters`, `memberships`,
+  `artifacts`, `companion.graph`, `item.clusters`, cluster-targeted links,
+  `declaration.unlocated`), `site` (`destinations`, `snippets`), `audit`
+  (`verdicts`) and `history` (`changelog`, `link.orphaned`,
+  `declaration.replaced_by`). A profile's keys need the profile declared
+  (invariant I14). A reader ignores profiles it does not implement.
+  `source.role` stays in the core: a document with no verdicts can still say
+  which source it audits or keeps as a reference.
+- **Selectors.** Exactly five selector types: `FragmentSelector`,
+  `TextQuoteSelector`, `CssSelector`, `PdfRegionSelector`, `SitePageSelector`.
+  `TextPositionSelector`, `DataPositionSelector`, `XPathSelector`,
+  `SvgSelector`, `RangeSelector` and `target.state` are left out of 1.0. A
+  PDF fragment may not repeat a parameter.
+- **Sources.** New optional `identifiers` (`doi`, `isbn`, `arxiv`). A `pdf`
+  source may be pinned by `identifiers` alone when the producer knows the
+  edition but does not hold the bytes (an `other` source too); `page=`
+  fragments, `pages` and the page fields apply to it, a `PdfRegionSelector`
+  does not (I7: geometry needs the bytes). A site source's `sha256` is
+  defined over the pages listed in `page_hashes`, which a hashed site source
+  must carry; each entry names a file in the site-path grammar.
+- **Items.** `coverage` is `formalized`, `partial_only`, `support_only`,
+  `example_only`, `private_only`, `not_formalized` or `out_of_scope`
+  (`partial` renamed, `private_only` new). `example_only` is for an item
+  whose only formalisations are anonymous examples linked with role
+  `example`; an anonymous example may be a `key` link's target, and the
+  item is then `formalized`. New optional `coverage_note` and
+  `xrefs` (`{database, tag}`, core databases `stacks`, `kerodon`,
+  `wikidata`, `lmfdb`). `cluster_fallback` is removed (derivable). `sub`
+  (on items, links and verdicts) admits primes, `b'` or `f''`, which the
+  label id carries verbatim (`exercise-1.4-b'`).
+- **Declarations.** New kinds `constructor`, `recursor`, `alias`,
+  `irreducible_def`. An `example` is always anonymous.
+- **Links.** `confidence` is removed. `part` joins the core relation tokens.
+  Invariant I5 is rewritten. An `attributed` link needs a `key` link unless
+  the item's coverage is `partial_only`, and each coverage class says which
+  link roles it allows.
+- **Companion.** New optional `toolchain` and `packages` (`{name, rev}`).
+- **Verdicts.** The four fields that carried one audit tool's own verdict,
+  finding kind, finding ids and pinned commit are removed; a producer keeps
+  such data under `x_` keys. The vocabulary is the format's own
+  (`docs/vocabulary.md`).
+- **Ids.** The statement hash now hashes a token-normalised form of the
+  header, so formatting-only edits (line breaks, comments, `(x:T)` vs
+  `(x : T)`, `=>` vs `↦`, `λ` vs `fun`) keep the id; the display `signature`
+  keeps the readable form. Whitespace and identifier characters are defined
+  explicitly. The rules are an algorithm, `docs/id-algorithm.md`, with test
+  vectors under `conformance/ids/`. Ordinals (`~k`) are counted over every
+  `.lean` file tracked at `companion.commit`.
+- **Scanner fixes.** `public` and `meta` modifiers; a named instance whose
+  name is on a later line; typed headers continued at column 0; a trailing
+  comment on the previous line no longer declares an id; same-line
+  docstrings; match alternatives at any indentation; `«…»` identifiers; a
+  leading BOM; nested brackets in attributes; `attribute [...] in` and
+  `unseal ... in` prefixes.
+- **Validity.** Documents are I-JSON: finite numbers, integers within
+  ±(2^53 - 1), no lone surrogates, nesting at most 64 deep. Every date and
+  timestamp in the document is checked (I9), leap seconds accepted. Physical
+  pages are at least 1 (I6). I4 applies to passages only: a numbered item is
+  located by its number and may have no location, quote or pages. The URL
+  rule (former I10) is no longer part of validity. It is the opt-in lint `external-urls` (`L1`), which now scans
+  keys and every scheme and exempts fields by path.
+- **Compatibility.** One schema file per format minor
+  (`schema/annotations-v1.0.schema.json`); the checker validates against the
+  minor a document declares, and warns rather than fails on unknown keys of a
+  newer minor. Reader and producer conformance rules are in the
+  specification.
+
+### The checker and the package
+
+- Problems and warnings carry stable codes (`SCHEMA`, `IJSON`, `I1` to
+  `I14` with `I10` retired, `L1`, `W-...`); `validate.check` returns
+  `Problem(code, path, message)` records. New flags `--format json` and
+  `--lint NAME`.
+- Fixed: `--canonical` accepted CRLF files. Schema and checker regexes
+  matched a trailing newline and non-ASCII digits; every pattern is now
+  dialect-neutral and `schemacheck` refuses the others. Float pages, huge
+  numbers, lone surrogates and deep nesting raised tracebacks; they now exit
+  2 with a message, never a traceback, never "invalid". `page=999&page=7`
+  hid a page. Negative physical pages passed. `--print-canonical` wrote in
+  the locale's encoding and never validated first; it now sorts the
+  document, validates the result and writes UTF-8. `at` values outside the
+  changelog were not checked. A field's full name was unchecked without
+  `name`. Two passes were quadratic. Uppercase `md5=` hex was refused. The
+  CLI stopped at the first unreadable file. Both known issues of the
+  withdrawn tag (`1e400`, `--print-canonical` on malformed input) are gone.
+- Also fixed before the candidate: `--print-canonical`
+  wrote problem lines to standard output; the canonical writer raised on a
+  value outside I-JSON; a comment above a `library_note` hid the note; 333
+  nested interpolation holes overflowed the scanner; a lone surrogate in Lean
+  text raised an encoding error; the scan was quadratic in a file's lines;
+  `ids.signature_at` accepted any word as a keyword (it raises `ValueError`).
+  The checker now refuses what the specification already forbade: a
+  `private_only` key link to a cluster (I5), a `restated` entry at the same
+  instant as the retirement (I9), a member whose own name holds a dot (I8),
+  and a quad whose corners all lie on one line (I7).
+- The public API is defined by this repository alone. Scanner internals left
+  `ids.__all__`; `ids.signature_at` and `ids.hash_form` joined it.
+- Docs: the specification was rewritten (RFC 2119 keywords, a glossary, a
+  data-model overview, conformance and pairing sections); informative
+  material moved to `docs/mapping-notes.md` and `docs/history.md`; the
+  README leads with a complete minimal document.
+- Infrastructure: a language-neutral conformance suite (`conformance/`), a
+  Node `ajv` job and a JavaScript reference implementation of the canonical
+  form in CI, a `release` workflow publishing to PyPI through trusted
+  publishing (a release candidate as a pre-release), issue templates.
 
 ### Where it comes from
 
-This repository keeps the skill's history of the format. `git filter-repo`
-cut the skill's `master` at `d4deedb` down to the format's files (the schema,
-`docs/annotations.md`, `examples/annotations/`, the checker, the id rules and
-`tests/test_annotations_schema.py`) and moved `scripts/annotations/` to
-`src/formal_companion_annotations/`, keeping every author, date and message.
-Each skill commit and its commit here:
-
-| skill | here | what it brought |
-|---|---|---|
-| `155292b` | `cc001f0` | "Annotation format v1.0: schema, spec, validator, examples and tests": the schema, the spec, the checker (`validate.py`, `schemacheck.py`), the id rules (`ids.py`), the nine examples and their tests. The annotation block of the skill's `scripts/cflib/vocab.py` and section 1.10 of its `references/vocabulary.md` were written here too; they became `vocab.py` and `docs/vocabulary.md` in the extraction commit |
-| `3efbe95` | `5f408b1` | "Apply the pre-merge review of the annotation format": the reviewed checker, schema, spec, `mixed.json` and tests |
-| `2f48341` | `168f935` | the PDF-to-companion proposal: the spec's list of what v1 leaves out names the proposed producer (merged as `8122f86`, here `b6ad0a0`) |
-| `5b93174` | `bfb4283` | the skill's exporters: `ids.py` gained the public `token_at` and `AnonymousDecl.comment_tags` / `comment_tags()` |
-| `2e79a91` | `5a52f80` | the exporters' docs: the spec's sections 10 and 11 name the two exporters and where their reference documents are kept (merged as `0991892`, here `503bbb0`) |
-
-The skill's last merge, `d4deedb`, touched none of these files, so the
-filtered history ends at `503bbb0`. On top of it:
-
-- `576553d` "Extract the format as the standalone formal-companion-annotations
-  package" brings the tree to the package, as first cut and checked in a
-  preliminary, unpublished repository (lean-companion-annotations, `764c4d8`),
-  under this project's names;
-- the release commit adds what 1.0.0 lists below as the release polish.
-
-### Unchanged from the skill's copy
-
-- What the checker accepts and rejects, and every message, warning, exit
-  status and the canonical bytes it writes. Checked against the skill's copy
-  on all nine examples, 6000 random mutations of them, 44 CLI invocations
-  (stdout, stderr and status) and the Lean id scanner over the two worked
-  companions' `.lean` files.
-- The format's identifier: the root `schema` is still
-  `"lean-companion/annotations"`, and the docstring line still
-  `lean-companion id:`, so every document already written validates
-  unedited. The project's name does not change them (README.md says why).
-- Every validation keyword of the schema. Only its `$id` and its root
-  `description` differ from the skill's.
-
-### Changed from the skill's copy
-
-- **Names.** The distribution is `formal-companion-annotations`, the package
-  `formal_companion_annotations`, with a console script,
-  `formal-companion-annotations-validate`, and `python3 -m` entry points.
-- **The command line.** Its `prog` is the console script's name, where the
-  skill's is `validate.py`, so usage lines and argument errors name the
-  command a user ran; its `--help` description says "formal-companion".
-  `--version` is new. A missing packaged schema (a broken install) exits 2
-  with "formal-companion-annotations-validate: schema file not found:
-  <path>" on stderr, where the skill's exited 1 with "$.schema_version: no
-  schema for major version 1", which blamed the document; `--print-canonical`
-  reads no schema, so it still works there.
-- **The schema's `$id`** is
-  `https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/v1.0.0/schema/annotations-v1.schema.json`:
-  the raw URL of the schema at the tag of the release that introduced this
-  minor version (spec section 9.3). It resolves only for clients that can
-  read the repository; validators never fetch it, and documents need not
-  carry `$schema`. The root `description` names this project's checker (the
-  skill's names its `scripts/annotations/validate.py`) and states that rule.
-  The two copies of the schema stay byte-identical.
-- **The package.** The schema ships as package data
-  (`src/formal_companion_annotations/schema/`, the same bytes as `schema/`),
-  and `validate.SCHEMA_DIR` points there. `vocab.py` holds only what the
-  format needs: the skill's annotation block, verbatim but for the paths its
-  comments cite, and the sets the format shares with the skill
-  (`VIEWER_VERDICTS`, `VIEWER_SEVERITIES`, `VIEWER_STATUS`,
-  `LEDGER_VERDICTS`, `FINDING_KINDS`, `SOURCE_ROLES`, `SORRY_CLASSES`,
-  `STATIC_RESOLUTIONS`, `RESOLUTION_PREFIXES`) written out as literals; all
-  58 constants equal the skill's. Imports are relative; nothing imports the
-  skill's `cflib`, which the skill's checker imported (and with it PyYAML,
-  when installed) only for those constants.
-- **The format owns every value it uses.** `docs/vocabulary.md` (the skill's
-  section 1.10 plus the shared sets) defines each value and its meaning, the
-  shared sets included (its section 2), and producers, the skill among them,
-  conform.
-- **The spec.** It cites this repository's paths, and the skill's files as
-  `formal-companion/...`. It marks section 10 and the section 5.1 survey
-  figures as informative, names the two worked companions' repositories
-  (`github.com/mathlib-initiative/measure_theory` and
-  `github.com/mathlib-initiative/tao-measure-lean`), and rewrites section 11,
-  which said no producer existed: the skill's `cf export attribution-table`,
-  `cf export docstring-tags`, `cf ingest` and `cf inventory` write documents,
-  and `cf review-tags` reads them. It says the `verdicts` record is specific
-  to faithfulness audits and stays in the core format for 1.0. Section 9
-  gains the versioning and compatibility policy: the package's MAJOR is the
-  format's major, MINOR is backward-compatible additions, PATCH changes no
-  admitted document; the exit statuses, the output line formats and `__all__`
-  fall under it; the checker picks the schema by the major alone, so writers
-  must declare the minor they use; and the `$id` rule.
-
-### Added
-
-- **A public API**: each module's `__all__` is exactly its stable API
-  (README.md, "Public API"); every name formal-companion imports is in it,
-  and a test says so. The public functions are fully annotated (the `spans`
-  parameter of three functions in `ids`, and the return of two `__init__`
-  methods, gained the annotations they lacked; no code changed), and the
-  package ships `py.typed`.
-- **Tests** beyond the skill's, which moved with their imports and paths
-  adapted (the `tests/_hermetic.py` HOME pin dropped, since nothing here
-  reads HOME): `tests/test_packaging.py` (standard-library-only imports, the
-  entry points, the usage, `--version`, the broken-install exit, the version
-  stated once, the docs cite only paths that exist) and
-  `tests/test_public_api.py` (`__all__`, the skill's imports, the
-  annotations); the packaged schema equals `schema/` byte for byte, the
-  `$id` follows its rule, the checker imports no network library, the format
-  identifier is unchanged, and every value of a shared set is documented.
-  The suite tests the copy of the package Python imports (an installed one
-  when there is one) and adds `src/` to the path only when none is.
-- **Packaging**: `pyproject.toml` (with `[project.urls]` and classifiers),
-  and `MANIFEST.in`, so an unpacked sdist carries the examples, docs,
-  top-level schema, changelog and workflow and runs its own tests. The wheel
-  holds the package, its schema and `py.typed` only.
-- **CI** (`.github/workflows/tests.yml`): Python 3.11 to 3.14, `jsonschema`
-  in one job, `unittest discover` with nothing installed, the installed
-  console script against the examples, the suite against a regular install
-  (checking it tested the installed copy), and the sdist and wheel
-  (`python -m build`, `twine check`, the unpacked sdist's tests).
-- **Documents**: `README.md`, `CONTRIBUTING.md` (how a change is proposed,
-  when it is minor or major, the two schema copies, synthetic examples only),
-  `SWITCHOVER.md` (how formal-companion vendors this package), and the
-  skill's `LICENSE` (Apache-2.0), copyright the formal-companion
-  contributors.
-
-### Known issues
-
-Present identically in the skill's copy of the checker, and deliberately not
-fixed in 1.0.0, so the two checkers do not disagree before the skill vendors
-this package (`README.md`, "Known issues"). Each fix will be a patch release.
-
-- A number such as `1e400` overflows to `inf` past `loads()`, so a
-  schema-valid document passes plain validation, but `--canonical` and
-  `--print-canonical` crash with a traceback ("ValueError: NaN and Infinity
-  are not JSON") instead of reporting a problem.
-- `--print-canonical` never validates first, so malformed input can crash it
-  with a `TypeError` or `UnicodeEncodeError` traceback. Run the checker
-  without the flag first.
+The format was first written inside another repository of the same
+organisation and extracted into this one with its history preserved;
+`docs/history.md` has the details.

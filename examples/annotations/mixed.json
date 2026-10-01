@@ -39,9 +39,19 @@
     "generated_at": "2026-09-26T12:00:00Z",
     "generator": "notes exporter 0.1",
     "name": "notes-companion",
+    "packages": [
+      {
+        "name": "batteries",
+        "rev": "0f1e2d3c4b5a69788796a5b4c3d2e1f00112233a"
+      },
+      {
+        "name": "mathlib",
+        "rev": "3c9a6f4c6d4b9d7e1f2a3b4c5d6e7f8091a2b3c4"
+      }
+    ],
     "repo": "git.example.org/example/notes-companion",
+    "toolchain": "leanprover/lean4:v4.34.0",
     "x_build": {
-      "lake_toolchain": "leanprover/lean4:v4.34.0",
       "warm_cache": true
     }
   },
@@ -57,6 +67,19 @@
       "name": "Notes.Box",
       "private": false,
       "sorry": "none"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.mk",
+      "id_source": "name",
+      "kind": "constructor",
+      "line": 12,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.mk",
+      "namespace": "Notes.Box",
+      "parent": "Notes.Box",
+      "private": false
     },
     {
       "anonymous": false,
@@ -86,12 +109,73 @@
     {
       "anonymous": false,
       "file": "Notes/Basic.lean",
+      "id": "Notes.Box.rec",
+      "id_source": "name",
+      "kind": "recursor",
+      "line": 12,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.rec",
+      "namespace": "Notes.Box",
+      "parent": "Notes.Box",
+      "private": false
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
       "id": "Notes.Box.union_isElementary",
       "id_source": "name",
       "kind": "theorem",
       "line": 58,
       "module": "Notes.Basic",
       "name": "Notes.Box.union_isElementary",
+      "private": false,
+      "sorry": "none"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.union_two_isElementary",
+      "id_source": "name",
+      "kind": "theorem",
+      "line": 66,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.union_two_isElementary",
+      "private": false,
+      "sorry": "none"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.vol",
+      "id_source": "name",
+      "kind": "alias",
+      "line": 24,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.vol",
+      "private": false,
+      "sorry": "none"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.volume_union_le",
+      "id_source": "name",
+      "kind": "theorem",
+      "line": 62,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.volume_union_le",
+      "private": false,
+      "sorry": "none"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.boxVolume",
+      "id_source": "name",
+      "kind": "irreducible_def",
+      "line": 28,
+      "module": "Notes.Basic",
+      "name": "Notes.boxVolume",
       "private": false,
       "sorry": "none"
     },
@@ -116,7 +200,21 @@
       "line": 22,
       "module": "Notes.Exercises",
       "private": false,
-      "statement_sha256": "713e86822d4aa5359c8f96c699ee931027fda40a9f5beceede3e2b7d2ac1ec06"
+      "signature": "example : IsElementary (Box.unit 1 : Set ℝ)",
+      "statement_sha256": "0b94d6d4cb136d10a03fcee0218666d035239f1ed5c5828ebe95e8b098ed6441"
+    },
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "private:Notes.Basic:Notes.Box.volume_aux",
+      "id_source": "private",
+      "kind": "lemma",
+      "lean_name": "_private.Notes.Basic.0.Notes.Box.volume_aux",
+      "line": 31,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.volume_aux",
+      "private": true,
+      "sorry": "none"
     }
   ],
   "destinations": [
@@ -152,7 +250,32 @@
         "first": 3
       },
       "source": "notes-pdf",
-      "title": "Boxes"
+      "title": "Boxes",
+      "xrefs": [
+        {
+          "database": "stacks",
+          "tag": "0A1B"
+        },
+        {
+          "database": "wikidata",
+          "tag": "Q1234567"
+        }
+      ]
+    },
+    {
+      "coverage": "partial_only",
+      "coverage_note": "The bound is stated for a union of two boxes (part (i)); the equality of part (ii) is not.",
+      "form": "numbered",
+      "id": "lemma-1.4",
+      "id_source": "label",
+      "kind": "Lemma",
+      "number": "1.4",
+      "pages": {
+        "basis": "printed",
+        "first": 8
+      },
+      "source": "notes-pdf",
+      "title": "Volume of a union"
     },
     {
       "form": "passage",
@@ -194,6 +317,7 @@
         "section-1"
       ],
       "coverage": "support_only",
+      "coverage_note": "The remark is stated for two boxes only by Notes.Box.union_isElementary; the finite case is not stated.",
       "form": "passage",
       "id": "passage-remark-unions",
       "id_source": "declared",
@@ -201,6 +325,21 @@
       "source": "notes-pdf",
       "title": "Unnumbered remark: finite unions of boxes",
       "title_source": "producer"
+    },
+    {
+      "coverage": "private_only",
+      "coverage_note": "Stated only by a private lemma of Notes.Basic; a public statement is planned.",
+      "form": "numbered",
+      "id": "theorem-1.5",
+      "id_source": "label",
+      "kind": "Theorem",
+      "number": "1.5",
+      "pages": {
+        "basis": "printed",
+        "first": 9
+      },
+      "source": "notes-pdf",
+      "title": "Volume is additive"
     }
   ],
   "links": [
@@ -234,6 +373,24 @@
       "role": "support"
     },
     {
+      "declaration": "Notes.Box.union_two_isElementary",
+      "id": "lemma-1.4/attributed/Notes.Box.union_two_isElementary",
+      "item": "lemma-1.4",
+      "note": "Two boxes only; the lemma is stated for finitely many.",
+      "provenance": "prov-curation",
+      "relation": "special_case",
+      "role": "attributed"
+    },
+    {
+      "declaration": "Notes.Box.volume_union_le",
+      "id": "lemma-1.4/attributed/Notes.Box.volume_union_le",
+      "item": "lemma-1.4",
+      "note": "Part (i): the volume of a union of two boxes is at most the sum.",
+      "provenance": "prov-curation",
+      "relation": "part",
+      "role": "attributed"
+    },
+    {
       "declaration": "example:boxes-are-elementary",
       "id": "passage-remark-unions/example/example:boxes-are-elementary",
       "item": "passage-remark-unions",
@@ -246,6 +403,22 @@
       "item": "passage-remark-unions",
       "provenance": "prov-curation",
       "role": "support"
+    },
+    {
+      "declaration": "Notes.Box.vol",
+      "id": "theorem-1.5/helper/Notes.Box.vol",
+      "item": "theorem-1.5",
+      "provenance": "prov-curation",
+      "relation": "invocation",
+      "role": "helper"
+    },
+    {
+      "declaration": "private:Notes.Basic:Notes.Box.volume_aux",
+      "id": "theorem-1.5/key/private:Notes.Basic:Notes.Box.volume_aux",
+      "item": "theorem-1.5",
+      "provenance": "prov-curation",
+      "relation": "exact",
+      "role": "key"
     }
   ],
   "locations": [
@@ -373,6 +546,12 @@
       }
     }
   ],
+  "profiles": {
+    "audit": "1.0",
+    "graph": "1.0",
+    "history": "1.0",
+    "site": "1.0"
+  },
   "provenance": [
     {
       "actor": "agent",
@@ -392,10 +571,10 @@
       "id": "prov-review",
       "method": "manual",
       "note": "Verdict confirmed by the companion's author.",
-      "x_review_round": 2
+      "x_curation_pass": 2
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "snippets": [
     {
@@ -418,6 +597,14 @@
       "bytes": 482113,
       "edition": "second printing",
       "id": "notes-pdf",
+      "identifiers": {
+        "arxiv": "2601.00001v2",
+        "doi": "10.5555/elementary-sets.2026",
+        "isbn": [
+          "9780000000002",
+          "9781234567897"
+        ]
+      },
       "kind": "pdf",
       "page_size": {
         "height_pt": 792,
@@ -461,18 +648,12 @@
         "Notes.Box.ofLT takes a < b in every coordinate.",
         "The notes' Definition 1.1 writes a <= b."
       ],
-      "finding_ids": [
-        "a4258a7620990a47b9d149ec549e87969c586ff6cbf0a74ed43a4f0288d59c0e"
-      ],
-      "finding_kind": "CONTENT",
       "id": "definition-1.1-strict-endpoints",
       "item": "definition-1.1",
-      "ledger_verdict": "CONFIRMED_CONTENT",
       "locations": [
         "definition-1.1@p007",
         "definition-1.1@p007-endpoints"
       ],
-      "pinned_commit": "33469d3faaaa5d6833f75be819e4820ed8b6e120",
       "provenance": "prov-review",
       "resolution": {
         "commits": [
@@ -488,7 +669,11 @@
       "severity": "low",
       "status": "fixed",
       "summary": "The first formal box required strict endpoints; the notes allow a = b. Replaced by Notes.Box.ofLE.",
-      "verdict": "deviation"
+      "verdict": "deviation",
+      "x_finding": {
+        "id": "a4258a7620990a47b9d149ec549e87969c586ff6cbf0a74ed43a4f0288d59c0e",
+        "kind": "CONTENT"
+      }
     }
   ],
   "x_producer": {

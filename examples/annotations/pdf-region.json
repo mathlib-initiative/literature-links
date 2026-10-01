@@ -47,12 +47,12 @@
       "private": false,
       "signature": "theorem volume_nonneg (B : Box d) : 0 ≤ B.volume",
       "sorry": "none",
-      "statement_sha256": "eb97fda64365a170e4661c940b4dba4e0a0cde88abec42a636b1f51f2215cd0b"
+      "statement_sha256": "29927ae42942707d64ce2a9003fe533a70660797671dfcf1d8dd1423749a6504"
     },
     {
       "anonymous": true,
       "file": "Notes/Exercises.lean",
-      "id": "example:5d39943aff95",
+      "id": "example:a3be9ccfbb38",
       "id_source": "statement_hash",
       "kind": "example",
       "line": 7,
@@ -61,7 +61,7 @@
       "private": false,
       "signature": "example : volume (Box.unit 2) = 1",
       "sorry": "exercise",
-      "statement_sha256": "5d39943aff9520f963b99c5fbc23746520695fc2cb53babe62baa1cdb1c193d2"
+      "statement_sha256": "a3be9ccfbb381b727b4bc6926976236a0e9fdfbf26727b12c6f27e2df93039f4"
     },
     {
       "anonymous": false,
@@ -146,8 +146,8 @@
       "role": "key"
     },
     {
-      "declaration": "example:5d39943aff95",
-      "id": "exercise-1.4/example/example:5d39943aff95",
+      "declaration": "example:a3be9ccfbb38",
+      "id": "exercise-1.4/example/example:a3be9ccfbb38",
       "item": "exercise-1.4",
       "provenance": "prov-docstrings",
       "raw_label": "Exercise 1.4",
@@ -287,9 +287,9 @@
           {
             "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
             "refinedBy": {
-              "end": 1530,
-              "start": 1412,
-              "type": "TextPositionSelector"
+              "exact": "Exercise 1.4.",
+              "suffix": " Compute the volume of the unit box",
+              "type": "TextQuoteSelector"
             },
             "type": "FragmentSelector",
             "value": "page=10"
@@ -299,38 +299,49 @@
       }
     },
     {
-      "id": "lemma-1.2@p008-p009",
+      "id": "lemma-1.2@p008",
       "items": [
         "lemma-1.2"
       ],
       "pages": {
         "basis": "printed",
-        "first": 4,
-        "last": 5
+        "first": 4
       },
       "target": {
         "selector": [
           {
-            "endSelector": {
-              "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
-              "refinedBy": {
-                "exact": "This concludes the proof",
-                "prefix": "the empty box. ",
-                "type": "TextQuoteSelector"
-              },
-              "type": "FragmentSelector",
-              "value": "page=9"
+            "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
+            "refinedBy": {
+              "exact": "Lemma 1.2 (Volume is non-negative).",
+              "type": "TextQuoteSelector"
             },
-            "startSelector": {
-              "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
-              "refinedBy": {
-                "exact": "Lemma 1.2 (Volume is non-negative).",
-                "type": "TextQuoteSelector"
-              },
-              "type": "FragmentSelector",
-              "value": "page=8"
+            "type": "FragmentSelector",
+            "value": "page=8"
+          }
+        ],
+        "source": "notes-pdf"
+      }
+    },
+    {
+      "id": "lemma-1.2@p009",
+      "items": [
+        "lemma-1.2"
+      ],
+      "pages": {
+        "basis": "printed",
+        "first": 5
+      },
+      "target": {
+        "selector": [
+          {
+            "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
+            "refinedBy": {
+              "exact": "This concludes the proof",
+              "prefix": "the empty box. ",
+              "type": "TextQuoteSelector"
             },
-            "type": "RangeSelector"
+            "type": "FragmentSelector",
+            "value": "page=9"
           }
         ],
         "source": "notes-pdf"
@@ -348,15 +359,9 @@
           {
             "conformsTo": "http://tools.ietf.org/rfc/rfc8118",
             "refinedBy": {
-              "endSelector": {
-                "exact": "This concludes the proof",
-                "type": "TextQuoteSelector"
-              },
-              "startSelector": {
-                "exact": "For part (ii),",
-                "type": "TextQuoteSelector"
-              },
-              "type": "RangeSelector"
+              "exact": "For part (ii),",
+              "suffix": " we argue by induction on d.",
+              "type": "TextQuoteSelector"
             },
             "type": "FragmentSelector",
             "value": "page=9"
@@ -407,7 +412,7 @@
       "note": "Regions drawn by hand on the pinned PDF."
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {
@@ -421,7 +426,6 @@
       },
       "physical_page_count": 40,
       "printed_page_offset": 4,
-      "role": "audited",
       "sha256": "e45a0b99dd11778aac792ecd226d150a9d28b82c9e2897510f441235956a3b07",
       "text_layer": {
         "case": "sensitive",

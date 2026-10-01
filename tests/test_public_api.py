@@ -1,21 +1,8 @@
-"""The stable Python API: exactly each module's ``__all__``, and nothing the skill uses is missing.
+"""The stable Python API: exactly each module's ``__all__``.
 
-New code for 1.0.0.  README.md ("Public API") says the stable API of each
-module is its ``__all__``; a name leaves it only in a major release.  The
-formal-companion skill is the first consumer, so ``SKILL_USES`` records every
-name it takes from the format, read from its imports at ``master`` ``d4deedb``:
-
-    git grep -nE "from annotations(\\.[a-z_]+)? import" -- scripts tests
-    git grep -ohE "\\b(ids|V|annotations_validate)\\.[A-Za-z_]+" -- <the importing files>
-
-(the importing files are ``scripts/annotations/export/{common,attribution_table,
-docstring_tags}.py``, ``scripts/cfcmd/{export,review_tags}.py``,
-``scripts/pipeline/{document,inventory,recall}.py`` and
-``tests/test_{export,review_tags,m1_source_side}.py``), plus the ``cflib.vocab``
-constants those modules read that SWITCHOVER.md section 4 moves to this
-package's ``vocab``, and the names SWITCHOVER.md section 8's skill test reads.
-A name the skill uses that is not exported fails here, before a release can
-break the skill.
+The stable API of each module is its ``__all__``; a name leaves it only in a
+major release.  ``EXPECTED_ALL`` pins the names of every module, so a name
+cannot appear in or leave ``__all__`` unnoticed.
 """
 from __future__ import annotations
 
@@ -38,30 +25,40 @@ import formal_companion_annotations                                  # noqa: E40
 PACKAGE = "formal_companion_annotations"
 MODULES = ("ids", "schemacheck", "validate", "vocab")
 
-#: The shared sets the skill keeps copies of (SWITCHOVER.md sections 5 and 8).
-SHARED_SETS = ("FINDING_KINDS", "LEDGER_VERDICTS", "RESOLUTION_PREFIXES", "SORRY_CLASSES", "SOURCE_ROLES",
-               "STATIC_RESOLUTIONS", "VIEWER_SEVERITIES", "VIEWER_STATUS", "VIEWER_VERDICTS")
-
-#: Every name the formal-companion skill takes from the format, by module.
-SKILL_USES = {
-    "ids": (
-        "AnonymousDecl", "DECLARED_ID", "assign_ids", "blank_literals", "item_label_id", "named_signature",
-        "normalize_text", "ordinal_ids", "passage_page_id", "passage_quote_id", "private_id", "scan_file",
-        "statement_sha256", "strip_comments", "token_at",
-    ),
-    "validate": (
-        "LoadError", "RECORD_ARRAYS", "canonical_dumps", "canonicalize", "check", "loads", "order_key",
+#: The public names of each module (docs/annotations.md section 11.6 and README.md).
+EXPECTED_ALL = {
+    "validate": {
+        "LINTS", "LoadError", "PROFILES", "Problem", "RECORD_ARRAYS", "Report", "SCHEMA_DIR", "SCHEMA_PATH",
+        "canonical_dumps", "canonicalize", "check", "loads", "main", "order_key", "schema_path",
         "site_sha256", "validate",
-    ),
-    # The skill's own checker and schema tests imported these; they moved here
-    # with those files, and a producer that evaluates the schema alone uses them.
-    "schemacheck": ("SchemaError", "Validator"),
-    "vocab": (
-        # read through cflib.vocab by the exporters and pipeline/document.py
-        "ANNOTATION_SCHEMA", "ANNOTATION_SCHEMA_VERSION", "CONFORMS_TO_HTML", "CONFORMS_TO_PDF",
-        # read by the skill's dependency test (SWITCHOVER.md section 8)
-        "ANNOTATION_RESOLUTION_STATES", "ANNOTATION_SCHEMA_MAJOR", *SHARED_SETS,
-    ),
+    },
+    "schemacheck": {"SchemaError", "Validator"},
+    "ids": {
+        "AnonymousDecl", "scan_file", "assign_ids", "ordinal_ids", "statement_sha256", "hash_form",
+        "normalize_statement", "anonymous_id", "private_id", "signature_at", "item_label_id",
+        "passage_quote_id", "passage_page_id", "normalize_text", "HASH_ID", "DECLARED_ID",
+    },
+    "vocab": {
+        "ANNOTATION_ARTIFACT_KINDS", "ANNOTATION_CHANGELOG_EVENTS", "ANNOTATION_CHANGELOG_REASONS",
+        "ANNOTATION_CHANGELOG_SUBJECTS", "ANNOTATION_CONFORMS_TO", "ANNOTATION_COORDINATE_ORIGINS",
+        "ANNOTATION_COORDINATE_UNITS", "ANNOTATION_COORDINATE_X_AXES", "ANNOTATION_COORDINATE_Y_AXES",
+        "ANNOTATION_COVERAGE", "ANNOTATION_DESTINATION_RESOLUTIONS", "ANNOTATION_DESTINATION_SITES",
+        "ANNOTATION_ID_SOURCES", "ANNOTATION_ITEM_FORMS", "ANNOTATION_ITEM_ID_SOURCES",
+        "ANNOTATION_ITEM_RELATIONS", "ANNOTATION_LEAN_KINDS", "ANNOTATION_LINK_RELATIONS",
+        "ANNOTATION_LINK_ROLES", "ANNOTATION_MEMBER_PARENT_KINDS", "ANNOTATION_MEMBERSHIP_ROLES",
+        "ANNOTATION_ORIGIN_Y_AXIS", "ANNOTATION_PAGE_ANCHORS", "ANNOTATION_PAGE_BASES", "ANNOTATION_PAGE_BOXES",
+        "ANNOTATION_PROFILE_VERSIONS", "ANNOTATION_PROFILES", "ANNOTATION_PROVENANCE_ACTORS",
+        "ANNOTATION_PROVENANCE_METHODS", "ANNOTATION_RESOLUTION_STATES", "ANNOTATION_SCHEMA",
+        "ANNOTATION_SCHEMA_ID_BASE", "ANNOTATION_SCHEMA_MAJOR", "ANNOTATION_SCHEMA_VERSION",
+        "ANNOTATION_SELECTOR_TYPES", "ANNOTATION_SEVERITIES", "ANNOTATION_SORRY_CLASSES",
+        "ANNOTATION_SOURCE_KINDS", "ANNOTATION_SOURCE_ROLES", "ANNOTATION_SOURCE_SCOPES",
+        "ANNOTATION_TEXT_CASE", "ANNOTATION_TEXT_ORIGINS", "ANNOTATION_TEXT_UNICODE",
+        "ANNOTATION_TEXT_WHITESPACE", "ANNOTATION_UNATTRIBUTED_CLAIMS", "ANNOTATION_VERDICT_STATUSES",
+        "ANNOTATION_VERDICTS", "ANNOTATION_XREF_DATABASES", "ANONYMOUS_KEYWORDS", "CONFORMS_TO_HTML",
+        "CONFORMS_TO_MEDIA", "CONFORMS_TO_PDF", "CONFORMS_TO_PDF_RFC3778", "CONFORMS_TO_TEXT",
+        "DECLARED_ID_PATTERN", "DECLARED_SLUG_PATTERN", "HASH_ID_PATTERN", "PASSAGE_PAGE_ID_PATTERN",
+        "PASSAGE_QUOTE_ID_PATTERN",
+    },
 }
 
 
@@ -87,6 +84,7 @@ class TestAll(unittest.TestCase):
 
     def test_the_package_exports_its_version_and_modules(self):
         self.assertEqual(formal_companion_annotations.__all__, ["__version__", *MODULES])
+        self.assertEqual(formal_companion_annotations.__version__, "1.0.0rc1")
         namespace: dict = {}
         exec(f"from {PACKAGE} import *", namespace)
         for attr in formal_companion_annotations.__all__:
@@ -109,6 +107,19 @@ class TestAll(unittest.TestCase):
         vocab = module("vocab")
         constants = {n for n in vars(vocab) if n.isupper() and not n.startswith("_")}
         self.assertEqual(constants, set(vocab.__all__))
+
+    def test_all_is_exactly_the_documented_names(self):
+        for name, expected in EXPECTED_ALL.items():
+            with self.subTest(module=name):
+                self.assertEqual(set(module(name).__all__), expected)
+        self.assertEqual(set(EXPECTED_ALL), set(MODULES))
+
+    def test_the_old_scanner_names_are_private(self):
+        ids = module("ids")
+        for name in ("strip_comments", "blank_literals", "token_at", "named_signature", "comment_tags",
+                     "statement_span", "declared_tag"):
+            with self.subTest(name=name):
+                self.assertFalse(hasattr(ids, name), f"ids.{name} is not public")
 
 
 class TestTyped(unittest.TestCase):
@@ -140,23 +151,46 @@ class TestTyped(unittest.TestCase):
                             self.assertIsNot(p.annotation, inspect.Parameter.empty, p.name)
 
 
-class TestTheSkillsImports(unittest.TestCase):
-
-    def test_every_name_the_skill_uses_is_exported(self):
-        for name, used in SKILL_USES.items():
-            exported = set(module(name).__all__)
-            for attr in used:
-                with self.subTest(module=name, name=attr):
-                    self.assertIn(attr, exported, f"the skill uses {name}.{attr}, which is not in __all__")
+class TestTheCheckersApi(unittest.TestCase):
 
     def test_the_record_types_keep_their_fields(self):
-        """The skill reads these fields of the records the API returns."""
-        ids, validate = module("ids"), module("validate")
-        self.assertEqual([f.name for f in dataclasses.fields(ids.AnonymousDecl)],
-                         ["file", "line", "keyword", "statement_sha256", "typed", "declared_id", "signature",
-                          "rejected_tag", "comment_tags"])
+        """A reader takes these fields of the records the API returns."""
+        validate = module("validate")
+        self.assertEqual([f.name for f in dataclasses.fields(validate.Problem)], ["code", "path", "message"])
         self.assertEqual([f.name for f in dataclasses.fields(validate.Report)], ["problems", "warnings"])
         self.assertTrue(issubclass(validate.LoadError, ValueError))
+        problem = validate.Problem("I3", "$.links[0].item", "'x' is not an id in items[]")
+        self.assertEqual(str(problem), "$.links[0].item: 'x' is not an id in items[]")
+        with self.assertRaises(dataclasses.FrozenInstanceError):
+            problem.code = "I4"                                         # type: ignore[misc]
+        report = validate.Report()
+        self.assertTrue(report.ok)
+        report.problems.append(problem)
+        self.assertFalse(report.ok)
+        self.assertEqual(validate.LINTS, frozenset({"external-urls"}))
+        self.assertIsInstance(validate.LINTS, frozenset)
+
+    def test_check_and_validate_take_the_documented_keywords(self):
+        validate = module("validate")
+        for fn in (validate.check, validate.validate):
+            with self.subTest(function=fn.__name__):
+                params = inspect.signature(fn).parameters
+                self.assertEqual(list(params), ["doc", "text", "canonical", "lints", "schema"])
+                self.assertTrue(all(p.kind is inspect.Parameter.KEYWORD_ONLY for p in list(params.values())[1:]))
+        self.assertEqual(list(inspect.signature(validate.loads).parameters), ["text"])
+        self.assertEqual(list(inspect.signature(validate.schema_path).parameters), ["major", "minor"])
+
+    def test_profiles_is_the_complete_ownership_table(self):
+        validate, vocab = module("validate"), module("vocab")
+        self.assertEqual(set(validate.PROFILES), set(vocab.ANNOTATION_PROFILES))
+        for name, owned in validate.PROFILES.items():
+            with self.subTest(profile=name):
+                self.assertEqual(set(owned), {"arrays", "fields"})
+                self.assertTrue(all(a in validate.RECORD_ARRAYS for a in owned["arrays"]))
+                for dotted in owned["fields"]:
+                    head, _, field_name = dotted.partition(".")
+                    self.assertTrue(head == "companion" or head in validate.RECORD_ARRAYS, dotted)
+                    self.assertTrue(field_name)
 
 
 if __name__ == "__main__":

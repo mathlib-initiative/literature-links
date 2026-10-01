@@ -1,0 +1,63 @@
+﻿{
+  "companion": {
+    "commit": "ed00b5dc6b11040ed2f9baf475edc9b48e1c7f4a",
+    "generated_at": "2026-09-26T12:00:00Z",
+    "generator": "hand",
+    "name": "notes-companion",
+    "repo": "git.example.org/example/notes-companion"
+  },
+  "declarations": [
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.volume_nonneg",
+      "id_source": "name",
+      "kind": "theorem",
+      "line": 41,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.volume_nonneg",
+      "private": false
+    }
+  ],
+  "items": [
+    {
+      "form": "numbered",
+      "id": "lemma-1.2",
+      "id_source": "label",
+      "kind": "Lemma",
+      "number": "1.2",
+      "pages": {
+        "basis": "printed",
+        "first": 5
+      },
+      "source": "notes-pdf"
+    }
+  ],
+  "links": [
+    {
+      "declaration": "Notes.Box.volume_nonneg",
+      "id": "lemma-1.2/key/Notes.Box.volume_nonneg",
+      "item": "lemma-1.2",
+      "provenance": "prov-curation",
+      "role": "key"
+    }
+  ],
+  "provenance": [
+    {
+      "actor": "human",
+      "confirmed_by_human": true,
+      "id": "prov-curation",
+      "method": "curation"
+    }
+  ],
+  "schema": "formal-companion/annotations",
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "id": "notes-pdf",
+      "kind": "pdf",
+      "sha256": "e45a0b99dd11778aac792ecd226d150a9d28b82c9e2897510f441235956a3b07",
+      "title": "Elementary Sets: Lecture Notes (synthetic)"
+    }
+  ]
+}

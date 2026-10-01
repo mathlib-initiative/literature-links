@@ -49,7 +49,7 @@
     {
       "declaration": "Ideal.IsPrime",
       "fragment": "Ideal.IsPrime",
-      "href": "https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Ideal/Prime.html",
+      "href": "https://docs.example.org/Mathlib/RingTheory/Ideal/Prime.html",
       "id": "Ideal.IsPrime@docs",
       "resolution": "exact",
       "site": "doc_gen4"
@@ -104,7 +104,6 @@
       "role": "attributed"
     },
     {
-      "confidence": 0.9,
       "declaration": "Ideal.IsPrime",
       "id": "passage-lead-definition/key/Ideal.IsPrime",
       "item": "passage-lead-definition",
@@ -130,23 +129,17 @@
             "type": "TextQuoteSelector"
           },
           {
-            "refinedBy": {
-              "end": 367,
-              "start": 311,
-              "type": "TextPositionSelector"
-            },
             "type": "CssSelector",
-            "value": "#mw-content-text"
+            "value": "#mw-content-text > p:nth-of-type(2)"
           }
         ],
-        "source": "wiki-prime-ideal",
-        "state": {
-          "sourceDate": "2026-09-01T08:00:00Z",
-          "type": "TimeState"
-        }
+        "source": "wiki-prime-ideal"
       }
     }
   ],
+  "profiles": {
+    "site": "1.0"
+  },
   "provenance": [
     {
       "actor": "agent",
@@ -168,7 +161,7 @@
       "method": "manual"
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {

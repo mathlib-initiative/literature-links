@@ -88,9 +88,8 @@
             "value": "char=1204,1618;length=9120,UTF-8"
           },
           {
-            "end": 1618,
-            "start": 1204,
-            "type": "TextPositionSelector"
+            "exact": "\\begin{definition}\\label{def:finsum}",
+            "type": "TextQuoteSelector"
           }
         ],
         "source": "blueprint-ch1"
@@ -147,7 +146,7 @@
       }
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {
@@ -173,5 +172,5 @@
       "title": "Blueprint/Basic.lean at the pinned commit"
     }
   ],
-  "x_expected_error": "$.locations[2].target.selector[0].value: RFC 5147 range 47,41 is empty or out of order; lines L1..L2 are written line=(L1-1),L2"
+  "x_expected_error": "$.locations[2].target.selector[0].value: RFC 5147 range 47,41 is empty or out of order; lines L1..L2 are written line=(L1-1),L2 [I7]"
 }

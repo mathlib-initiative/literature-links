@@ -1,0 +1,147 @@
+[
+ {
+  "name": "anonymous instance forms",
+  "lean": "instance (priority := 100) : Foo := ⟨1⟩\ninstance : Foo := { x := 1 }\ninstance : Foo where\n  x := 1\n  y := 2\ninstance : Foo := ⟨_⟩\ninstance (x : α) : Foo := ⟨x⟩\ninstance {n : ℕ} [NeZero n] : Foo := ⟨1⟩\ninstance ⦃n : ℕ⦄ : Foo := ⟨n⟩\ninstance [Foo] : Bar := ⟨1⟩\nlocal instance : Foo := ⟨4⟩\nscoped instance : Foo := ⟨5⟩\ninstance (priority := (100 : ℕ)) : Foo := ⟨6⟩\ninstance ( priority := low ) : Foo := ⟨7⟩\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "instance",
+    "signature": "instance (priority := 100) : Foo",
+    "hash_form": "instance(priority:=100):Foo",
+    "statement_sha256": "67f7c22a511162649c29da94ecb08b4d3966a376b4e0b911883f21a858367b9f",
+    "id": "instance:67f7c22a5111"
+   },
+   {
+    "line": 2,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   },
+   {
+    "line": 3,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~2"
+   },
+   {
+    "line": 6,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~3"
+   },
+   {
+    "line": 7,
+    "keyword": "instance",
+    "signature": "instance (x : α) : Foo",
+    "hash_form": "instance(x:α):Foo",
+    "statement_sha256": "1f9e3face8522d66bd97cc8fa01021ee4bb0d2641f948b8a56f329b8ad36f6d8",
+    "id": "instance:1f9e3face852"
+   },
+   {
+    "line": 8,
+    "keyword": "instance",
+    "signature": "instance {n : ℕ} [NeZero n] : Foo",
+    "hash_form": "instance{n:ℕ}[NeZero n]:Foo",
+    "statement_sha256": "7460abfb9889064f4b5078b93c830c182ea7006d425f6950421f54a7f7e66767",
+    "id": "instance:7460abfb9889"
+   },
+   {
+    "line": 9,
+    "keyword": "instance",
+    "signature": "instance ⦃n : ℕ⦄ : Foo",
+    "hash_form": "instance⦃n:ℕ⦄:Foo",
+    "statement_sha256": "78d31fd80c1eee5c81869d1a121b16dc55dc1f640e4447c8f0e71e154765ae98",
+    "id": "instance:78d31fd80c1e"
+   },
+   {
+    "line": 10,
+    "keyword": "instance",
+    "signature": "instance [Foo] : Bar",
+    "hash_form": "instance[Foo]:Bar",
+    "statement_sha256": "a2940e59c7ea57e07b8ea5a261e62582feb9997af84ef756c332b981cb571e3f",
+    "id": "instance:a2940e59c7ea"
+   },
+   {
+    "line": 11,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~4"
+   },
+   {
+    "line": 12,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~5"
+   },
+   {
+    "line": 13,
+    "keyword": "instance",
+    "signature": "instance (priority := (100 : ℕ)) : Foo",
+    "hash_form": "instance(priority:=(100:ℕ)):Foo",
+    "statement_sha256": "65c8aed91f3f0c07875544e19204d693b3425e3d2ebb73acbbda43a61cac7a68",
+    "id": "instance:65c8aed91f3f"
+   },
+   {
+    "line": 14,
+    "keyword": "instance",
+    "signature": "instance ( priority := low ) : Foo",
+    "hash_form": "instance(priority:=low):Foo",
+    "statement_sha256": "807d99a81f088e6040d2c55e07b00c9ec668448b098c309d87003680bdd77da3",
+    "id": "instance:807d99a81f08"
+   }
+  ],
+  "note": "local and scoped are modifiers; the signature starts at the keyword"
+ },
+ {
+  "name": "named instances are not anonymous, wherever the name sits",
+  "lean": "instance foo : Foo := ⟨1⟩\ninstance (priority := 100) fooInst : Foo := ⟨1⟩\ninstance\n    namedOnNextLine : Foo := ⟨7⟩\ninstance (priority := 100)\n    Foo.bar (x : α) : Bar x := ⟨1⟩\ninstance -- the canonical one\n    canonical : Foo := ⟨1⟩\ninstance /- c -/ named2 : Foo := ⟨1⟩\ninstance «odd name» : Foo := ⟨1⟩\ninstance foo.{u} : Foo := ⟨1⟩\nderiving instance Repr for Bar\ninstance : Foo := ⟨9⟩\n",
+  "expected": [
+   {
+    "line": 13,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   }
+  ]
+ },
+ {
+  "name": "an antiquotation inside a syntax quotation counts as a name",
+  "lean": "macro \"foo\" : command => `(\n  instance $x:ident : Foo := ⟨1⟩\n  instance : Bar := ⟨2⟩)\n",
+  "expected": [
+   {
+    "line": 3,
+    "keyword": "instance",
+    "signature": "instance : Bar",
+    "hash_form": "instance:Bar",
+    "statement_sha256": "011e8effc992da2880f11d207c595850662411e3a4c7436f15c54dc8a94ccc65",
+    "id": "instance:011e8effc992"
+   }
+  ]
+ },
+ {
+  "name": "instance keyword inside a class body is found (the scanner has no context)",
+  "lean": "class Foo (α : Type) where\n  instance : Bar\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "instance",
+    "signature": "instance : Bar",
+    "hash_form": "instance:Bar",
+    "statement_sha256": "011e8effc992da2880f11d207c595850662411e3a4c7436f15c54dc8a94ccc65",
+    "id": "instance:011e8effc992"
+   }
+  ]
+ }
+]

@@ -1,0 +1,353 @@
+[
+ {
+  "name": "modifiers before the keyword, in any order",
+  "lean": "public instance : Foo := ⟨1⟩\nmeta instance : Foo := ⟨1⟩\n@[expose] public instance : Foo := ⟨1⟩\nprivate meta local instance : Foo := ⟨1⟩\nnoncomputable instance : Foo := ⟨1⟩\nprotected instance : Foo := ⟨1⟩\nunsafe instance : Foo := ⟨1⟩\nnonrec instance : Foo := ⟨1⟩\npublic noncomputable example : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   },
+   {
+    "line": 2,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~2"
+   },
+   {
+    "line": 3,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~3"
+   },
+   {
+    "line": 4,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~4"
+   },
+   {
+    "line": 5,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~5"
+   },
+   {
+    "line": 6,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~6"
+   },
+   {
+    "line": 7,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~7"
+   },
+   {
+    "line": 8,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~8"
+   },
+   {
+    "line": 9,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "attributes on the keyword's line and above, with nested brackets",
+  "lean": "@[simp] instance : Foo := ⟨1⟩\n@[simp, to_additive (attr := simp) \"doc [x]\"]\nexample : True := trivial\n@[foo (x := [1, 2])]\nexample : True := trivial\n@[foo (x := [1, 2])] instance : Foo := ⟨1⟩\n@[simps (config := { rhsMd := .default,\n  simpRhs := true })]\ninstance : Bar := ⟨1⟩\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   },
+   {
+    "line": 6,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97~2"
+   },
+   {
+    "line": 9,
+    "keyword": "instance",
+    "signature": "instance : Bar",
+    "hash_form": "instance:Bar",
+    "statement_sha256": "011e8effc992da2880f11d207c595850662411e3a4c7436f15c54dc8a94ccc65",
+    "id": "instance:011e8effc992"
+   }
+  ]
+ },
+ {
+  "name": "one-line prefixes on the same line and on the line above",
+  "lean": "set_option maxHeartbeats 400000 in\nexample : True := trivial\nopen Foo in set_option pp.all true in example : True := trivial\n#guard_msgs in\nexample : True := trivial\n#guard_msgs in example : True := trivial\n#guard_msgs (drop info) in example : True := trivial\n#guard_msgs (drop warning, drop info) in example : True := trivial\nvariable (n : ℕ) (h : n ∈ interior s) in example : n = n := rfl\nopen Foo in\n@[simp] noncomputable instance : Foo := ⟨1⟩\nattribute [local instance] Classical.propDecidable in example : True := trivial\nattribute [local instance] Classical.propDecidable in\nexample : True := trivial\nunseal foo in example : True := trivial\nopen scoped Classical in example : True := trivial\ninclude h in\nomit [Foo α] in\nexample : True := trivial\nuniverse u in example : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~3"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~4"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~5"
+   },
+   {
+    "line": 8,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~6"
+   },
+   {
+    "line": 9,
+    "keyword": "example",
+    "signature": "example : n = n",
+    "hash_form": "example:n=n",
+    "statement_sha256": "eb9de1a8e6f89586d06b0fb9e2404ce55a9db87a0ef3886f47b04622d6e6cd14",
+    "id": "example:eb9de1a8e6f8"
+   },
+   {
+    "line": 11,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   },
+   {
+    "line": 12,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~7"
+   },
+   {
+    "line": 14,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~8"
+   },
+   {
+    "line": 15,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~9"
+   },
+   {
+    "line": 16,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~10"
+   },
+   {
+    "line": 19,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~11"
+   },
+   {
+    "line": 20,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~12"
+   }
+  ]
+ },
+ {
+  "name": "a prefix word without `in` on its line is a plain command, not a head",
+  "lean": "open Foo\nexample : True := trivial\nvariable (x : ℕ)\ninstance : Foo := ⟨1⟩\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 4,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   }
+  ]
+ },
+ {
+  "name": "declarations indented inside sections and namespaces",
+  "lean": "section\n  example : True := trivial\n  example (x : ℕ) := x\n  example : False := sorry\nend\nnamespace Foo\n  example (y : ℕ) :=\n    y + 1\n  instance : Foo := ⟨1⟩\nend Foo\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example (x : ℕ) := x",
+    "hash_form": "example(x:ℕ):=x",
+    "statement_sha256": "2b5639df426811a4bcfb54567e15fc13e4813f28ae578325bd33f315ecf478ad",
+    "id": "example:2b5639df4268"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : False",
+    "hash_form": "example:False",
+    "statement_sha256": "8dd6226f42a34bb50a2bb0e9776ddd7967514d29749bb30994c262bc0bfa4d0b",
+    "id": "example:8dd6226f42a3"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example (y : ℕ) := y + 1",
+    "hash_form": "example(y:ℕ):=y+1",
+    "statement_sha256": "ef4ca89b8de1b1772532b2bbce3de8af058538f3756ca6ccaaf1eea22d1a12ea",
+    "id": "example:ef4ca89b8de1"
+   },
+   {
+    "line": 9,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:a1d80e6f4e97"
+   }
+  ]
+ },
+ {
+  "name": "a same-line comment before the keyword does not count as indentation",
+  "lean": "/-- doc -/ example (x : ℕ) :\n    x = x := rfl\n  /- c -/ example : True :=\n  trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (x : ℕ) : x = x",
+    "hash_form": "example(x:ℕ):x=x",
+    "statement_sha256": "c994baa41477ac08e4f3a34cfb7532b582e7292397ca54a64f78ce24c55468d3",
+    "id": "example:c994baa41477"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "two declarations on one line: only the first is found",
+  "lean": "example : True := trivial; example : False := sorry\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "a keyword that is not the first token of its line is not a declaration",
+  "lean": "def x := Foo\n  .example\ntheorem t : True := by\n  exact example_lemma\n",
+  "expected": []
+ }
+]

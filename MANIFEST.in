@@ -4,11 +4,15 @@
 # `python -m unittest discover -s tests` green, with or without the package
 # installed.  None of it is inside the package, so the wheel is unchanged: the
 # package and its packaged schema only.
-include CHANGELOG.md CONTRIBUTING.md SWITCHOVER.md MANIFEST.in
+include CHANGELOG.md CONTRIBUTING.md MANIFEST.in
 graft docs
 graft examples
 graft schema
+graft conformance
+# `npm ci` leaves conformance/js/node_modules/ in a maintainer's tree (git ignores it);
+# the sdist carries no copy of it.
+prune conformance/js/node_modules
 graft tests
-# README.md cites the workflow, and a test checks that every path it cites exists.
+# conformance/README.md cites the workflow, and tests/test_packaging.py requires it.
 graft .github
 global-exclude __pycache__ *.py[cod] .DS_Store

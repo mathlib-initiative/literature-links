@@ -1,0 +1,317 @@
+[
+ {
+  "name": "header ends at `:=` or top-level `where`, not at a `:=` inside brackets",
+  "lean": "example : Foo where\n  x := 1\nexample (f : (h : ℕ := 3) → ℕ) : f = f := rfl\ninstance : Inhabited (Σ n : ℕ, Fin (n+1)) where\n  default := ⟨0, 0⟩\ninstance (h : 1 = 1 := by rfl) : Foo := ⟨1⟩\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : Foo",
+    "hash_form": "example:Foo",
+    "statement_sha256": "6f7d4a69ef85eb732a00ba5492489775c54867c48c283cb076442ae83cd84dd9",
+    "id": "example:6f7d4a69ef85"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example (f : (h : ℕ := 3) → ℕ) : f = f",
+    "hash_form": "example(f:(h:ℕ:=3)→ℕ):f=f",
+    "statement_sha256": "72bb891f64b84bd920d6a9ff21293414afab1ec792094e21b8f3353d261bf506",
+    "id": "example:72bb891f64b8"
+   },
+   {
+    "line": 4,
+    "keyword": "instance",
+    "signature": "instance : Inhabited (Σ n : ℕ, Fin (n+1))",
+    "hash_form": "instance:Inhabited(Σn:ℕ,Fin(n+1))",
+    "statement_sha256": "0fb6ee54ca0bb744f7131baa4393cdc9aa060d4eca0ffd50c21f321bcd69b336",
+    "id": "instance:0fb6ee54ca0b"
+   },
+   {
+    "line": 6,
+    "keyword": "instance",
+    "signature": "instance (h : 1 = 1 := by rfl) : Foo",
+    "hash_form": "instance(h:1=1:=by rfl):Foo",
+    "statement_sha256": "fc787f5a619a58236f11df7fab7e174a8ed9d25460b3f414cf5c1239d5731cd5",
+    "id": "instance:fc787f5a619a"
+   }
+  ]
+ },
+ {
+  "name": "let and have binders inside the type keep their own `:=`",
+  "lean": "example : let x := 1; x = 1 := rfl\nexample : have h : 1 = 1 := rfl; True := trivial\nexample : let x := 1\n  let y := x\n  y = 1 := rfl\nexample : haveI := inst; True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : let x := 1; x = 1",
+    "hash_form": "example:let x:=1;x=1",
+    "statement_sha256": "01ada1ee5c76837e62e1d4a683d7c27634dbc54f9c3b9e524e7ae5eb478741e6",
+    "id": "example:01ada1ee5c76"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : have h : 1 = 1 := rfl; True",
+    "hash_form": "example:have h:1=1:=rfl;True",
+    "statement_sha256": "c17062d9b7d0ad767aebcdd97feb70c5fdac1a9e92eff420791fd6e19f3fe842",
+    "id": "example:c17062d9b7d0"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : let x := 1 let y := x y = 1",
+    "hash_form": "example:let x:=1 let y:=x y=1",
+    "statement_sha256": "4cba2b87ccc3c2cf28245e09372f6c2d7a8272f1a9a58666b52d8bf4371d4aff",
+    "id": "example:4cba2b87ccc3"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : haveI := inst; True",
+    "hash_form": "example:haveI:=inst;True",
+    "statement_sha256": "eb81606119609b89daa8f1ff7b66d82178a1af6aa6bb5915051928f494551cf1",
+    "id": "example:eb8160611960"
+   }
+  ]
+ },
+ {
+  "name": "a pattern-matching let in the type has no `:=` of its own",
+  "lean": "example : let f : ℕ → ℕ | 0 => 1 | _ => 2; f 0 = 1 := rfl\nexample : have h : |a| = 1 := foo; True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : let f : ℕ → ℕ | 0 => 1 | _ => 2; f 0 = 1",
+    "hash_form": "example:let f:ℕ→ℕ|0=>1|_=>2;f 0=1",
+    "statement_sha256": "3d0f0f23a9d5218e00e2f773b3cfd372a20c3b839fc62ab1ad3b760fe5d73c56",
+    "id": "example:3d0f0f23a9d5"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : have h : |a| = 1 := foo; True",
+    "hash_form": "example:have h:|a|=1:=foo;True",
+    "statement_sha256": "61571e99985abf1ea9ad0b4bf423aad6cb8aecbf3da1c36ec7989af9b9936e3f",
+    "id": "example:61571e99985a"
+   }
+  ]
+ },
+ {
+  "name": "match-alternative lines end the header at any indentation",
+  "lean": "instance : Foo Bool\n  | true => 1\n  | false => 2\ninstance : Foo Bool\n    | true => 1\n    | false => 2\ninstance : Foo Bool\n| true => 1\n| false => 2\nexample : ℕ → ℕ\n  | 0 => 1\n  | n + 1 => n\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool",
+    "hash_form": "instance:Foo Bool",
+    "statement_sha256": "2d1ff3e685baeb031372d37db0aa1f186e4732810c4ef44b884c909169054922",
+    "id": "instance:2d1ff3e685ba"
+   },
+   {
+    "line": 4,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool",
+    "hash_form": "instance:Foo Bool",
+    "statement_sha256": "2d1ff3e685baeb031372d37db0aa1f186e4732810c4ef44b884c909169054922",
+    "id": "instance:2d1ff3e685ba~2"
+   },
+   {
+    "line": 7,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool",
+    "hash_form": "instance:Foo Bool",
+    "statement_sha256": "2d1ff3e685baeb031372d37db0aa1f186e4732810c4ef44b884c909169054922",
+    "id": "instance:2d1ff3e685ba~3"
+   },
+   {
+    "line": 10,
+    "keyword": "example",
+    "signature": "example : ℕ → ℕ",
+    "hash_form": "example:ℕ→ℕ",
+    "statement_sha256": "b2f5344da4b8864335b8d839679351ed44d524d52af670d45064465f02be3931",
+    "id": "example:b2f5344da4b8"
+   }
+  ]
+ },
+ {
+  "name": "an absolute value at the start of a type line is not a match alternative",
+  "lean": "example (a : ℝ) :\n    |a| ≥ 0 := abs_nonneg a\nexample (x y : ℝ) (h : x = y) :\n    |x - y| = 0 := by simp [h]\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (a : ℝ) : |a| ≥ 0",
+    "hash_form": "example(a:ℝ):|a|≥0",
+    "statement_sha256": "698d1226b0fe640da13ed83f87daa59b1df9bb7cab4acacb064ec60877a5a7e4",
+    "id": "example:698d1226b0fe"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example (x y : ℝ) (h : x = y) : |x - y| = 0",
+    "hash_form": "example(x y:ℝ)(h:x=y):|x-y|=0",
+    "statement_sha256": "5f36405230acbd65e47eb7ae70ddcd5037157e0c7d786da4c77621cb5be8ba2a",
+    "id": "example:5f36405230ac"
+   }
+  ]
+ },
+ {
+  "name": "continuation lines at any column, including 0, belong to the header",
+  "lean": "example : P a\n  b ∧\nQ c := sorry\nexample (x : ℕ)\n    (h : x = 1) :\n  x = 1\n:= h\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : P a b ∧ Q c",
+    "hash_form": "example:P a b∧Q c",
+    "statement_sha256": "518b1f74d1651f019aa42d0addbb0dd5f0c9d20ef2127e2c2f6850b129045e69",
+    "id": "example:518b1f74d165"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example (x : ℕ) (h : x = 1) : x = 1",
+    "hash_form": "example(x:ℕ)(h:x=1):x=1",
+    "statement_sha256": "f3ae1e63d4629f4ce86a5c2d389ef8955cdcdeb6b8fe019b41cb594add391bd6",
+    "id": "example:f3ae1e63d462"
+   }
+  ]
+ },
+ {
+  "name": "an untyped header hashes the whole command, up to the next command-start line",
+  "lean": "example (d : ℕ) := t\nexample (d : ℕ)\n:= t\nexample := by\n  exact trivial\n  -- trailing\n#check 1\nexample (x : ℕ)\n    (h : x = 1)\n:= h\n\n/-- doc -/\ntheorem next : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (d : ℕ) := t",
+    "hash_form": "example(d:ℕ):=t",
+    "statement_sha256": "4004d749e9a292b40c34d549099665efe39911a5290ea0f52e307630570060c7",
+    "id": "example:4004d749e9a2"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example (d : ℕ) := t",
+    "hash_form": "example(d:ℕ):=t",
+    "statement_sha256": "4004d749e9a292b40c34d549099665efe39911a5290ea0f52e307630570060c7",
+    "id": "example:4004d749e9a2~2"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example := by exact trivial",
+    "hash_form": "example:=by exact trivial",
+    "statement_sha256": "966afec9a99d39c3f6e97ca0c004569a6398b1a0f4ba5d4d88f41674127c99f7",
+    "id": "example:966afec9a99d"
+   },
+   {
+    "line": 8,
+    "keyword": "example",
+    "signature": "example (x : ℕ) (h : x = 1) := h",
+    "hash_form": "example(x:ℕ)(h:x=1):=h",
+    "statement_sha256": "af8407214552751c947b043f5e6600d1a31c5799c10e367638d5ea3fe22be84a",
+    "id": "example:af8407214552"
+   }
+  ]
+ },
+ {
+  "name": "a typed header with no terminator runs to the next command-start line",
+  "lean": "example : P a\n  b ∧\nQ c\ntheorem next : True := trivial\ninstance : Foo Bool | true => 1 | false => 2\n@[simp]\ntheorem last : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : P a b ∧ Q c",
+    "hash_form": "example:P a b∧Q c",
+    "statement_sha256": "518b1f74d1651f019aa42d0addbb0dd5f0c9d20ef2127e2c2f6850b129045e69",
+    "id": "example:518b1f74d165"
+   },
+   {
+    "line": 5,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool | true => 1 | false => 2",
+    "hash_form": "instance:Foo Bool|true=>1|false=>2",
+    "statement_sha256": "6fdda0ad0c66cd0e731c75ec86834fdad7f18ad5c5beb3f5ceea5ee506b37ad6",
+    "id": "instance:6fdda0ad0c66"
+   }
+  ]
+ },
+ {
+  "name": "the next command-start line must be indented no deeper than the declaration",
+  "lean": "section\n  example (d : ℕ) :=\n    foo d\nend\nexample (d : ℕ) :=\n  foo d\n    theorem indented : True := trivial\nmy_custom_cmd x\ntheorem t : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example (d : ℕ) := foo d",
+    "hash_form": "example(d:ℕ):=foo d",
+    "statement_sha256": "0042187300cd2f8d4d0bd61d29effee6db6230982a3d46a1edf3d1879c958be1",
+    "id": "example:0042187300cd"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example (d : ℕ) := foo d theorem indented : True := trivial my_custom_cmd x",
+    "hash_form": "example(d:ℕ):=foo d theorem indented:True:=trivial my_custom_cmd x",
+    "statement_sha256": "777fcb93e2655a7cf8eb04e5659e93ccf97949a9d651e65bfc92935d5d845cb3",
+    "id": "example:777fcb93e265"
+   }
+  ],
+  "note": "an unknown command word is not a boundary: the second untyped example runs over `my_custom_cmd x`"
+ },
+ {
+  "name": "by, fun, calc and termination_by after the header do not matter",
+  "lean": "example : True := by\n  trivial\nexample : ℕ → ℕ := fun n => n\ntermination_by n => n\nexample : (by exact 1 : ℕ) = 1 := rfl\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : ℕ → ℕ",
+    "hash_form": "example:ℕ→ℕ",
+    "statement_sha256": "b2f5344da4b8864335b8d839679351ed44d524d52af670d45064465f02be3931",
+    "id": "example:b2f5344da4b8"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : (by exact 1 : ℕ) = 1",
+    "hash_form": "example:(by exact 1:ℕ)=1",
+    "statement_sha256": "324a890d0d4592aa568334aa84c2d6ae5555da890e7b7d45cb89a98769eccaf5",
+    "id": "example:324a890d0d45"
+   }
+  ]
+ },
+ {
+  "name": "comments inside the header are one space each",
+  "lean": "example : a/- c -/= b := h\nexample (x : ℕ) -- about x\n    (y : ℕ) /- and y -/ : x = y := sorry\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : a = b",
+    "hash_form": "example:a=b",
+    "statement_sha256": "08e9ec03e67c3a284adaff3967755728faecfb313701f8e6a5f98b3243fea0cd",
+    "id": "example:08e9ec03e67c"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example (x : ℕ) (y : ℕ) : x = y",
+    "hash_form": "example(x:ℕ)(y:ℕ):x=y",
+    "statement_sha256": "1117eb1a0d6875af8b8f8ed1ec8025a4d5419ab526e35788ac74971540c4ce80",
+    "id": "example:1117eb1a0d68"
+   }
+  ]
+ }
+]

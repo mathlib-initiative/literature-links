@@ -1,0 +1,12 @@
+# Permanent identifiers for the formal-companion annotation format.
+# Registered at https://github.com/perma-id/w3id.org under formal-companion/.
+#
+#   https://w3id.org/formal-companion/annotations/v<major>.<minor>/schema.json
+#     -> the JSON Schema of that format minor, which never changes after release
+#   https://w3id.org/formal-companion/annotations
+#     -> the format's repository
+Options +FollowSymLinks
+RewriteEngine on
+
+RewriteRule ^annotations/v([0-9]+)\.([0-9]+)/schema\.json$ https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/annotations-v$1.$2.schema.json [R=302,L]
+RewriteRule ^annotations/?$ https://github.com/mathlib-initiative/formal-companion-annotations [R=302,L]

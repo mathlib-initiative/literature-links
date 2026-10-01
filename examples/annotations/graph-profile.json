@@ -30,10 +30,10 @@
       "commit": "2bd082dc9254c707c153eeab645cbbd5931ac307",
       "event": "ordinal_assigned",
       "file": "Notes/Basic.lean",
-      "id": "2026-09-01/ordinal/example:04b2e561a56f~2",
+      "id": "2026-09-01/ordinal/example:7c01be3bbde5~2",
       "line": 64,
       "note": "The second copy of the statement, below the first in the same file.",
-      "subject": "example:04b2e561a56f~2",
+      "subject": "example:7c01be3bbde5~2",
       "subject_kind": "declaration"
     },
     {
@@ -41,10 +41,10 @@
       "commit": "2bd082dc9254c707c153eeab645cbbd5931ac307",
       "event": "ordinal_assigned",
       "file": "Notes/Basic.lean",
-      "id": "2026-09-01/ordinal/example:04b2e561a56f~3",
+      "id": "2026-09-01/ordinal/example:7c01be3bbde5~3",
       "line": 68,
       "note": "A third copy, deleted on 2026-09-04; the record stays as history.",
-      "subject": "example:04b2e561a56f~3",
+      "subject": "example:7c01be3bbde5~3",
       "subject_kind": "declaration"
     },
     {
@@ -67,9 +67,9 @@
       "at": "2026-09-04",
       "commit": "46e8b2fffdb9a1336797580e833b1f1506226b4b",
       "event": "retired",
-      "id": "2026-09-04/retired/example:04b2e561a56f~3",
+      "id": "2026-09-04/retired/example:7c01be3bbde5~3",
       "reason": "removed",
-      "subject": "example:04b2e561a56f~3",
+      "subject": "example:7c01be3bbde5~3",
       "subject_kind": "declaration"
     }
   ],
@@ -98,12 +98,12 @@
     "generator": "hand",
     "graph": {
       "bytes": 90412,
-      "path": "data/formalization-ledger.json",
+      "path": "data/dependency-graph.json",
       "sha256": "65d83e0e8c05fe7a5bb3ad6c7b6249805c5ef65008d7ae90fccdb506b7096312",
       "snapshot_commit": "70c17b8858df2272d37b2f18f1ad8a182aa8e4b5"
     },
-    "name": "ledger-companion",
-    "repo": "git.example.org/example/ledger-companion"
+    "name": "graph-companion",
+    "repo": "git.example.org/example/graph-companion"
   },
   "declarations": [
     {
@@ -170,26 +170,26 @@
     {
       "anonymous": true,
       "file": "Notes/Basic.lean",
-      "id": "example:04b2e561a56f",
+      "id": "example:7c01be3bbde5",
       "id_source": "statement_hash",
       "kind": "example",
       "line": 60,
       "module": "Notes.Basic",
       "private": false,
       "signature": "example : Box.unit 0 = Box.unit 0",
-      "statement_sha256": "04b2e561a56f5ee42c113d84bc4f4482203aa31829069f241609eed4fe4a3cce"
+      "statement_sha256": "7c01be3bbde5c1ff76d6d2275e81f1ee95c71f40b50e6971c2648be4b53e6ce9"
     },
     {
       "anonymous": true,
       "file": "Notes/Basic.lean",
-      "id": "example:04b2e561a56f~2",
+      "id": "example:7c01be3bbde5~2",
       "id_source": "statement_hash",
       "kind": "example",
       "line": 64,
       "module": "Notes.Basic",
       "private": false,
       "signature": "example : Box.unit 0 = Box.unit 0",
-      "statement_sha256": "04b2e561a56f5ee42c113d84bc4f4482203aa31829069f241609eed4fe4a3cce"
+      "statement_sha256": "7c01be3bbde5c1ff76d6d2275e81f1ee95c71f40b50e6971c2648be4b53e6ce9"
     },
     {
       "anonymous": true,
@@ -263,7 +263,6 @@
       "title": "Boxes"
     },
     {
-      "cluster_fallback": true,
       "clusters": [
         "node-boxes"
       ],
@@ -285,14 +284,14 @@
       "declaration": "Notes.Box.lower",
       "id": "definition-1.1/attributed/Notes.Box.lower",
       "item": "definition-1.1",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "attributed"
     },
     {
       "declaration": "Notes.Box",
       "id": "definition-1.1/key/Notes.Box",
       "item": "definition-1.1",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "key"
     }
   ],
@@ -305,7 +304,7 @@
       "legacy_ids": [
         "region:batch-a:definition-1.1:p007:r01"
       ],
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "signoff": {
         "evidence_id": "evidence:batch-a:definition-1.1:p007:r01:page-raster",
         "method": "page_raster",
@@ -339,7 +338,7 @@
       "items": [
         "definition-1.1"
       ],
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "target": {
         "selector": [
           {
@@ -389,52 +388,58 @@
       "artifact": "check:Notes.Basic:52",
       "cluster": "node-boxes",
       "id": "node-boxes/consumer/check:Notes.Basic:52",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "consumer"
     },
     {
       "artifact": "module_doc:Notes.Basic",
       "cluster": "node-boxes",
       "id": "node-boxes/consumer/module_doc:Notes.Basic",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "consumer"
     },
     {
       "cluster": "node-boxes",
       "declaration": "Notes.Box",
       "id": "node-boxes/primary/Notes.Box",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "primary"
     },
     {
       "cluster": "node-boxes",
       "declaration": "Notes.Box.volume",
       "id": "node-boxes/primary/Notes.Box.volume",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "primary"
     },
     {
       "cluster": "node-boxes",
       "declaration": "private:Notes.Basic:Notes.Box.volume_aux",
       "id": "node-boxes/support/private:Notes.Basic:Notes.Box.volume_aux",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "support"
     },
     {
       "artifact": "figure:Notes.Unions:boxes",
       "cluster": "node-unions",
       "id": "node-unions/primary/figure:Notes.Unions:boxes",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "primary"
     },
     {
       "cluster": "node-unions",
       "declaration": "example:Unions-of-boxes-are-elementary",
       "id": "node-unions/support/example:Unions-of-boxes-are-elementary",
-      "provenance": "prov-ledger",
+      "provenance": "prov-graph",
       "role": "support"
     }
   ],
+  "profiles": {
+    "audit": "1.0",
+    "graph": "1.0",
+    "history": "1.0",
+    "site": "1.0"
+  },
   "provenance": [
     {
       "actor": "agent",
@@ -452,12 +457,12 @@
     {
       "actor": "tool",
       "confirmed_by_human": false,
-      "id": "prov-ledger",
+      "id": "prov-graph",
       "inputs": [
         {
           "bytes": 90412,
           "commit": "70c17b8858df2272d37b2f18f1ad8a182aa8e4b5",
-          "path": "data/formalization-ledger.json",
+          "path": "data/dependency-graph.json",
           "sha256": "65d83e0e8c05fe7a5bb3ad6c7b6249805c5ef65008d7ae90fccdb506b7096312"
         },
         {
@@ -467,12 +472,12 @@
       ],
       "method": "pipeline",
       "tool": {
-        "name": "ledger exporter",
+        "name": "graph exporter",
         "version": "0.2"
       }
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {
@@ -502,7 +507,7 @@
   "verdicts": [
     {
       "evidence": [
-        "The ledger node's primary declaration quantified one coordinate.",
+        "The graph node's primary declaration quantified one coordinate.",
         "Both regions of the definition state every coordinate."
       ],
       "id": "definition-1.1-lower-bound",

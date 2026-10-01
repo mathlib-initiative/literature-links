@@ -1,0 +1,1509 @@
+[
+  {
+    "exit_status": 0,
+    "file": "valid/minimal.json",
+    "note": "The specification's minimal complete document: a PDF source, one numbered item anchored by pages, one named theorem, one key link.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-pdf.json",
+    "note": "A pdf source with page metadata; a location with a PdfRegionSelector alternative and a page= fragment refined by a quote, on the item's printed page 5 (physical 9).",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-pdf-by-identifiers.json",
+    "note": "A pdf source pinned by identifiers alone (a DOI and an ISBN, no sha256): the producer knows the edition but does not hold the bytes. An edition has pages, so physical_page_count, printed_page_offset, pages and a page= fragment (refined by a quote) apply to it.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-web-page.json",
+    "note": "A web page pinned by revision; a passage item with a quote_hash id, located by a TextQuoteSelector and a CssSelector alternative.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-web-site.json",
+    "note": "A web source of scope site, pinned by page_hashes and the manifest sha256 they give; the location names its page with a SitePageSelector refined by an RFC 3236 id fragment.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-tex.json",
+    "note": "A tex source pinned by git blob; an RFC 5147 line range and a quote.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-lean.json",
+    "note": "A lean source: one location anchors the theorem (no items), another shows a passage item of the file.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-other.json",
+    "note": "An other source with a text media type (Markdown), pinned by git blob; RFC 5147 lines apply because the media type is text/*.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/profile-audit.json",
+    "note": "The audit profile: one verdict. The source's role is core and would be valid without the profile.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/profile-graph.json",
+    "note": "The graph profile: companion.graph, a cluster the item belongs to, memberships of a declaration and an artifact, a link to the cluster, an unlocated declared example.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/profile-history.json",
+    "note": "The history profile: an ordinal_assigned record for a ~2 statement-hash id, a retired record that an orphaned link names.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/profile-site.json",
+    "note": "The site profile: a destination and a snippet.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/all-profiles.json",
+    "note": "All four profiles declared and used; the destination targets an artifact, which needs both site and graph; an alias replaced_by the theorem needs history.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/profiles-declared-unused.json",
+    "note": "Every profile declared and none of their keys present is fine (I14 gates presence, not absence).",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/source-role-core.json",
+    "note": "A source's role (audited) with no profiles declared: role is a core field, so a document with no verdicts can still say which source it audits.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/numbered-item-without-anchor.json",
+    "note": "A numbered item with no location, quote or pages: a numbered item is located by its number alone, so I4 does not apply to it (compare invalid/unanchored-item.json, a passage).",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/sub-with-prime.json",
+    "note": "An item whose sub is a part with a prime, b', as the source numbers it; the label id carries the prime verbatim (exercise-1.4-b'), and the key link's sub repeats it.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/order-utf16.json",
+    "note": "Record arrays sort by UTF-16 code units: U+1D400 (surrogates D835 DC00) comes before U+FF5E, although by code point it comes after.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/fragment-without-conformsto.json",
+    "note": "A FragmentSelector without conformsTo is valid; the checker warns and does not check the value.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-CONFORMS",
+        "path": "$.locations[0].target.selector[0].conformsTo"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/media-fragment-unknown-dimension.json",
+    "note": "A Media Fragments name that is no dimension (foo=) is a warning, as the Recommendation says.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-MEDIA",
+        "path": "$.locations[0].target.selector[0].value"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/relation-outside-core.json",
+    "note": "A link relation outside the documented core passes with a warning.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-RELATION",
+        "path": "$.links[0].relation"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/xref-outside-core.json",
+    "note": "An xref database outside the documented core passes with a warning.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-XREF",
+        "path": "$.items[0].xrefs[0].database"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/newer-minor.json",
+    "note": "Forward mode: a 1.7 document is checked against the newest schema the checker has; the unknown key is a warning, not a problem. Plain schema validation against 1.0 rejects the key, so schema_valid is false.",
+    "problems": [],
+    "schema_valid": false,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-NEWER",
+        "path": "$.items[0].future_field"
+      },
+      {
+        "code": "W-NEWER",
+        "path": "$.schema_version"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/newer-profile-minor.json",
+    "note": "Forward mode for a profile: site 1.3 is newer than the checker's 1.0; the unknown destination key is a warning.",
+    "problems": [],
+    "schema_valid": false,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-NEWER",
+        "path": "$.destinations[0].future_field"
+      },
+      {
+        "code": "W-NEWER",
+        "path": "$.profiles.site"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/schema-id-mismatch.json",
+    "note": "A root $schema that is not the declared minor's $id is a warning.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": [
+      {
+        "code": "W-SCHEMA-ID",
+        "path": "$.$schema"
+      }
+    ]
+  },
+  {
+    "exit_status": 0,
+    "file": "valid/urls-at-exempt-paths.json",
+    "lints": [
+      "external-urls"
+    ],
+    "note": "Run with the external-urls lint: URLs at every exempt path (sources[].url, alternate_urls, the root $schema, conformsTo, a location's TextQuoteSelector text, items[].quote, destinations[].href) pass.",
+    "problems": [],
+    "schema_valid": true,
+    "valid": true,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-missing-required.json",
+    "note": "A required root array is missing; the link's provenance reference is never checked because the semantic checks run only on a document the schema accepts.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-unknown-key.json",
+    "note": "An unknown key of a closed object under the declared 1.0 (compare valid/newer-minor.json).",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.items[0].future_field"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-bad-enum.json",
+    "note": "A value outside a closed vocabulary.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.declarations[0].kind"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-unknown-major.json",
+    "note": "An unknown core major is a problem, never forward mode.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.schema_version"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-unknown-profile-major.json",
+    "note": "An unknown profile major is a problem, never forward mode.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.profiles.site"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/schema-unknown-profile.json",
+    "note": "A profile name the schema does not know, under the declared 1.0 (in forward mode it would be W-NEWER).",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.profiles.other"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-id-trailing-newline.json",
+    "note": "A declaration id with a trailing newline. A pattern anchored with $ must mean end of string: Python's re.search would accept this.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.declarations[0].id"
+      },
+      {
+        "code": "SCHEMA",
+        "path": "$.links[0].declaration"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-id-bom.json",
+    "note": "A declaration id ending in U+FEFF, which the schema's explicit whitespace class excludes.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.declarations[0].id"
+      },
+      {
+        "code": "SCHEMA",
+        "path": "$.links[0].declaration"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-id-file-separator.json",
+    "note": "A declaration id containing U+001C (a C0 control, in the schema's explicit whitespace class; not in ECMA-262's \\s).",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.declarations[0].id"
+      },
+      {
+        "code": "SCHEMA",
+        "path": "$.links[0].declaration"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-commit-trailing-newline.json",
+    "note": "40 hex digits and a newline: not a commit id. Python's jsonschema, which evaluates $ with re.search, accepts it; ajv and this checker do not.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.companion.commit"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-version-trailing-newline.json",
+    "note": "A schema_version with a trailing newline matches no minor; the newest schema reports it.",
+    "problems": [
+      {
+        "code": "SCHEMA",
+        "path": "$.schema_version"
+      }
+    ],
+    "schema_valid": false,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/trap-page-non-ascii-digit.json",
+    "note": "page=1 followed by U+0660 (an Arabic-Indic zero): fragment numbers are ASCII digits only. The schema accepts any fragment string, so this is an invariant, not a schema failure.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].value"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/duplicate-id.json",
+    "note": "Two declarations with one id.",
+    "problems": [
+      {
+        "code": "I1",
+        "path": "$.declarations[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/unsorted-records.json",
+    "note": "A record array not sorted by id.",
+    "problems": [
+      {
+        "code": "I2",
+        "path": "$.items[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/unsorted-utf16.json",
+    "note": "The twin of valid/order-utf16.json in code point order, which is not the UTF-16 order the format uses.",
+    "problems": [
+      {
+        "code": "I2",
+        "path": "$.items[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/unsorted-keyed-list.json",
+    "note": "A keyed list (xrefs, by (database, tag)) out of order.",
+    "problems": [
+      {
+        "code": "I2",
+        "path": "$.items[0].xrefs"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/dangling-reference.json",
+    "note": "A link to a declaration id that is not in declarations[].",
+    "problems": [
+      {
+        "code": "I3",
+        "path": "$.links[0].declaration"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/member-parent-kind.json",
+    "note": "A constructor whose parent is a theorem: a constructor's parent is an inductive, structure or class.",
+    "problems": [
+      {
+        "code": "I3",
+        "path": "$.declarations[1].parent"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/unanchored-item.json",
+    "note": "A passage with no location, quote or pages. I4 is for passages: a numbered item is located by its number alone (valid/numbered-item-without-anchor.json).",
+    "problems": [
+      {
+        "code": "I4",
+        "path": "$.items[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/coverage-missing.json",
+    "note": "I5 rule 2: links but no key link, so the item must carry coverage.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/attributed-without-key.json",
+    "note": "I5 rule 3: an attributed link needs a key link unless the item is partial_only.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/formalized-without-key.json",
+    "note": "I5 rule 4: formalized needs a key link.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/partial-only-with-key.json",
+    "note": "I5 rule 4: partial_only excludes a key link.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/private-only-public-key.json",
+    "note": "I5 rule 4: a private_only item's key links name private declarations only.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/private-only-key-to-cluster.json",
+    "note": "I5 rule 4: a private_only item's key links name private declarations; a key link to a cluster names no declaration at all.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/private-only-without-link.json",
+    "note": "I5 rule 4: private_only needs at least one link.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/not-formalized-with-attributed.json",
+    "note": "I5 rule 5: not_formalized excludes attributed links; rule 3 fires as well (attributed without key).",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0]"
+      },
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/out-of-scope-with-key.json",
+    "note": "I5 rules 4 and 5: out_of_scope excludes a key link (reported once).",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/coverage-note-without-coverage.json",
+    "note": "I5 rule 6: coverage_note needs coverage.",
+    "problems": [
+      {
+        "code": "I5",
+        "path": "$.items[0].coverage_note"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/pages-on-web-source.json",
+    "note": "pages apply to a PDF source; this item's source is a web page.",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.items[0].pages"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/page-past-count.json",
+    "note": "A physical page past the source's physical_page_count.",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.items[0].pages"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/page-below-one.json",
+    "note": "Printed page 3 with printed_page_offset -5 is physical page -2; every physical page is at least 1.",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.items[0].pages"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/pages-reversed.json",
+    "note": "A page range whose last page is before its first.",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.items[0].pages"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/site-sha256-mismatch.json",
+    "note": "A site's sha256 is the sha256 of the manifest its page_hashes give; this one is something else.",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.sources[0].sha256"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/page-hash-directory.json",
+    "note": "A page_hashes entry names a file, never a directory (write its index.html).",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.sources[0].page_hashes[0].path"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/duplicate-numbered-item.json",
+    "note": "Two numbered items with the same (source, kind, number, sub).",
+    "problems": [
+      {
+        "code": "I6",
+        "path": "$.items[1]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/reversed-line-range.json",
+    "note": "An RFC 5147 range whose end is before its start.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].value"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/selector-wrong-family.json",
+    "note": "A CssSelector on a pdf source: the selector families of section 6.2.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/repeated-pdf-parameter.json",
+    "note": "A PDF fragment names each parameter once.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].value"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/fragment-leading-hash.json",
+    "note": "A fragment is written without its leading #.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].value"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/region-page-mismatch.json",
+    "note": "A PdfRegionSelector refining a page= fragment names the same page.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].refinedBy.page"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/region-quad-collinear.json",
+    "note": "6.4: a quad's corners must not all lie on one line; this one has three distinct corners on a diagonal and encloses no area.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].quads[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/region-without-bytes.json",
+    "note": "A PdfRegionSelector on a pdf source pinned by identifiers alone: geometry is measured on the bytes, which the source does not name (no sha256 or git_blob). A page= fragment or pages would be fine (valid/source-pdf-by-identifiers.json).",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/conformsto-wrong-family.json",
+    "note": "A known conformsTo that does not fit the source's family (RFC 5147 text fragments on a PDF).",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].conformsTo"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/location-wrong-source.json",
+    "note": "A location shows items of its own source; this item is on the PDF.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].items[0]"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/refinement-too-deep.json",
+    "note": "A refinedBy chain of nine selectors: the limit is eight.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].refinedBy.refinedBy.refinedBy.refinedBy.refinedBy.refinedBy.refinedBy.refinedBy"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/site-page-not-listed.json",
+    "note": "On a source with page_hashes, a SitePageSelector names a listed page.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].target.selector[0].path"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/location-shows-nothing.json",
+    "note": "A location with no items that anchors no declaration and is named by no link.",
+    "problems": [
+      {
+        "code": "I7",
+        "path": "$.locations[0].items"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/named-example.json",
+    "note": "An example is always anonymous; a named one is refused.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[0].anonymous"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/hash-id-mismatch.json",
+    "note": "A statement-hash id's 12 digits are the prefix of statement_sha256.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/signature-not-display-form.json",
+    "note": "A signature in the display form has each run of whitespace collapsed to one space.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].signature"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/signature-hash-mismatch.json",
+    "note": "The sha256 of the signature's hash form is statement_sha256; this signature hashes to something else.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].signature"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/ordinal-without-record.json",
+    "note": "A ~k statement-hash id needs an ordinal_assigned changelog record (the history profile).",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/declared-id-hex-slug.json",
+    "note": "A declared id's slug is never 12 lowercase hex digits, which are reserved for statement hashes.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/private-id-shape.json",
+    "note": "A private declaration's id is private:<module>:<name>.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/anonymous-with-name.json",
+    "note": "An anonymous declaration has no name.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].name"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/member-full-name.json",
+    "note": "A field's full name is its parent's full name, a dot and its own name.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].name"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/member-dotted-own-name.json",
+    "note": "5.3: a member's full name is its namespace, a dot and its own name, which is one component; a field whose own name holds a dot is refused.",
+    "problems": [
+      {
+        "code": "I8",
+        "path": "$.declarations[1].name"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/bad-calendar-date.json",
+    "note": "The schema's date pattern accepts 2026-02-30; the calendar does not.",
+    "problems": [
+      {
+        "code": "I9",
+        "path": "$.companion.generated_at"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/bad-time-of-day.json",
+    "note": "Hour 24 is not a UTC instant (23:59:60Z, a leap second, would be).",
+    "problems": [
+      {
+        "code": "I9",
+        "path": "$.provenance[0].at"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/changelog-retired-live.json",
+    "note": "A retired id may not be in use; this one is a live declaration.",
+    "problems": [
+      {
+        "code": "I9",
+        "path": "$.changelog[0].subject"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/changelog-restated-hash-id.json",
+    "note": "A statement-hash id changes with its statement: a restatement is recorded as retired, not restated.",
+    "problems": [
+      {
+        "code": "I9",
+        "path": "$.changelog[0].subject"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/changelog-restated-not-later.json",
+    "note": "8.4: a restated id that is not live must be retired or renamed by a later entry; a retirement at the same instant is not later (ordinal_assigned, whose rule says no earlier, would accept it).",
+    "problems": [
+      {
+        "code": "I9",
+        "path": "$.changelog[0].subject"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "canonical": true,
+    "exit_status": 1,
+    "file": "invalid/not-canonical.json",
+    "note": "Checked with the canonical flag: the file is valid but laid out with a four-space indent, so its bytes are not the canonical form. Without the flag it is valid.",
+    "problems": [
+      {
+        "code": "I11",
+        "path": "$"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/label-id-mismatch.json",
+    "note": "A label id is <kind>-<number>[-<sub>]; this item is Lemma 1.2.",
+    "problems": [
+      {
+        "code": "I12",
+        "path": "$.items[0].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/quote-hash-mismatch.json",
+    "note": "A quote_hash id is passage-<8 hex of the normalised quote>.",
+    "problems": [
+      {
+        "code": "I12",
+        "path": "$.items[0].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/declared-id-passage-shape.json",
+    "note": "A declared item id may not take the shape of a mechanical passage id.",
+    "problems": [
+      {
+        "code": "I12",
+        "path": "$.items[0].id"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/quote-only-whitespace.json",
+    "note": "The quote a quote_hash id hashes has text in it; this one is only whitespace.",
+    "problems": [
+      {
+        "code": "I12",
+        "path": "$.items[0].id_source"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/unattributed-but-linked.json",
+    "note": "An unattributed declaration has no non-orphaned link; this one has a key link.",
+    "problems": [
+      {
+        "code": "I13",
+        "path": "$.unattributed[0].declaration"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/profile-audit-undeclared.json",
+    "note": "verdicts[] belongs to the audit profile, which is not declared. The source's role is a core field and needs no profile, so it is not reported.",
+    "problems": [
+      {
+        "code": "I14",
+        "path": "$.verdicts"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/profile-graph-undeclared.json",
+    "note": "clusters[] and items[].clusters belong to the graph profile, which is not declared.",
+    "problems": [
+      {
+        "code": "I14",
+        "path": "$.clusters"
+      },
+      {
+        "code": "I14",
+        "path": "$.items[0].clusters"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/profile-history-undeclared.json",
+    "note": "changelog[] and links[].orphaned belong to the history profile, which is not declared.",
+    "problems": [
+      {
+        "code": "I14",
+        "path": "$.changelog"
+      },
+      {
+        "code": "I14",
+        "path": "$.links[0].orphaned"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/profile-site-undeclared.json",
+    "note": "destinations[] and snippets[] belong to the site profile, which is not declared.",
+    "problems": [
+      {
+        "code": "I14",
+        "path": "$.destinations"
+      },
+      {
+        "code": "I14",
+        "path": "$.snippets"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/profile-destination-artifact-needs-graph.json",
+    "note": "A destination with an artifact target needs the graph profile as well as site.",
+    "problems": [
+      {
+        "code": "I14",
+        "path": "$.artifacts"
+      },
+      {
+        "code": "I14",
+        "path": "$.destinations[0].artifact"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/external-url-in-note.json",
+    "lints": [
+      "external-urls"
+    ],
+    "note": "Run with the external-urls lint: a URL in a link note, a path the lint does not exempt. Without the lint the document is valid.",
+    "problems": [
+      {
+        "code": "L1",
+        "path": "$.links[0].note"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 1,
+    "file": "invalid/external-url-in-extension.json",
+    "lints": [
+      "external-urls"
+    ],
+    "note": "Run with the external-urls lint: a protocol-relative reference and a mailto: prefix inside an extension object; the lint reads x_ values at any depth.",
+    "problems": [
+      {
+        "code": "L1",
+        "path": "$.x_meta.contact"
+      },
+      {
+        "code": "L1",
+        "path": "$.x_meta.homepage"
+      }
+    ],
+    "schema_valid": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/byte-order-mark.json",
+    "note": "The minimal document behind a UTF-8 byte-order mark, which I-JSON forbids.",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/infinite-number.json",
+    "note": "A numeric literal that is not a finite double.",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/duplicate-key.json",
+    "note": "The same key twice in one object (schema_version).",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/lone-surrogate.json",
+    "note": "A lone surrogate escape, which is not UTF-8 text.",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/nested-70-deep.json",
+    "note": "An array nested 70 levels deep inside the root object: the limit is 64.",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/not-a-number.json",
+    "note": "A NaN literal, which is not JSON.",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/integer-past-2-53.json",
+    "note": "An integer outside the I-JSON range [-(2^53 - 1), 2^53 - 1].",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  },
+  {
+    "exit_status": 2,
+    "file": "unreadable/not-utf8.json",
+    "note": "Bytes that are not UTF-8 (Latin-1 accented letters in the title).",
+    "problems": [
+      {
+        "code": "IJSON",
+        "path": "$"
+      }
+    ],
+    "schema_valid": null,
+    "unreadable": true,
+    "valid": false,
+    "warnings": []
+  }
+]
