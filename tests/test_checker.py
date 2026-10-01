@@ -131,6 +131,16 @@ def frag(conforms: str | None, value: str, refined: dict | None = None) -> dict:
     return sel
 
 
+def malformed_records() -> dict:
+    """mixed.json with a record that is not an object and keyed-list entries the sorts cannot key by a string."""
+    doc = load("mixed.json")
+    doc["companion"]["packages"] = [{"name": 5}, {"name": "a"}, {"name": None}, {}]
+    doc["items"].insert(1, 1)
+    next(i for i in doc["items"] if "xrefs" in i)["xrefs"] += ["x", {"database": 1, "tag": []}, {"tag": {}}]
+    next(p for p in doc["provenance"] if "inputs" in p)["inputs"] += [{"path": {}}, {"path": []}, 3]
+    return doc
+
+
 def quote(exact: str, refined: dict | None = None, **context: str) -> dict:
     sel = {"type": "TextQuoteSelector", "exact": exact, **context}
     if refined is not None:
@@ -696,6 +706,10 @@ class TestIJson(Case):
             deep = [deep]
         doc["x_meta"] = deep
         self.assertEqual(codes(doc), ["IJSON"])
+        chain: dict = {}
+        for _ in range(70):
+            chain = {"x_a": chain}
+        self.assertEqual(lines({"x_d": chain}), ["$.x_d" + ".x_a" * 63 + ": nested deeper than 64 levels [IJSON]"])
 
     def test_the_pre_pass_stops_everything_else_and_reads_integral_floats_as_ints(self):
         doc = load("pdf-region.json")
@@ -822,22 +836,29 @@ class TestCanonicalForm(Case):
         doc = load("minimal.json")
         doc["items"][0]["legacy_ids"] = [{"a": 1}, "x", "x"]            # not a set of strings: left for the schema
         self.assertEqual(V.canonicalize(doc)["items"][0]["legacy_ids"], [{"a": 1}, "x", "x"])
+        doc = malformed_records()
+        self.assertEqual([p.get("name") for p in V.canonicalize(doc)["companion"]["packages"]], ["a", 5, None, None])
+        self.assertTrue(V.canonical_dumps(V.canonicalize(doc)))
+        self.assertIn("SCHEMA", codes(doc))
+
+        def paths(x, p=()):
+            yield p
+            if isinstance(x, dict):
+                for k, v in x.items():
+                    yield from paths(v, p + (k,))
+            elif isinstance(x, list):
+                for i, v in enumerate(x):
+                    yield from paths(v, p + (i,))
         rng = random.Random(1)
-        values = [10 ** 400, {1: 2}, [{"a": 1}], [[1], [1]], object(), float("nan"), "", None, {"id": 3}, [None, "a"]]
+        values = [10 ** 400, {1: 2}, [{"a": 1}], [[1], [1]], object(), float("nan"), "", None, 1, {"id": 3},
+                  [None, "a"], {"name": []}]
         for _ in range(300):
             doc = load(rng.choice(VALID))
-            node, key = doc, None
-            for _depth in range(rng.randint(1, 6)):
-                keys = list(node) if isinstance(node, dict) else list(range(len(node)))
-                if not keys:
-                    break
-                key = rng.choice(keys)
-                if not isinstance(node[key], (dict, list)):
-                    break
-                node, key = node[key], None
-            if key is None:
-                continue
-            node[key] = rng.choice(values)
+            *where, last = rng.choice(list(paths(doc))[1:])
+            parent = doc
+            for key in where:
+                parent = parent[key]
+            parent[last] = rng.choice(values)
             try:
                 V.canonical_dumps(V.canonicalize(doc))
             except (TypeError, ValueError):
@@ -2006,7 +2027,8 @@ class TestTheCli(Temp):
         self.assertIn("[W-CONFORMS]", err)                          # warnings go to stderr
         for name, body, code in (("dangling.json", load("invalid-dangling-reference.json"), "I3"),
                                  ("types.json", json.dumps(dict(load("mixed.json"), clusters=[{"id": "c", "items": [[1]]}])),
-                                  "SCHEMA")):
+                                  "SCHEMA"),
+                                 ("records.json", json.dumps(malformed_records()), "SCHEMA")):
             path = self.write(name, body)
             status, out, err = run_cli(str(path), "--print-canonical")
             self.assertEqual((status, out), (1, ""))
