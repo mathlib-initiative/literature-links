@@ -1,0 +1,293 @@
+[
+  {
+    "name": "an integer",
+    "input": 42,
+    "canonical": "42\n"
+  },
+  {
+    "name": "a negative integer",
+    "input": -7,
+    "canonical": "-7\n"
+  },
+  {
+    "name": "zero",
+    "input": 0,
+    "canonical": "0\n"
+  },
+  {
+    "name": "negative zero is written 0",
+    "input": -0.0,
+    "canonical": "0\n"
+  },
+  {
+    "name": "an integral float is written without .0",
+    "input": 1.0,
+    "canonical": "1\n"
+  },
+  {
+    "name": "a fraction",
+    "input": 0.5,
+    "canonical": "0.5\n"
+  },
+  {
+    "name": "0.1 + 0.2: the shortest digits that round-trip",
+    "input": 0.30000000000000004,
+    "canonical": "0.30000000000000004\n"
+  },
+  {
+    "name": "2^53 - 1, the largest I-JSON integer",
+    "input": 9007199254740991,
+    "canonical": "9007199254740991\n"
+  },
+  {
+    "name": "-(2^53 - 1)",
+    "input": -9007199254740991,
+    "canonical": "-9007199254740991\n"
+  },
+  {
+    "name": "1e20 is the last power of ten in plain notation",
+    "input": 100000000000000000000,
+    "canonical": "100000000000000000000\n"
+  },
+  {
+    "name": "1e21 is the first in exponent notation",
+    "input": 1e+21,
+    "canonical": "1e+21\n"
+  },
+  {
+    "name": "1.2345678901234568e20 in plain notation",
+    "input": 123456789012345680000,
+    "canonical": "123456789012345680000\n"
+  },
+  {
+    "name": "1e-6 in plain notation",
+    "input": 1e-06,
+    "canonical": "0.000001\n"
+  },
+  {
+    "name": "1e-7 is the first small number in exponent notation",
+    "input": 1e-07,
+    "canonical": "1e-7\n"
+  },
+  {
+    "name": "2.5e-8 keeps its digits",
+    "input": 2.5e-08,
+    "canonical": "2.5e-8\n"
+  },
+  {
+    "name": "5e-324, the smallest double",
+    "input": 5e-324,
+    "canonical": "5e-324\n"
+  },
+  {
+    "name": "the largest double",
+    "input": 1.7976931348623157e+308,
+    "canonical": "1.7976931348623157e+308\n"
+  },
+  {
+    "name": "1.5e300",
+    "input": 1.5e+300,
+    "canonical": "1.5e+300\n"
+  },
+  {
+    "name": "an exponent spelling of an integer is an integer",
+    "input": 1000.0,
+    "canonical": "1000\n"
+  },
+  {
+    "name": "trailing zeros are dropped",
+    "input": 2.5,
+    "canonical": "2.5\n"
+  },
+  {
+    "name": "a number in an array",
+    "input": [
+      1.0,
+      -0.0,
+      1e+21,
+      0.1
+    ],
+    "canonical": "[\n  1,\n  0,\n  1e+21,\n  0.1\n]\n"
+  },
+  {
+    "name": "control characters as \\u00xx in lower-case hex",
+    "input": "\u0000\u0001\u001f",
+    "canonical": "\"\\u0000\\u0001\\u001f\"\n"
+  },
+  {
+    "name": "the short escapes",
+    "input": "\b\f\n\r\t",
+    "canonical": "\"\\b\\f\\n\\r\\t\"\n"
+  },
+  {
+    "name": "quote and backslash",
+    "input": "a\"b\\c",
+    "canonical": "\"a\\\"b\\\\c\"\n"
+  },
+  {
+    "name": "a slash is not escaped",
+    "input": "a/b",
+    "canonical": "\"a/b\"\n"
+  },
+  {
+    "name": "DEL (U+007F) is written raw",
+    "input": "",
+    "canonical": "\"\"\n"
+  },
+  {
+    "name": "U+2028 and U+2029 are written raw",
+    "input": "a b c",
+    "canonical": "\"a b c\"\n"
+  },
+  {
+    "name": "non-ASCII is written raw",
+    "input": "déjà vu ℝ",
+    "canonical": "\"déjà vu ℝ\"\n"
+  },
+  {
+    "name": "astral characters are written raw",
+    "input": "𝔽 😀",
+    "canonical": "\"𝔽 😀\"\n"
+  },
+  {
+    "name": "the empty string",
+    "input": "",
+    "canonical": "\"\"\n"
+  },
+  {
+    "name": "keys sort by UTF-16 code units: an astral key before U+E000",
+    "input": {
+      "": "private use",
+      "😀": "astral"
+    },
+    "canonical": "{\n  \"😀\": \"astral\",\n  \"\": \"private use\"\n}\n"
+  },
+  {
+    "name": "integer-like keys sort as strings, not first",
+    "input": {
+      "10": 1,
+      "9": 2,
+      "a": 3
+    },
+    "canonical": "{\n  \"10\": 1,\n  \"9\": 2,\n  \"a\": 3\n}\n"
+  },
+  {
+    "name": "upper case, underscore, lower case",
+    "input": {
+      "b": 1,
+      "B": 2,
+      "a": 3,
+      "_": 4
+    },
+    "canonical": "{\n  \"B\": 2,\n  \"_\": 4,\n  \"a\": 3,\n  \"b\": 1\n}\n"
+  },
+  {
+    "name": "the empty key sorts first",
+    "input": {
+      "": 1,
+      "a": 2
+    },
+    "canonical": "{\n  \"\": 1,\n  \"a\": 2\n}\n"
+  },
+  {
+    "name": "a key with escapes",
+    "input": {
+      "a\"b\n": 1
+    },
+    "canonical": "{\n  \"a\\\"b\\n\": 1\n}\n"
+  },
+  {
+    "name": "a key with non-ASCII",
+    "input": {
+      "é": 1,
+      "z": 2
+    },
+    "canonical": "{\n  \"z\": 2,\n  \"é\": 1\n}\n"
+  },
+  {
+    "name": "empty containers",
+    "input": {
+      "a": {},
+      "b": []
+    },
+    "canonical": "{\n  \"a\": {},\n  \"b\": []\n}\n"
+  },
+  {
+    "name": "nested arrays",
+    "input": [
+      [
+        1,
+        [
+          2,
+          []
+        ]
+      ],
+      {}
+    ],
+    "canonical": "[\n  [\n    1,\n    [\n      2,\n      []\n    ]\n  ],\n  {}\n]\n"
+  },
+  {
+    "name": "nested objects",
+    "input": {
+      "a": {
+        "b": {
+          "c": [
+            true,
+            false,
+            null
+          ]
+        }
+      }
+    },
+    "canonical": "{\n  \"a\": {\n    \"b\": {\n      \"c\": [\n        true,\n        false,\n        null\n      ]\n    }\n  }\n}\n"
+  },
+  {
+    "name": "an array of scalars",
+    "input": [
+      1,
+      "two",
+      null,
+      true
+    ],
+    "canonical": "[\n  1,\n  \"two\",\n  null,\n  true\n]\n"
+  },
+  {
+    "name": "a string at the top level",
+    "input": "x",
+    "canonical": "\"x\"\n"
+  },
+  {
+    "name": "null at the top level",
+    "input": null,
+    "canonical": "null\n"
+  },
+  {
+    "name": "true at the top level",
+    "input": true,
+    "canonical": "true\n"
+  },
+  {
+    "name": "an empty object at the top level",
+    "input": {},
+    "canonical": "{}\n"
+  },
+  {
+    "name": "an empty array at the top level",
+    "input": [],
+    "canonical": "[]\n"
+  },
+  {
+    "name": "a record-like object",
+    "input": {
+      "id": "x",
+      "zeta": 1,
+      "alpha": [
+        {
+          "k": "v"
+        }
+      ],
+      "n": 2.0
+    },
+    "canonical": "{\n  \"alpha\": [\n    {\n      \"k\": \"v\"\n    }\n  ],\n  \"id\": \"x\",\n  \"n\": 2,\n  \"zeta\": 1\n}\n"
+  }
+]

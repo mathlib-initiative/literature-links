@@ -1,0 +1,517 @@
+[
+ {
+  "name": "a tag comment directly above declares the id",
+  "lean": "/- `example:first-tag` -/\nexample : True := trivial\n-- `example:line.tag`\nexample : True := trivial\n/-- `example:doc_tag` -/\nexample : True := trivial\n/-! `instance:moddoc-tag` -/\ninstance : Foo := ⟨1⟩\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:first-tag",
+    "declared_id": "example:first-tag"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:line.tag",
+    "declared_id": "example:line.tag"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:doc_tag",
+    "declared_id": "example:doc_tag"
+   },
+   {
+    "line": 8,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:moddoc-tag",
+    "declared_id": "instance:moddoc-tag"
+   }
+  ]
+ },
+ {
+  "name": "the docstring line form, with any whitespace after the colon",
+  "lean": "/-- formal-companion id: example:nospace -/\nexample : True := trivial\n/--\nSome prose.\nformal-companion id:   example:many -/\nexample : True := trivial\n/-- formal-companion id:example:none -/\nexample : True := trivial\n/- formal-companion id: example:nondoc -/\nexample : True := trivial\n/-- formal-companion id: example:same\n\nformal-companion id: example:same -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:nospace",
+    "declared_id": "example:nospace"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:many",
+    "declared_id": "example:many"
+   },
+   {
+    "line": 8,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:none",
+    "declared_id": "example:none"
+   },
+   {
+    "line": 10,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 14,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:same",
+    "declared_id": "example:same"
+   }
+  ],
+  "note": "the line form counts only in a doc comment; the same id twice is one candidate"
+ },
+ {
+  "name": "blank lines, attributes, modifiers and prefixes may sit between the tag and the keyword",
+  "lean": "/- `example:far` -/\n\n\n\nexample : True := trivial\n/- `example:a1` -/\nopen Foo in\nset_option x true in\nexample : True := trivial\n/- `example:attr` -/\n@[simp]\nexample : True := trivial\n/- `instance:mods` -/\n@[simp] private noncomputable instance : Foo := ⟨1⟩\n/-- `example:doc-line` -/ example : True := trivial\n/-- formal-companion id: example:same-line -/ example : True := trivial\n",
+  "expected": [
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:far",
+    "declared_id": "example:far"
+   },
+   {
+    "line": 9,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:a1",
+    "declared_id": "example:a1"
+   },
+   {
+    "line": 12,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:attr",
+    "declared_id": "example:attr"
+   },
+   {
+    "line": 14,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:mods",
+    "declared_id": "instance:mods"
+   },
+   {
+    "line": 15,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:doc-line",
+    "declared_id": "example:doc-line"
+   },
+   {
+    "line": 16,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:same-line",
+    "declared_id": "example:same-line"
+   }
+  ]
+ },
+ {
+  "name": "a trailing comment on a code line is never directly above",
+  "lean": "theorem foo : True := trivial -- `example:stolen`\nexample : True := trivial\ntheorem bar : True := trivial /- `example:stolen2` -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "a tag comment inside the head, after an attribute, is not read",
+  "lean": "@[simp]\n/- `example:inner` -/\nexample : True := trivial\n/- `example:outer` -/\n@[simp]\n/- `example:inner2` -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:outer",
+    "declared_id": "example:outer"
+   }
+  ]
+ },
+ {
+  "name": "only whitespace may separate the comments of the run",
+  "lean": "/- `example:blocked` -/\ndef helper := 1\nexample : True := trivial\n/- `example:through` -/\n-- another comment\n/-- doc -/\nexample : True := trivial\n/- `example:string` -/\n\"stray\"\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:through",
+    "declared_id": "example:through"
+   },
+   {
+    "line": 10,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "rejections: not alone, bad slug, wrong keyword, conflicting tags",
+  "lean": "/- `example:tag` and more -/\nexample : True := trivial\n/- `example:a b` -/\nexample : True := trivial\n/- `example:aaaaaaaaaaaa` -/\nexample : True := trivial\n/- `example:bbbbbbbbbbbb~2` -/\nexample : True := trivial\n/-- formal-companion id: example:-bad -/\nexample : True := trivial\n/-- formal-companion id: instance:on-example -/\nexample : True := trivial\n/- `example:x` -/\n/- `example:y` -/\nexample : True := trivial\n/-- formal-companion id: example:x\nformal-companion id: example:y -/\nexample : True := trivial\n/- `example:with space` -/\nexample : True := trivial\n/- `instance:tag`\n-/\ninstance : Foo := ⟨1⟩\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d",
+    "rejected_tag": [
+     "tag-not-alone"
+    ]
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2",
+    "rejected_tag": [
+     "tag-not-alone"
+    ]
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~3",
+    "rejected_tag": [
+     "not-a-declared-id"
+    ]
+   },
+   {
+    "line": 8,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~4",
+    "rejected_tag": [
+     "not-a-declared-id"
+    ]
+   },
+   {
+    "line": 10,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~5",
+    "rejected_tag": [
+     "not-a-declared-id"
+    ]
+   },
+   {
+    "line": 12,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~6",
+    "rejected_tag": [
+     "wrong-keyword"
+    ]
+   },
+   {
+    "line": 15,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~7",
+    "rejected_tag": [
+     "conflicting-tags"
+    ]
+   },
+   {
+    "line": 18,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~8",
+    "rejected_tag": [
+     "conflicting-tags"
+    ]
+   },
+   {
+    "line": 20,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~9",
+    "rejected_tag": [
+     "tag-not-alone"
+    ]
+   },
+   {
+    "line": 23,
+    "keyword": "instance",
+    "signature": "instance : Foo",
+    "hash_form": "instance:Foo",
+    "statement_sha256": "a1d80e6f4e974a0b64bb2b5b244cdbacb36f78db97151200a689592906e053e4",
+    "id": "instance:tag",
+    "declared_id": "instance:tag"
+   }
+  ]
+ },
+ {
+  "name": "a rejected tag and a good one: the good one wins, the rejection is still reported",
+  "lean": "/- `example:good` -/\n/- `example:bad one` -/\nexample : True := trivial\n/- `instance:wrong` -/\n/- `example:right` -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:good",
+    "declared_id": "example:good",
+    "rejected_tag": [
+     "tag-not-alone"
+    ]
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:right",
+    "declared_id": "example:right",
+    "rejected_tag": [
+     "wrong-keyword"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "the note body of library_note or #adaptation_note is not a docstring",
+  "lean": "library_note \"foo\"\n/-- some note\nformal-companion id: example:x -/\nexample : True := trivial\n#adaptation_note /-- x -/\n/-- formal-companion id: example:foo -/\nexample : True := trivial\nlibrary_note \"bar\" /-- inline\nformal-companion id: example:y -/\nexample : False := sorry\n",
+  "expected": [
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:foo",
+    "declared_id": "example:foo"
+   },
+   {
+    "line": 10,
+    "keyword": "example",
+    "signature": "example : False",
+    "hash_form": "example:False",
+    "statement_sha256": "8dd6226f42a34bb50a2bb0e9776ddd7967514d29749bb30994c262bc0bfa4d0b",
+    "id": "example:8dd6226f42a3"
+   }
+  ]
+ },
+ {
+  "name": "the legacy id line and a mention in prose declare nothing",
+  "lean": "/-- other-tool id: example:old -/\nexample : True := trivial\n/-- See also `example:foo` for a related fact. -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "a declared id takes no ordinal and shifts none",
+  "lean": "example : True := trivial\n/- `example:named` -/\nexample : True := trivial\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:named",
+    "declared_id": "example:named"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "slug grammar: letters of either case, digits, dot, underscore, dash",
+  "lean": "/- `example:Ex.1_2-b` -/\nexample : True := trivial\n/- `example:9lives` -/\nexample : True := trivial\n/- `example:_x` -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:Ex.1_2-b",
+    "declared_id": "example:Ex.1_2-b"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:9lives",
+    "declared_id": "example:9lives"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d",
+    "rejected_tag": [
+     "not-a-declared-id"
+    ]
+   }
+  ]
+ },
+ {
+  "name": "a note body is not read even when a block comment precedes library_note on its line",
+  "lean": "  /- c -/ library_note \"foo\"\n/-- `example:hidden1` -/\nexample : True := trivial\n/- multi\nline -/ library_note \"bar\"\n/-- formal-companion id: example:hidden2 -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 7,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ],
+  "note": "12.1 (3): the first token of the note command's line is found in S, where the comment before it is blank; the docstring is the note's body, so neither tag is read and both examples keep their statement-hash ids."
+ }
+]

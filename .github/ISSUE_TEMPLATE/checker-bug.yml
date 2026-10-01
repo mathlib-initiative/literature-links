@@ -1,0 +1,47 @@
+name: Checker bug
+description: The checker accepts a document the specification forbids, refuses one it allows, crashes, or disagrees with the schema or the conformance suite.
+title: "[checker] "
+labels: ["checker"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What happened
+      options:
+        - It accepted a document the specification forbids
+        - It refused a document the specification allows
+        - It crashed or printed a traceback
+        - Its output disagrees with another implementation or with the conformance suite
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: document
+    attributes:
+      label: The smallest document that shows it
+      description: Synthetic only (no text from a real source). Start from examples/annotations/minimal.json if you can.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the specification says
+      description: Quote the section, invariant code or conformance vector.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the checker printed
+      description: The command, its output and exit status.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `formal-companion-annotations-validate --version`, and the Python version.
+    validations:
+      required: true

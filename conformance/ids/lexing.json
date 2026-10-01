@@ -1,0 +1,449 @@
+[
+ {
+  "name": "nested block comment hides a declaration",
+  "lean": "/- outer /- inner example : False := sorry -/ still comment example : False := x -/\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "doc comment with nested block and a stray quote",
+  "lean": "/-- a doc with /- nested -/ and \"quote -/\nexample : True := trivial\nexample : False := sorry\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : False",
+    "hash_form": "example:False",
+    "statement_sha256": "8dd6226f42a34bb50a2bb0e9776ddd7967514d29749bb30994c262bc0bfa4d0b",
+    "id": "example:8dd6226f42a3"
+   }
+  ]
+ },
+ {
+  "name": "unterminated block comment swallows the rest",
+  "lean": "example : True := trivial\n/- never closed\nexample : False := sorry\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "`/--/` is not a closed comment, `/-- -/` is",
+  "lean": "/-- -/\nexample : Foo := ⟨1⟩\n/--/ example : Bar := ⟨2⟩ -/\nexample : Baz := ⟨3⟩\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : Foo",
+    "hash_form": "example:Foo",
+    "statement_sha256": "6f7d4a69ef85eb732a00ba5492489775c54867c48c283cb076442ae83cd84dd9",
+    "id": "example:6f7d4a69ef85"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : Baz",
+    "hash_form": "example:Baz",
+    "statement_sha256": "70fd1f3d6b3940ede36bb494a56a6ff6c487f717b9b9a2055d55e1ce0d1f55f6",
+    "id": "example:70fd1f3d6b39"
+   }
+  ]
+ },
+ {
+  "name": "line comment markers inside strings are text",
+  "lean": "def s := \"a -- not a comment\"\nexample : s = \"a -- not a comment\" := rfl\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : s = \"a -- not a comment\"",
+    "hash_form": "example:s=\"a -- not a comment\"",
+    "statement_sha256": "076b8517d465e9cf5e6b46ce91a30988d3e55e1690f01d7a270756b8e3ad9146",
+    "id": "example:076b8517d465"
+   }
+  ]
+ },
+ {
+  "name": "keywords inside comments, strings and guillemets are not declarations",
+  "lean": "-- example : False := sorry\n/-- example : False := sorry -/\ndef x := \"\nexample : False := sorry\n\"\ndef my_example := 1\ndef «example» := 2\ntheorem Foo.example_thm : True := trivial\nexample : x = x := rfl\n",
+  "expected": [
+   {
+    "line": 9,
+    "keyword": "example",
+    "signature": "example : x = x",
+    "hash_form": "example:x=x",
+    "statement_sha256": "a58cb429d3c882fc26b8e3c08531aacedffd9ef9fcbb264e5598fee0e248a269",
+    "id": "example:a58cb429d3c8"
+   }
+  ]
+ },
+ {
+  "name": "string literals are opaque: a `:=` or bracket inside never counts",
+  "lean": "example : \"a\\\"b\" = \"x := y\" := rfl\nexample : \"(\" ++ \")\" = \"()\" := rfl\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : \"a\\\"b\" = \"x := y\"",
+    "hash_form": "example:\"a\\\"b\"=\"x := y\"",
+    "statement_sha256": "63029208bbc8f367b469b9b9afa206981b7195ca37a1451335926f7ddb43a594",
+    "id": "example:63029208bbc8"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : \"(\" ++ \")\" = \"()\"",
+    "hash_form": "example:\"(\"++\")\"=\"()\"",
+    "statement_sha256": "8e2a7b21c001d5c2e6f501c2e99e995b7b0ed8c4bd0fd8def83745af0f2a45d2",
+    "id": "example:8e2a7b21c001"
+   }
+  ]
+ },
+ {
+  "name": "raw strings, with and without hashes",
+  "lean": "example : r\"a := b\" = \"a := b\" := rfl\nexample : r#\"a \"quote\" := \"#.length = 3 := rfl\nexample : r##\"x\"#y\"## = \"x\\\"#y\" := rfl\nexample : bar\"c\" = 1 := rfl\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : r\"a := b\" = \"a := b\"",
+    "hash_form": "example:r\"a := b\"=\"a := b\"",
+    "statement_sha256": "a5505f5eebcedcb23d8fc2d096774b76b35613a1d3f395d5f4309f709b918d60",
+    "id": "example:a5505f5eebce"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : r#\"a \"quote\" := \"#.length = 3",
+    "hash_form": "example:r#\"a \"quote\" := \"# .length=3",
+    "statement_sha256": "c3367e895b9a37a2078c7b79898c00947d30d89cf14dbbbc125b300a8b9d41ad",
+    "id": "example:c3367e895b9a"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : r##\"x\"#y\"## = \"x\\\"#y\"",
+    "hash_form": "example:r##\"x\"#y\"##=\"x\\\"#y\"",
+    "statement_sha256": "db77912dd68197ad19eda61e1e1c8c59da5206a10de1475636b3f938f5d2997c",
+    "id": "example:db77912dd681"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : bar\"c\" = 1",
+    "hash_form": "example:bar \"c\"=1",
+    "statement_sha256": "487b1560377cf19ef5258c25a314864d4641af10234db713b832e3f4ee9b51cd",
+    "id": "example:487b1560377c"
+   }
+  ]
+ },
+ {
+  "name": "char literals: plain, quote, escapes, hex and unicode",
+  "lean": "example : '\"' = '\"' := rfl\nexample : '\\'' ≠ 'a' := by decide\nexample : '\\x41' = 'A' := rfl\nexample : '\\u03bb' = 'λ' := rfl\nexample : '(' ≠ ')' := by decide\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : '\"' = '\"'",
+    "hash_form": "example:'\"'='\"'",
+    "statement_sha256": "e50e2969c8ce81cd2913fa54168b71307716addf02ce2486a580e11e8a13bc00",
+    "id": "example:e50e2969c8ce"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : '\\'' ≠ 'a'",
+    "hash_form": "example:'\\''≠'a'",
+    "statement_sha256": "e15b2e65e2505f59998c0a157f9dddd66ff1caa2d6ce4700041da54bed74e6d2",
+    "id": "example:e15b2e65e250"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : '\\x41' = 'A'",
+    "hash_form": "example:'\\x41'='A'",
+    "statement_sha256": "c9849d2106e47585cde4c2a4bf781f41eb744e724094baa6df41e765580fde41",
+    "id": "example:c9849d2106e4"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : '\\u03bb' = 'λ'",
+    "hash_form": "example:'\\u03bb'='λ'",
+    "statement_sha256": "eba6ccc832a1471ef3f3ea158e397d15192ced5360f96eb352b4c6b79093d88a",
+    "id": "example:eba6ccc832a1"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : '(' ≠ ')'",
+    "hash_form": "example:'('≠')'",
+    "statement_sha256": "5ad3e6917f8b874274da0e6c902d68e178918d3bed0f3ddc439ebd3466b3c4c5",
+    "id": "example:5ad3e6917f8b"
+   }
+  ]
+ },
+ {
+  "name": "a prime after a name is not a char literal; image notation `''`",
+  "lean": "example (f : α → β) (s : Set α) : f '' s = f '' s := rfl\nexample (f' : ℕ → ℕ) : f' 0 = f' 0 := rfl\nexample (x₁' : ℕ) : x₁' = x₁' := rfl\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (f : α → β) (s : Set α) : f '' s = f '' s",
+    "hash_form": "example(f:α→β)(s:Set α):f '' s=f '' s",
+    "statement_sha256": "98b7ed6899b00320868a6d8f531c17b0055d92766e3eb0ebcf424165e4678cd2",
+    "id": "example:98b7ed6899b0"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example (f' : ℕ → ℕ) : f' 0 = f' 0",
+    "hash_form": "example(f':ℕ→ℕ):f' 0=f' 0",
+    "statement_sha256": "c8febb5acc4e0632fc86f25dcee7ceb0895b42aaeb6967c6f99c2b9ca2bac6bb",
+    "id": "example:c8febb5acc4e"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example (x₁' : ℕ) : x₁' = x₁'",
+    "hash_form": "example(x₁':ℕ):x₁'=x₁'",
+    "statement_sha256": "6b7f7082449c9078c100d93aae9b6afe50d1a6ab7c778b27d162616dd73194e5",
+    "id": "example:6b7f7082449c"
+   }
+  ]
+ },
+ {
+  "name": "interpolated strings: holes may hold strings, braces and comments",
+  "lean": "example : s!\"{x := 1}\" = \"\" := rfl\nexample : s!\"{f \"a:=b\"} \" = \"\" := rfl\nexample : m!\"{g \"(\"} \" = x := rfl\nexample : s!\"{f \"a\\\"b\"} x\" = \"\" := rfl\nexample : f!\"{ {x := 1}.x /- c -/ }\" = \"1\" := rfl\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : s!\"{x := 1}\" = \"\"",
+    "hash_form": "example:s! \"{x := 1}\"=\"\"",
+    "statement_sha256": "f983080e64a0637b1f4c3bb8c0afc2ec2428cab4152bfc88a79654501f1ba75e",
+    "id": "example:f983080e64a0"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : s!\"{f \"a:=b\"} \" = \"\"",
+    "hash_form": "example:s! \"{f \"a:=b\"} \"=\"\"",
+    "statement_sha256": "52cd24d63456397e4c60a7b44635fd02044f2fa083beaac7d8230bb22dcf7dd9",
+    "id": "example:52cd24d63456"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : m!\"{g \"(\"} \" = x",
+    "hash_form": "example:m! \"{g \"(\"} \"=x",
+    "statement_sha256": "391507100abddcce001b5f01a7ab586d781cb7e8e71d62ae061735db21b970a0",
+    "id": "example:391507100abd"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : s!\"{f \"a\\\"b\"} x\" = \"\"",
+    "hash_form": "example:s! \"{f \"a\\\"b\"} x\"=\"\"",
+    "statement_sha256": "6daf95011e3a9cf708f658133c2368fdd5e813734ae91a8e3a0520f62796c9ce",
+    "id": "example:6daf95011e3a"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : f!\"{ {x := 1}.x /- c -/ }\" = \"1\"",
+    "hash_form": "example:f! \"{ {x := 1}.x /- c -/ }\"=\"1\"",
+    "statement_sha256": "db61f381381548a57c80d81daa930037bb83b44109d929130c3c36e0d49e1705",
+    "id": "example:db61f3813815"
+   },
+   {
+    "line": 6,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ]
+ },
+ {
+  "name": "guillemet identifiers are opaque to the lexer",
+  "lean": "def «a\"b» := 1\nexample : True := trivial\ndef c := \"x\"\nexample : «my thing».foo = 1 := rfl\n",
+  "expected": [
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 4,
+    "keyword": "example",
+    "signature": "example : «my thing».foo = 1",
+    "hash_form": "example:«my thing».foo=1",
+    "statement_sha256": "df6a4534a266189e3c24aaed36e235f37a19ae8892ccae006ce7c7d227c9ded1",
+    "id": "example:df6a4534a266"
+   }
+  ]
+ },
+ {
+  "name": "a leading byte order mark is ignored",
+  "lean": "﻿example : True := trivial\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "CRLF line endings give the same ids as LF, inside literals too",
+  "lean": "example (x : ℕ) :\r\n    x = x := rfl\r\ninstance : Foo Bool\r\n  | true => 1\r\nexample : \"a\r\nb\" = \"a\nb\" := rfl\r\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (x : ℕ) : x = x",
+    "hash_form": "example(x:ℕ):x=x",
+    "statement_sha256": "c994baa41477ac08e4f3a34cfb7532b582e7292397ca54a64f78ce24c55468d3",
+    "id": "example:c994baa41477"
+   },
+   {
+    "line": 3,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool",
+    "hash_form": "instance:Foo Bool",
+    "statement_sha256": "2d1ff3e685baeb031372d37db0aa1f186e4732810c4ef44b884c909169054922",
+    "id": "instance:2d1ff3e685ba"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : \"a\nb\" = \"a\nb\"",
+    "hash_form": "example:\"a\nb\"=\"a\nb\"",
+    "statement_sha256": "2d65578360ed1ffaa5846fd7563a35e727e0c0e14a5d7795962d54a5d28cbce3",
+    "id": "example:2d65578360ed"
+   }
+  ]
+ },
+ {
+  "name": "the LF twin of the CRLF case",
+  "lean": "example (x : ℕ) :\n    x = x := rfl\ninstance : Foo Bool\n  | true => 1\nexample : \"a\nb\" = \"a\nb\" := rfl\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example (x : ℕ) : x = x",
+    "hash_form": "example(x:ℕ):x=x",
+    "statement_sha256": "c994baa41477ac08e4f3a34cfb7532b582e7292397ca54a64f78ce24c55468d3",
+    "id": "example:c994baa41477"
+   },
+   {
+    "line": 3,
+    "keyword": "instance",
+    "signature": "instance : Foo Bool",
+    "hash_form": "instance:Foo Bool",
+    "statement_sha256": "2d1ff3e685baeb031372d37db0aa1f186e4732810c4ef44b884c909169054922",
+    "id": "instance:2d1ff3e685ba"
+   },
+   {
+    "line": 5,
+    "keyword": "example",
+    "signature": "example : \"a\nb\" = \"a\nb\"",
+    "hash_form": "example:\"a\nb\"=\"a\nb\"",
+    "statement_sha256": "2d65578360ed1ffaa5846fd7563a35e727e0c0e14a5d7795962d54a5d28cbce3",
+    "id": "example:2d65578360ed"
+   }
+  ]
+ },
+ {
+  "name": "tabs are whitespace",
+  "lean": "example :\n\tTrue := trivial\n\texample : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d~2"
+   }
+  ]
+ },
+ {
+  "name": "interpolated strings: a hole may hold an interpolated string with holes of its own",
+  "lean": "example : s!\"{s!\"{s!\"{x}\"}\"}\" = \"\" := rfl\nexample : s!\"{ (s!\"{x}\", r#\"}\"#) }\" = \"\" := rfl\nexample : True := trivial\n",
+  "expected": [
+   {
+    "line": 1,
+    "keyword": "example",
+    "signature": "example : s!\"{s!\"{s!\"{x}\"}\"}\" = \"\"",
+    "hash_form": "example:s! \"{s!\"{s!\"{x}\"}\"}\"=\"\"",
+    "statement_sha256": "12603cb9b7f7b8f8c978fa9649a62ccc17376b44812f625d551359121913cc39",
+    "id": "example:12603cb9b7f7"
+   },
+   {
+    "line": 2,
+    "keyword": "example",
+    "signature": "example : s!\"{ (s!\"{x}\", r#\"}\"#) }\" = \"\"",
+    "hash_form": "example:s! \"{ (s!\"{x}\", r#\"}\"#) }\"=\"\"",
+    "statement_sha256": "088d17adf8945ca3bbecad3c1138377c860a6fd21413ab1521918778bae946e9",
+    "id": "example:088d17adf894"
+   },
+   {
+    "line": 3,
+    "keyword": "example",
+    "signature": "example : True",
+    "hash_form": "example:True",
+    "statement_sha256": "15d809f6918d5b255aee11bd83eb3cb155c84e626c00ad158655b146637df19b",
+    "id": "example:15d809f6918d"
+   }
+  ],
+  "note": "3.3: holes nest; a raw string inside a hole is one literal, so its brace does not count."
+ }
+]

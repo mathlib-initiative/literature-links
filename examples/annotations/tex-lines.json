@@ -88,9 +88,8 @@
             "value": "char=1204,1618;length=9120,UTF-8"
           },
           {
-            "end": 1618,
-            "start": 1204,
-            "type": "TextPositionSelector"
+            "exact": "\\begin{definition}\\label{def:finsum}",
+            "type": "TextQuoteSelector"
           }
         ],
         "source": "blueprint-ch1"
@@ -147,7 +146,7 @@
       }
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {

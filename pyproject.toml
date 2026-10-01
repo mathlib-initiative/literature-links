@@ -2,10 +2,9 @@
 # Schema (shipped as package data), the checker and its console script, the
 # mechanical id rules and the format's vocabulary.
 #
-# Standard library only at run time, as the checker was in the
-# formal-companion skill it was extracted from: `dependencies` is empty
-# on purpose. `jsonschema` is used by the test suite when it is importable
-# (the agreement tests), never by the checker.
+# Standard library only at run time: `dependencies` is empty on purpose.
+# `jsonschema` is used by the test suite when it is importable (the agreement
+# tests), never by the checker.
 
 [build-system]
 requires = ["setuptools>=77"]
@@ -13,21 +12,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "formal-companion-annotations"
-version = "1.0.0"                        # kept in step with src/formal_companion_annotations/__init__.py
+version = "1.0.0rc1"                     # kept in step with src/formal_companion_annotations/__init__.py
 description = "The formal-companion annotation format: which Lean declarations formalise which items of which sources, with a standard-library validator."
 readme = "README.md"
-# 3.11 is the floor the checker was written and tested against in the skill,
-# and the changelog `at` check needs it: before 3.11 `datetime.fromisoformat`
-# accepts LESS (only what `isoformat()` writes), so 3.10 rejects a timestamp
-# the schema allows, such as "2026-09-05T10:20:30.5Z" (a one-digit fraction),
-# and would refuse a valid changelog.  Tests use `tomllib` (3.11) too.
+# 3.11 is the floor the checker is written and tested against; the tests
+# use `tomllib` (3.11).
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "the formal-companion contributors" }]
 keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema", "web-annotation"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",

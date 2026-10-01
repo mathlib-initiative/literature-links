@@ -1,74 +1,70 @@
 # Vocabulary of the annotation format
 
-Every enum of `schema/annotations-v1.schema.json` is defined once, in
-`src/formal_companion_annotations/vocab.py`. The schema repeats the values
-because it is data a non-Python consumer reads, and
-`tests/test_annotations_schema.py` walks every `enum` in the schema and fails
-when one has no set in that module or the two disagree. This file documents
-the values; a test fails when one is missing here, or when a value of section
-2 has no meaning.
+Every closed set of values in `schema/annotations-v1.0.schema.json` is
+defined once, in `src/formal_companion_annotations/vocab.py`, and named
+here. The schema repeats the values because it is data a reader in any
+language can use. `tests/test_annotations_schema.py` walks every `enum` in
+the schema and fails when one has no set in that module or the two disagree.
+A test also fails when a value of section 1 is missing here, or when a value
+of section 2 has no meaning.
 
-**The format owns every value it uses.** That includes the sets of section 2,
-which the format shares with the formal-companion skill, where they were
-first written: their values and their meanings are the ones defined in this
-repository. A change to one is a change to the format, made here first: a new
-value is a new minor version at least, and a value removed or given another
-meaning is a new major version (section 9 of `docs/annotations.md`).
-Producers conform to it, the skill included: a producer that writes a value
-this file does not list writes an invalid document, and a producer that keeps
-its own copy of a set (as the skill does, for its own stages) keeps it equal
-to this one.
+**The format owns every value it uses.** A change to a set is a change to the
+format, made here first. A new value is a new minor version at least; a value
+removed or given another meaning is a new major version (section 12 of
+`docs/annotations.md`). A producer that writes a value this file does not
+list writes an invalid document.
 
-Section 1 began as section 1.10 of the skill's `references/vocabulary.md`,
-where the format was written. Section 2 defines the shared sets, with a
-meaning for each value, taken from that file (sections 1.2 to 1.7, and the
-ledger-to-viewer mapping of its section 2.5) and, for the sorry classes, from
-the skill's adapter contract (`references/onboarding-contract.md` section 6).
+Three fields are open rather than enums, each with a documented core: a link's
+`relation` and an xref's `database`, both lower-case snake_case tokens, and a
+FragmentSelector's `conformsTo`, an IRI. A value outside the core passes with
+a warning (`W-RELATION`, `W-XREF`, `W-CONFORMS`).
 
-**Contents**: 1 the annotation enums · 2 the shared sets: 2.1 viewer verdicts
-· 2.2 severities · 2.3 statuses · 2.4 ledger verdicts · 2.5 finding kinds · 2.6
-source roles · 2.7 sorry classes · 2.8 resolution states
+**Contents**: 1 the enums · 2 the audit, source and declaration sets: 2.1
+verdicts · 2.2 severities · 2.3 verdict statuses · 2.4 resolution states ·
+2.5 source roles · 2.6 sorry classes
 
 ---
 
-## 1. The annotation enums (`lean-companion/annotations`, schema_version `1.0`)
+## 1. The enums (`formal-companion/annotations`, schema_version `1.0`)
 
-The enums of `schema/annotations-v1.schema.json`, specified in `docs/annotations.md`:
-`vocab.ANNOTATION_*`. The sets the format shares with the skill are defined in section 2
-rather than repeated here: a verdict record's `verdict` and each `declarations[].verdict` are
-`VIEWER_VERDICTS`, its `severity` and `status` are `VIEWER_SEVERITIES` and `VIEWER_STATUS`, its
-`ledger_verdict` is `LEDGER_VERDICTS` and its `finding_kind` `FINDING_KINDS`; a source's `role`
-is `SOURCE_ROLES`; a declaration's `sorry` is `SORRY_CLASSES` (`exercise` | `gap` | `none`). Two
-fields are open rather than enums, each with a documented core: a link's `relation`, a
-lower-case snake_case token, and a FragmentSelector's `conformsTo`, an IRI. A value outside the
-core passes with a warning.
+The sets of `vocab.py` (`ANNOTATION_*`), as `docs/annotations.md` specifies
+them. The six sets of section 2 are listed here and defined there.
 
 | field | values |
 |---|---|
+| root `profiles` keys | `audit` \| `graph` \| `history` \| `site` (each with its own `"1.<minor>"`; the package knows `1.0` of each) |
 | source `kind` | `pdf` \| `web` \| `tex` \| `lean` \| `other` (named by `media_type`) |
 | source `scope` | `page` \| `site` (web only) |
+| source `role` | `audited` \| `reference` (section 2.5; a core field, not an audit one) |
 | item `form` | `numbered` \| `passage` |
 | item `id_source` | `label` \| `quote_hash` \| `page_title_hash` \| `declared` |
 | item `kind_source`, `title_source` | `source` \| `producer` |
 | item `relations` keys | `same_as` \| `part_of` \| `near` |
-| item `coverage` | `formalized` \| `partial` \| `not_formalized` \| `out_of_scope` \| `support_only` \| `example_only` (the fallback to an item's clusters is the separate boolean `cluster_fallback`) |
+| item `coverage` | `formalized` \| `partial_only` \| `support_only` \| `example_only` \| `private_only` \| `not_formalized` \| `out_of_scope` |
+| item `xrefs[].database` (an open lower-case snake_case token; the core) | `stacks` \| `kerodon` \| `wikidata` \| `lmfdb` |
 | `pages.basis` | `printed` \| `physical` |
 | `pages.anchor` | `own` \| `crossref` \| `inferred` |
 | link `role` | `key` \| `attributed` \| `support` \| `example` \| `helper` |
-| link `relation` (an open lower-case snake_case token; the core) | `exact` \| `generalization` \| `special_case` \| `invocation` \| `related` |
-| declaration `kind` | `theorem` \| `lemma` \| `def` \| `abbrev` \| `structure` \| `class` \| `inductive` \| `instance` \| `example` \| `opaque` \| `axiom` \| `field` \| `projection` |
+| link `relation` (an open lower-case snake_case token; the core) | `exact` \| `generalization` \| `special_case` \| `part` \| `invocation` \| `related` |
+| declaration `kind` | `theorem` \| `lemma` \| `def` \| `abbrev` \| `structure` \| `class` \| `inductive` \| `instance` \| `example` \| `opaque` \| `axiom` \| `alias` \| `irreducible_def` \| `field` \| `projection` \| `constructor` \| `recursor` |
+| declaration `parent` kinds, by member kind | `field`, `projection`: `structure` \| `class`; `constructor`, `recursor`: `inductive` \| `structure` \| `class` |
 | declaration `id_source` | `name` \| `private` \| `statement_hash` \| `declared` |
-| artifact `kind` | `module_doc` \| `check` \| `figure` \| `other` |
-| membership `role` | `primary` \| `support` \| `consumer` |
+| declaration `sorry` | `exercise` \| `gap` \| `none` (section 2.6) |
+| artifact `kind` (graph profile) | `module_doc` \| `check` \| `figure` \| `other` |
+| membership `role` (graph profile) | `primary` \| `support` \| `consumer` |
 | unattributed `claim` | `unattributed` \| `api` \| `infrastructure` |
 | provenance `actor` | `author` \| `agent` \| `human` \| `tool` |
 | provenance `method` | `docstring_tag` \| `curation` \| `blueprint_macro` \| `lean_scan` \| `layout_extraction` \| `text_match` \| `manual` \| `agent_annotation` \| `pipeline` \| `adjudication` \| `site_index` |
-| verdict `resolution.state` | `open` \| `fixed` \| `in_progress` \| `refuted` \| `argued_correct` \| `out_of_scope` (defined in section 2.8, from `STATIC_RESOLUTIONS` and `RESOLUTION_PREFIXES`; a verdict with no `resolution` is open) |
-| destination `site` | `verso_literate` \| `doc_gen4` \| `blueprint` \| `other` |
-| changelog `event` | `born` \| `retired` \| `restated` \| `renamed` \| `ordinal_assigned` |
-| changelog `subject_kind` | `declaration` \| `item` \| `location` \| `artifact` |
-| changelog `reason` | `statement_changed` \| `removed` \| `renamed` \| `moved` \| `other` |
-| selector `type` | `FragmentSelector` \| `TextQuoteSelector` \| `TextPositionSelector` \| `DataPositionSelector` \| `CssSelector` \| `XPathSelector` \| `SvgSelector` \| `RangeSelector`, plus the extensions `PdfRegionSelector` and `SitePageSelector` |
+| verdict `verdict`, `declarations[].verdict` (audit profile) | `faithful` \| `convention` \| `attribution_gap` \| `proxy` \| `deviation` (section 2.1) |
+| verdict `severity` (audit profile) | `none` \| `low` \| `medium` \| `high` (section 2.2) |
+| verdict `status` (audit profile) | `unconfirmed` \| `contested` \| `human_confirmed` \| `fixed` (section 2.3) |
+| verdict `resolution.state` (audit profile) | `open` \| `fixed` \| `in_progress` \| `refuted` \| `argued_correct` \| `out_of_scope` (section 2.4; a verdict with no `resolution` is open) |
+| destination `site` (site profile) | `verso_literate` \| `doc_gen4` \| `blueprint` \| `other` |
+| destination `resolution` (site profile) | `exact` (needs a `fragment`) \| `fallback` (needs a `fallback_label`) |
+| changelog `event` (history profile) | `born` \| `retired` \| `restated` \| `renamed` \| `ordinal_assigned` |
+| changelog `subject_kind` (history profile) | `declaration` \| `item` \| `location` \| `artifact` |
+| changelog `reason` (history profile) | `statement_changed` \| `removed` \| `renamed` \| `moved` \| `other` |
+| selector `type` | `FragmentSelector` \| `TextQuoteSelector` \| `CssSelector`, plus the extensions `PdfRegionSelector` and `SitePageSelector` |
 | `coordinate_space.origin` | `top_left` \| `bottom_left` (`top_left` goes with `y_axis` `down`, `bottom_left` with `up`) |
 | `coordinate_space.units` | `normalized` (fractions of the page box) \| `pt` (points) |
 | `coordinate_space.x_axis` | `right` |
@@ -77,124 +73,101 @@ core passes with a warning.
 | `text_layer.unicode` | `none` \| `nfc` \| `nfkc` |
 | `text_layer.whitespace` | `exact` \| `collapse` \| `ignore` |
 | `text_layer.case` | `sensitive` \| `insensitive` |
-| destination `resolution` | `exact` (needs a `fragment`) \| `fallback` (needs a `fallback_label`) |
 | `conformsTo` with a grammar check (open) | `http://tools.ietf.org/rfc/rfc8118` and its synonym `http://tools.ietf.org/rfc/rfc3778` (PDF), `http://tools.ietf.org/rfc/rfc5147` (text), `http://tools.ietf.org/rfc/rfc3236` (HTML id), `http://www.w3.org/TR/media-frags/` (Media Fragments) |
+
+The meaning of an item's `coverage` value is in `docs/annotations.md`
+section 5.2, and invariant I5 (section 5.4) ties it to the item's links.
+`example_only` is for an item whose only formalisations are anonymous
+`example` declarations that the producer links with role `example`, not
+`key`. An anonymous example MAY be a `key` link's target: it then states the
+item, and the item is `formalized`.
 
 ---
 
-## 2. The shared sets
+## 2. The audit, source and declaration sets
 
-These sets were first written for the formal-companion skill's own
-stages (findings, the adjudication ledger, the viewer, sources, sorry
-classes), and the format uses them unchanged. They are defined here, values
-and meanings, and `vocab.py` writes them out as literals, so this package
-imports nothing from the skill. The `verdicts` record that uses five of them
-is specific to faithfulness audits (section 3.7 of `docs/annotations.md`); a
-producer that does not audit omits it.
+The `verdicts` record of the `audit` profile (section 8.3 of
+`docs/annotations.md`) records the adjudicated outcome of checking an item's
+declarations against its source. Its vocabulary is the format's own: how a
+producer arrives at a verdict is its own method, which the verdict's
+`provenance` names. A producer's finer categories (finding kinds, finding
+ids, adjudication outcomes) go in `x_` keys. A source's `role` (2.5) and a
+declaration's `sorry` (2.6) are core fields.
 
-| set | where the format uses it | first written in the skill's vocabulary |
-|---|---|---|
-| `VIEWER_VERDICTS` | a verdict's `verdict` and each `declarations[].verdict` (2.1) | section 1.7, viewer layer |
-| `VIEWER_SEVERITIES` | a verdict's `severity` (2.2) | sections 1.3 and 1.7 |
-| `VIEWER_STATUS` | a verdict's `status` (2.3) | section 1.7 |
-| `LEDGER_VERDICTS` | a verdict's `ledger_verdict` (2.4) | section 1.4, ledger verdicts |
-| `FINDING_KINDS` | a verdict's `finding_kind` (2.5) | section 1.2, finding kinds |
-| `SOURCE_ROLES` | a source's `role` (2.6) | section 1.6, the source model |
-| `SORRY_CLASSES` | a declaration's `sorry` (2.7) | the adapter contract (`cflib.vocab`) |
-| `STATIC_RESOLUTIONS`, `RESOLUTION_PREFIXES` | the values of a verdict's `resolution.state` (2.8) | section 1.5, resolutions |
+| set | where the format uses it |
+|---|---|
+| `ANNOTATION_VERDICTS` | a verdict's `verdict` and each `declarations[].verdict` (2.1) |
+| `ANNOTATION_SEVERITIES` | a verdict's `severity` (2.2) |
+| `ANNOTATION_VERDICT_STATUSES` | a verdict's `status` (2.3) |
+| `ANNOTATION_RESOLUTION_STATES` | a verdict's `resolution.state` (2.4) |
+| `ANNOTATION_SOURCE_ROLES` | a source's `role` (2.5) |
+| `ANNOTATION_SORRY_CLASSES` | a declaration's `sorry` (2.6) |
 
-### 2.1 `VIEWER_VERDICTS`: a verdict's `verdict`
+### 2.1 `ANNOTATION_VERDICTS`: a verdict's `verdict`
 
-The verdict on an item, and on each declaration it names. The skill derives
-it from its ledger verdict (in brackets); a ledger `UNSURE` has none.
+The verdict on an item, and on each declaration the verdict names.
 
 | value | meaning |
 |---|---|
-| `faithful` | the declarations state what the item says: no defect was found, or the finding was refuted (`REFUTED`) |
-| `convention` | the declarations differ from the text only by an encoding or degenerate-case choice whose recovery argument is written down, or the printed text is what diverges (`CONVENTION`, `ERRATA`) |
-| `attribution_gap` | a faithful statement exists, but not in the declaration attributed to the item: the fix is naming, not mathematics (`ATTRIBUTION_GAP`) |
-| `proxy` | the declarations are about a stand-in: a library object adopted as the item's notion, whether or not an equivalence to the source's notion is proved (finding kind `PROXY`) |
-| `deviation` | the declarations assert something materially different from the text, or leave out a main clause (`CONFIRMED_CONTENT`) |
+| `faithful` | the declarations state what the item says: no defect was found, or a suspected defect was refuted |
+| `convention` | the declarations differ from the text only by an encoding or degenerate-case choice whose recovery argument is written down, or the printed text is what diverges and an errata entry says so |
+| `attribution_gap` | a faithful statement exists in the companion, but not in the declaration attributed to the item: the fix is naming, not mathematics |
+| `proxy` | the declarations are about a stand-in: a library object adopted as the item's notion, whether or not an equivalence to the source's notion is proved |
+| `deviation` | the declarations assert something materially different from the text, or leave out a main clause |
 
-### 2.2 `VIEWER_SEVERITIES`: a verdict's `severity`
+### 2.2 `ANNOTATION_SEVERITIES`: a verdict's `severity`
 
 Four levels, ordered `none` < `low` < `medium` < `high`. The format fixes the
-levels and their order; how a producer weighs a defect is its own method,
-which the verdict's `provenance` names.
+levels and their order; how a producer weighs a defect is its own method.
 
 | value | meaning |
 |---|---|
-| `none` | no defect to weigh: the verdict is `faithful`, or the finding was refuted |
+| `none` | no defect to weigh: the verdict is `faithful`, or the suspected defect was refuted |
 | `low` | a real defect of the least weight, such as an attribution gap where a faithful declaration exists, or a proxy with a proved bridge |
 | `medium` | a real defect of middle weight, such as a proxy with no bridge, or a notion the companion does not define at all |
 | `high` | a real defect of the greatest weight, such as one that changes what the item's main claim says |
 
-### 2.3 `VIEWER_STATUS`: a verdict's `status`
+### 2.3 `ANNOTATION_VERDICT_STATUSES`: a verdict's `status`
 
 | value | meaning |
 |---|---|
-| `unconfirmed` | the verdict stands as a machine pass wrote it: nobody has contested it, a human has not confirmed it, and it is not fixed |
+| `unconfirmed` | the verdict stands as a machine pass wrote it: nobody has contested it, no human has confirmed it, and it is not fixed |
 | `contested` | the adjudication recorded dissent it did not settle |
 | `human_confirmed` | a human confirmed the verdict; a machine pass never writes it |
 | `fixed` | the defect is fixed in the companion; the verdict's `resolution.state` is then `fixed` |
 
-### 2.4 `LEDGER_VERDICTS`: a verdict's `ledger_verdict`
+### 2.4 Resolution states: a verdict's `resolution.state`
 
-The outcome of adjudicating one finding.
-
-| value | meaning |
-|---|---|
-| `CONFIRMED_CONTENT` | the Lean asserts something materially different from the source, or a main clause is missing |
-| `ATTRIBUTION_GAP` | a faithful statement exists in the repository, but the declaration attributed to the item does not state it: the fix is naming, not mathematics |
-| `CONVENTION` | an encoding or degenerate-case choice: the source's claim is recoverable, and the recovery argument is written down |
-| `ERRATA` | the printed text is what diverges; the errata entry decides it |
-| `REFUTED` | the finding's factual premise is wrong (misread Lean, misread source, wrong edition) |
-| `UNSURE` | adjudicated and undecided; the verdict's `summary` says what would decide it |
-
-### 2.5 `FINDING_KINDS`: a verdict's `finding_kind`
-
-The kind of the finding the verdict adjudicated.
-
-| value | meaning |
-|---|---|
-| `CONTENT` | the Lean states something other than the source's claim; the evidence is a quote of the source and a witness |
-| `VACUITY` | the statement is vacuous or trivially true; the witness is the instance that makes it so |
-| `PROXY` | a definition stands in for the source's notion: a library object adopted as the definition, with a bridge to the source's notion that is proved, taken by fiat, or missing |
-| `SUSPECTED_ERRATA` | the divergence may be the printed text's; the evidence cites the errata entry by date and URL |
-| `COVERAGE` | no declaration formalises the item; the evidence is the item and its page |
-| `PAGE_ANCHOR` | a page anchor in the companion names the wrong page of its anchor edition; found by a mechanical check, never by a model |
-
-### 2.6 `SOURCE_ROLES`: a source's `role`
-
-| value | meaning |
-|---|---|
-| `audited` | at least one companion is checked against this source |
-| `reference` | prepared only so that a page map to a sibling edition can be checked, and audited by nobody: an edition a repository bundles but does not anchor to |
-
-### 2.7 `SORRY_CLASSES`: a declaration's `sorry`
-
-| value | meaning |
-|---|---|
-| `exercise` | the declaration's proof holds a `sorry` left on purpose, for an exercise the reader is to do; a companion's policy may keep it permanently |
-| `gap` | the declaration's proof holds a `sorry` that stands for work not done yet |
-| `none` | the declaration holds no `sorry` |
-
-### 2.8 Resolution states: a verdict's `resolution.state`
-
-`vocab.ANNOTATION_RESOLUTION_STATES`: `open`, the values of
-`STATIC_RESOLUTIONS` (`refuted`, `argued_correct`, `out_of_scope`), and the
-values of `RESOLUTION_PREFIXES` (`fixed:`, `in_progress:`) without the colon.
-The skill writes the last two as strings (`fixed:PR#8`,
-`in_progress:<branch>`); the format writes them as a `state` with `pr`,
-`commits` or `branch` beside it.
+`vocab.ANNOTATION_RESOLUTION_STATES`. `resolution` is optional: a verdict
+without one is open. A `fixed` resolution names the `pr` or the `commits`;
+an `in_progress` one names the `pr` or the `branch`.
 
 | value | meaning |
 |---|---|
 | `open` | nobody has resolved the verdict; a verdict with no `resolution` is open too |
 | `fixed` | the defect is fixed; the resolution names the `pr` or the `commits` |
 | `in_progress` | a fix is under way; the resolution names the `pr` or the `branch` |
-| `refuted` | the finding's premise was wrong, so there is nothing to fix |
+| `refuted` | the suspected defect's premise was wrong, so there is nothing to fix |
 | `argued_correct` | the owner answered the finding rather than fixing it: the statement is argued to be right as it stands |
 | `out_of_scope` | the finding concerns something outside what the companion sets out to formalise, and is closed without a fix |
+
+### 2.5 `ANNOTATION_SOURCE_ROLES`: a source's `role`
+
+What a source is for. The field is core (section 5.1 of
+`docs/annotations.md`): a document with no verdicts MAY still say which
+source it audits or keeps as a reference.
+
+| value | meaning |
+|---|---|
+| `audited` | at least one companion is checked against this source |
+| `reference` | prepared only so that a page map to a sibling edition can be checked, and audited against by nobody: an edition a repository bundles but does not anchor to |
+
+### 2.6 `ANNOTATION_SORRY_CLASSES`: a declaration's `sorry`
+
+| value | meaning |
+|---|---|
+| `exercise` | the declaration's proof holds a `sorry` left on purpose, for an exercise the reader is to do; a companion's policy may keep it permanently |
+| `gap` | the declaration's proof holds a `sorry` that stands for work not done yet |
+| `none` | the declaration holds no `sorry` |
 
 ---

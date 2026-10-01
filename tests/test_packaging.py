@@ -1,10 +1,9 @@
 """The package as a package: its entry points, its imports, its version and its docs.
 
-New code for the standalone project (the skill ran the checker by path, so none
-of this existed there).  It checks that the package imports nothing but the
-standard library and itself (so nothing from the formal-companion skill),
-that the console script and ``python3 -m`` both reach the checker, that the
-version is stated once, and that every repository path the docs cite exists.
+It checks that the package imports nothing but the standard library and
+itself, that the console script and ``python3 -m`` both reach the checker,
+that the version is stated once, that the repository has the documented
+layout, and that every repository path the docs cite exists.
 """
 from __future__ import annotations
 
@@ -40,6 +39,7 @@ PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
 #: The directory it was imported from (``src/`` or a ``site-packages``).
 IMPORT_ROOT = PACKAGE.parent
 EXAMPLES = ROOT / "examples" / "annotations"
+SCHEMA_FILE = "annotations-v1.0.schema.json"
 #: Set by the CI job that installs the package and runs the suite against it.
 EXPECT_INSTALLED = os.environ.get("FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED") == "1"
 
@@ -82,21 +82,36 @@ class TestStandalone(unittest.TestCase):
         self.assertEqual(pyproject()["project"]["dependencies"], [])
 
     def test_the_version_is_stated_once(self):
-        self.assertEqual(pyproject()["project"]["version"], formal_companion_annotations.__version__)
+        """pyproject, ``__version__`` and the CHANGELOG's first release heading agree.
+
+        A heading is ``## <version>`` or ``## <version> (<date or "unreleased">)``.
+        """
+        version = formal_companion_annotations.__version__
+        self.assertEqual(pyproject()["project"]["version"], version)
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         headings = re.findall(r"^## (\S+)", changelog, re.M)
         released = [h for h in headings if h != "Unreleased"]
         self.assertTrue(released)
-        self.assertEqual(released[0], formal_companion_annotations.__version__)
+        self.assertEqual(released[0], version)
         # An "Unreleased" entry, when there is one, comes first and only once.
         self.assertLessEqual(headings.count("Unreleased"), 1)
         if "Unreleased" in headings:
             self.assertEqual(headings[0], "Unreleased")
 
+    def test_a_release_candidate_is_marked_beta(self):
+        classifiers = pyproject()["project"]["classifiers"]
+        status = [c for c in classifiers if c.startswith("Development Status ::")]
+        self.assertEqual(len(status), 1)
+        if "rc" in formal_companion_annotations.__version__:
+            self.assertEqual(status, ["Development Status :: 4 - Beta"])
+        else:
+            self.assertEqual(status, ["Development Status :: 5 - Production/Stable"])
+
     def test_the_schema_ships_as_package_data(self):
         data = pyproject()["tool"]["setuptools"]["package-data"]["formal_companion_annotations"]
         self.assertIn("schema/*.json", data)
         self.assertTrue(V.SCHEMA_PATH.is_file())
+        self.assertEqual(V.SCHEMA_PATH.name, SCHEMA_FILE)
         self.assertEqual(Path(V.__file__).resolve().parent, PACKAGE)
         self.assertEqual(V.SCHEMA_PATH.parent, PACKAGE / "schema")
         self.assertNotEqual(V.SCHEMA_PATH.resolve().parent, (ROOT / "schema").resolve(),
@@ -189,23 +204,57 @@ class TestEntryPoints(unittest.TestCase):
                     child = self.run_module(module, str(good), env=env)
                     self.assertEqual(child.returncode, 2, child.stdout + child.stderr)
                     self.assertEqual(child.stdout, "")
-                    missing = broken / "schema" / "annotations-v1.schema.json"
+                    missing = broken / "schema" / SCHEMA_FILE
                     self.assertTrue(child.stderr.startswith(
                         f"formal-companion-annotations-validate: schema file not found: {missing} "), child.stderr)
                     self.assertNotIn("no schema for major version", child.stderr)
                     self.assertNotIn("Traceback", child.stderr)
-                    # --print-canonical reads no schema, so it still works there.
+                    # --print-canonical validates first, so it needs the schema too.
                     printed = self.run_module(module, str(good), "--print-canonical", env=env)
-                    self.assertEqual(printed.returncode, 0, printed.stderr)
-                    self.assertEqual(printed.stdout, good.read_text(encoding="utf-8"))
+                    self.assertEqual(printed.returncode, 2, printed.stderr)
+                    self.assertEqual(printed.stdout, "")
+                    self.assertIn("schema file not found", printed.stderr)
 
 
 #: A backticked token is read as a path in this repository when it starts with one of these.
+#: ``conformance/`` is the conformance suite's own concern (tests/test_conformance.py).
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
-REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SWITCHOVER.md", "LICENSE", "pyproject.toml")
-#: Documents about THIS repository.  SWITCHOVER.md and CHANGELOG.md are about the
-#: skill's tree too, so they cite paths that are not here by design.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md")
+REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "MANIFEST.in", "pyproject.toml")
+#: Documents about THIS repository.
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/id-algorithm.md", "docs/vocabulary.md",
+        "docs/mapping-notes.md", "docs/history.md")
+#: The repository layout (README.md "Repository layout").
+LAYOUT = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "MANIFEST.in", "pyproject.toml",
+          "docs/annotations.md", "docs/id-algorithm.md", "docs/vocabulary.md", "docs/mapping-notes.md",
+          "docs/history.md", f"schema/{SCHEMA_FILE}", "src/formal_companion_annotations/__init__.py",
+          "src/formal_companion_annotations/__main__.py", "src/formal_companion_annotations/validate.py",
+          "src/formal_companion_annotations/schemacheck.py", "src/formal_companion_annotations/ids.py",
+          "src/formal_companion_annotations/vocab.py", f"src/formal_companion_annotations/schema/{SCHEMA_FILE}",
+          "src/formal_companion_annotations/py.typed", "examples/annotations/minimal.json", "conformance/ids",
+          "tests", ".github/workflows/tests.yml")
+
+
+class TestTheRepositoryLayout(unittest.TestCase):
+
+    def test_the_documented_layout_exists(self):
+        for path in LAYOUT:
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).exists(), f"{path} is not here")
+        self.assertEqual(sorted(p.name for p in ROOT.glob("*.md")), ["CHANGELOG.md", "CONTRIBUTING.md", "README.md"],
+                         "the top-level documents are exactly the documented three")
+        self.assertEqual(sorted(p.name for p in (ROOT / "schema").glob("*")), [SCHEMA_FILE])
+
+    def test_the_sdist_manifest_carries_the_test_inputs(self):
+        manifest = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
+        for line in ("include CHANGELOG.md CONTRIBUTING.md MANIFEST.in\n", "graft docs\n", "graft examples\n",
+                     "graft schema\n", "graft conformance\n", "graft tests\n", "graft .github\n"):
+            self.assertIn(line, manifest)
+        self.assertEqual(manifest.count("include "), 1)
+
+    def test_the_ci_names_the_schema_file(self):
+        workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
+        self.assertIn(f"schema/{SCHEMA_FILE}", workflow)
+        self.assertNotIn("annotations-v1.schema.json", workflow)
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):
@@ -227,7 +276,7 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
 
     def test_no_em_dash_in_the_docs(self):
-        for name in DOCS + ("CHANGELOG.md", "SWITCHOVER.md"):
+        for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
                 self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
 

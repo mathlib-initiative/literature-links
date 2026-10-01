@@ -1,288 +1,309 @@
 # formal-companion-annotations
 
-A **Lean companion** is a Lean repository that formalises a book, lecture
-notes or a paper. The **formal-companion annotation format** is one JSON
-document per companion that says which Lean declarations formalise which
-items of which sources, and where those items sit in the sources: a PDF
-region, a quote on a web page, a page of a rendered site, a line range in a
-`.tex` or `.lean` file. With it, a PDF overlay, a web viewer or an audit can
-join the book and the Lean without reading either repository's own
-conventions.
+**One JSON file per Lean companion that says which Lean declarations formalise
+which items of which sources, and where those items sit in the sources.**
 
-This repository holds the format and nothing else: its JSON Schema, its prose
-specification, a checker that validates what a JSON Schema cannot, the
-mechanical id rules, and synthetic examples, as the Python package
-`formal_companion_annotations`. It is standard library only (Python 3.11+)
-and has no runtime dependencies.
+A *Lean companion* is a Lean 4 repository that formalises a book, a set of
+lecture notes or a paper. Today every companion invents its own way to say
+"this declaration formalises Definition 1.2": a docstring tag, a table, a
+dependency graph, a blueprint macro. Nothing built for one companion works for
+the next. This format is the one file a companion can publish so that a PDF
+overlay, a rendered site, an audit or a dataset builder can join the book and
+the Lean without reading either repository's own conventions. It holds no
+book text: only identifiers, page geometry and short anchoring quotes.
 
-## Who writes and reads it
+This repository is the format and nothing else:
 
-The format was designed in, and is used today by,
-[formal-companion](https://github.com/mathlib-initiative/formal-companion)
-(formerly named companion-faithfulness), the Claude Code skill that audits
-Lean companions against their sources. Its tools are the format's producers
-and readers:
+- the specification ([`docs/annotations.md`](docs/annotations.md)) and the
+  id algorithm ([`docs/id-algorithm.md`](docs/id-algorithm.md));
+- the JSON Schema ([`schema/annotations-v1.0.schema.json`](schema/annotations-v1.0.schema.json));
+- a checker for the invariants no JSON Schema can state, as the Python
+  package `formal_companion_annotations` (standard library only, Python 3.11+);
+- synthetic examples and a language-neutral conformance suite
+  ([`conformance/`](conformance/)).
 
-- **exporters**: `cf export attribution-table` and `cf export docstring-tags`
-  turn a companion's own attribution data into a document;
-- **the PDF-to-companion pipeline**: `cf ingest` and `cf inventory` write
-  its checkpoints (`doc.v0.json`, `doc.v1.json`) as documents;
-- **readers**: `cf review-tags` checks a document's key links, and the
-  pipeline reads its checkpoints back.
+## Status
 
-Each of them validates what it writes with this package's checker. The skill
-consumes the package by vendoring each release (see
-[`SWITCHOVER.md`](SWITCHOVER.md)); section 11 of the spec lists the tools.
-Anyone else can write or read documents too: the schema is plain JSON Schema,
-and the spec says everything a document must satisfy.
+**Release candidate (`1.0.0rc1`).** The format's version is `1.0`. The
+package and the format follow the compatibility rules in
+[`docs/annotations.md`](docs/annotations.md) section 12, but until `1.0.0`
+is released a release candidate may still change the format. `1.0.0` will
+be released when all of the following hold:
 
-## The format in brief
+1. at least one reader other than the checker consumes documents (an overlay,
+   a site, a dataset builder);
+2. documents have been produced for at least three companions, one of which
+   uses none of the conventions the format was first designed against;
+3. each of those companions validates its exported document in its own CI at
+   every commit.
 
-A document has a fixed header (`schema`, `schema_version`, `companion`) and
-arrays of records, each with a string `id` and each array sorted by it:
+## A complete document
 
-- `sources`: the editions annotated (a PDF, a web page, a whole rendered site,
-  a `.tex` or `.lean` file, or any other medium named by its media type), each
-  pinned by a hash or an immutable revision;
-- `items`: numbered items (`Definition 1.1`) and unnumbered passages;
-- `declarations`: the Lean declarations anything mentions, with mechanical
-  ids for anonymous ones (`example:<12 hex>` from a hash of the statement);
-- `links`: item to declaration attributions, with a role (`key`,
-  `attributed`, `support`, `example`, `helper`);
-- `provenance`: how links and locations were produced;
-- optional `locations` (W3C Web Annotation targets: PDF regions and pages,
-  quotes, text offsets, line ranges, pages of a site), `destinations`,
-  `snippets`, `verdicts`, `unattributed`, `clusters`, `memberships`,
-  `artifacts` and an id `changelog`.
+The smallest useful document: one source, one item, one declaration, one
+link, one provenance record. It is [`examples/annotations/minimal.json`](examples/annotations/minimal.json)
+and it validates as it stands.
 
-`verdicts` is specific to faithfulness audits (the adjudicated outcome of
-checking an item's Lean against its source). It is part of the core format
-in 1.0 and optional: a producer that does not audit omits it, and no other
-record depends on it.
+```json
+{
+  "companion": {
+    "commit": "ed00b5dc6b11040ed2f9baf475edc9b48e1c7f4a",
+    "generated_at": "2026-09-26T12:00:00Z",
+    "generator": "hand",
+    "name": "notes-companion",
+    "repo": "git.example.org/example/notes-companion"
+  },
+  "declarations": [
+    {
+      "anonymous": false,
+      "file": "Notes/Basic.lean",
+      "id": "Notes.Box.volume_nonneg",
+      "id_source": "name",
+      "kind": "theorem",
+      "line": 41,
+      "module": "Notes.Basic",
+      "name": "Notes.Box.volume_nonneg",
+      "private": false
+    }
+  ],
+  "items": [
+    {
+      "form": "numbered",
+      "id": "lemma-1.2",
+      "id_source": "label",
+      "kind": "Lemma",
+      "number": "1.2",
+      "pages": {
+        "basis": "printed",
+        "first": 5
+      },
+      "source": "notes-pdf"
+    }
+  ],
+  "links": [
+    {
+      "declaration": "Notes.Box.volume_nonneg",
+      "id": "lemma-1.2/key/Notes.Box.volume_nonneg",
+      "item": "lemma-1.2",
+      "provenance": "prov-curation",
+      "role": "key"
+    }
+  ],
+  "provenance": [
+    {
+      "actor": "human",
+      "confirmed_by_human": true,
+      "id": "prov-curation",
+      "method": "curation"
+    }
+  ],
+  "schema": "formal-companion/annotations",
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "id": "notes-pdf",
+      "kind": "pdf",
+      "sha256": "e45a0b99dd11778aac792ecd226d150a9d28b82c9e2897510f441235956a3b07",
+      "title": "Elementary Sets: Lecture Notes (synthetic)"
+    }
+  ]
+}
+```
 
-- [`docs/annotations.md`](docs/annotations.md) is the specification;
-- [`docs/vocabulary.md`](docs/vocabulary.md) defines every enum value and
-  what it means, including the sets the format shares with formal-companion
-  (the format owns them; producers conform);
-- [`schema/annotations-v1.schema.json`](schema/annotations-v1.schema.json)
-  is the JSON Schema (draft 2020-12) for `schema_version` `"1.0"`;
-- [`examples/annotations/`](examples/annotations/) has one synthetic document
-  per kind of source, and two that are invalid on purpose.
+Reading it: the **source** is a PDF pinned by its sha256. The **item** is
+"Lemma 1.2" of that source, on printed page 5. The **declaration** is a
+named Lean theorem at a pinned commit of the companion. The **link** says the
+declaration is the `key` formalisation of the item (it states the whole item),
+and names the **provenance** record that says who claims so and how.
 
-The canonical serialisation follows RFC 8785 (JCS) for key order and numbers,
-with a fixed two-space layout (spec section 7).
+## Concepts
+
+```mermaid
+erDiagram
+    SOURCE ||--o{ ITEM : "has"
+    ITEM ||--o{ LINK : "is formalised by"
+    DECLARATION ||--o{ LINK : "formalises"
+    SOURCE ||--o{ LOCATION : "is where"
+    LOCATION }o--o{ ITEM : "shows"
+    PROVENANCE ||--o{ LINK : "produced"
+    PROVENANCE ||--o{ LOCATION : "produced"
+```
+
+- **sources**: the editions annotated (a PDF, a web page, a rendered site, a
+  `.tex` or `.lean` file, any other medium), each pinned by a hash, an
+  immutable revision or, for a PDF whose bytes the producer does not hold,
+  a DOI, ISBN or arXiv identifier.
+- **items**: numbered items (`Definition 1.1`) and unnumbered passages, with
+  their coverage class and, optionally, cross-references to external
+  databases (Stacks Project, Kerodon, Wikidata, LMFDB).
+- **declarations**: the Lean declarations anything mentions. Named ones use
+  their name as id; anonymous `example`s and instances get a mechanical id
+  from a hash of their statement.
+- **links**: item to declaration, with a role (`key`, `attributed`, `support`,
+  `example`, `helper`) and a relation (`exact`, `special_case`, `part`, ...).
+- **locations**: where an item sits in a source, as a W3C Web Annotation
+  target: a PDF region, a page, a quote, an HTML element, a page of a site,
+  a line range in a file.
+- **provenance**: who produced the links and locations, and how.
+
+Four optional **profiles** add more, each versioned on its own: `graph` (a
+companion's own dependency graph: clusters, memberships, artifacts), `site`
+(where declarations are rendered on a companion site, and statement
+snippets), `audit` (adjudicated faithfulness verdicts), `history` (id
+events: retired, restated, renamed). A reader that does not implement a
+profile ignores it.
 
 ## Install
 
-The repository is private for now, so installing needs read access to it
-(an SSH key or a token git can use). There is no package-index release.
+Releases and release candidates are published to PyPI as
+`formal-companion-annotations`. A release candidate is a pre-release, so
+`pip` needs `--pre` until `1.0.0` is out:
 
 ```sh
-python3 -m pip install "formal-companion-annotations @ git+https://github.com/mathlib-initiative/formal-companion-annotations@v1.0.0"
-# or, with an SSH key:
-python3 -m pip install "formal-companion-annotations @ git+ssh://git@github.com/mathlib-initiative/formal-companion-annotations@v1.0.0"
-# or from a checkout:
+python3 -m pip install --pre formal-companion-annotations
+```
+
+From a checkout, and until `1.0.0rc1` is tagged and published:
+
+```sh
 python3 -m pip install .
 ```
 
-Pin a tag. The package is standard library only, so nothing else is
-installed.
+Nothing else is installed: the checker is standard library only.
 
-## Usage
-
-### The command line
+## Validate
 
 ```sh
 formal-companion-annotations-validate my-companion.annotations.json
-formal-companion-annotations-validate my-companion.annotations.json --canonical
+```
+
+```sh
+formal-companion-annotations-validate my-companion.annotations.json --canonical --lint external-urls
+```
+
+```sh
 formal-companion-annotations-validate my-companion.annotations.json --print-canonical > fixed.json
 ```
 
-`python3 -m formal_companion_annotations` (or
-`python3 -m formal_companion_annotations.validate`) runs the same checker.
+`python3 -m formal_companion_annotations` runs the same checker. It reads the
+document's `schema_version` and evaluates the JSON Schema of that exact
+minor. It then checks the invariants of the specification (section 9):
+unique and sorted ids, references that resolve, the coverage and link rules,
+the id rules, the selector grammars, the profile gating. The flags:
 
-The checker reads the document's `schema_version`, evaluates the JSON Schema
-for that major version with its own small draft 2020-12 evaluator, and then,
-on a document the schema accepts, checks the invariants no JSON Schema can
-state ([spec section 6](docs/annotations.md#6-invariants-and-warnings)):
-unique and sorted ids, references that resolve, anchoring and coverage rules,
-the id rules, selector grammars against their `conformsTo`, the changelog's
-rules and the URL rule. `--canonical` also requires the file's bytes to be
-the canonical form; `--print-canonical` writes that form (it does not
-validate first; see "Known issues").
+- `--canonical` also requires the file's bytes to be the canonical form;
+- `--print-canonical` sorts one document, validates the result and writes
+  that form to standard output, so a producer never has to hand-sort;
+  problems and warnings go to standard error;
+- `--lint NAME` adds an opt-in check that is not part of validity
+  (`external-urls`: no URL outside the fields meant to hold one);
+- `--format json` prints one JSON object per document instead of text lines;
+- `--version` prints the package version.
 
 Output, one line each:
 
-- `<file>: <path>: <message>` for each problem;
-- `<file>: warning: <message>` for each warning (an unknown `conformsTo` IRI,
-  a link `relation` outside the documented core, a newer minor version),
-  which does not fail the document;
-- `<file>: ok (<counts>)` for a valid document.
+- `<file>: <path>: <message> [<code>]` for each problem;
+- `<file>: warning: <path>: <message> [<code>]` for each warning;
+- `<file>: ok (<counts>)` for a valid document;
+- `<file>: cannot read: <message>` for a file that is not I-JSON or cannot
+  be opened (on standard error).
 
-Exit status: **0** valid, **1** invalid, **2** unreadable (not JSON, a
-duplicate key, `NaN`), a usage error, or a broken install (the packaged
-schema file is missing: "schema file not found"). `--version` prints the
-package's version.
+For example:
+
+```
+examples/annotations/minimal.json: ok (1 sources, 1 provenance, 1 items, 1 declarations, 1 links)
+examples/annotations/invalid-dangling-reference.json: $.links[2].declaration: 'Notes.Box.volume_pos' is not an id in declarations[] [I3]
+```
+
+Exit status: **0** every document is valid; **1** at least one is invalid;
+**2** at least one could not be read (not JSON, a duplicate key, a number
+too large, a lone surrogate), a usage error, a broken install or an internal
+error. The codes (`SCHEMA`, `IJSON`, `I1` to `I14` with `I10` retired,
+`L1`, `W-...`) are stable across releases; the wording of a message is not.
 
 ### From Python
 
 ```python
 from formal_companion_annotations import validate
 
-text = open("doc.json", encoding="utf-8").read()
-doc = validate.loads(text)                     # strict: no duplicate keys, no NaN
-report = validate.check(doc, text=text, canonical=True)
-report.problems, report.warnings               # lists of "path: message"
+data = open("doc.json", "rb").read()
+doc = validate.loads(data)                       # strict I-JSON; str or bytes
+report = validate.check(doc, text=data, canonical=True, lints=("external-urls",))
+report.ok                                        # True when there are no problems
+for problem in report.problems:                  # Problem(code, path, message)
+    print(problem.code, problem)                 # str(problem) is "<path>: <message>"
 canonical = validate.canonical_dumps(validate.canonicalize(doc))
 ```
 
-[`ids`](src/formal_companion_annotations/ids.py) has the mechanical id rules
-(statement-hash ids for `example` and anonymous `instance`, scanning Lean
-source, private ids, and the passage ids), and
-[`vocab`](src/formal_companion_annotations/vocab.py) the enums and the id
-grammar. Any JSON Schema 2020-12 validator can check the schema alone
-(`validate.SCHEMA_PATH` is the packaged copy); only this checker also checks
-the invariants.
-
-### Public API
-
-The stable Python API is exactly each module's `__all__`:
-
-| module | exports |
-|---|---|
-| `formal_companion_annotations` | `__version__` and the four modules below |
-| `validate` | `loads`, `LoadError`, `check`, `Report`, `validate`, `main`, `canonicalize`, `canonical_dumps`, `order_key`, `site_sha256`, `RECORD_ARRAYS`, `SCHEMA_DIR`, `SCHEMA_PATH`, `schema_path` |
-| `ids` | `AnonymousDecl`, `scan_file`, `assign_ids`, `ordinal_ids`, `statement_sha256`, `normalize_statement`, `anonymous_id`, `private_id`, `named_signature`, `comment_tags`, `item_label_id`, `passage_quote_id`, `passage_page_id`, `normalize_text`, `strip_comments`, `blank_literals`, `token_at`, `HASH_ID`, `DECLARED_ID` |
-| `schemacheck` | `Validator`, `SchemaError` |
-| `vocab` | every constant (the enums, the id grammar, the `conformsTo` IRIs, `ANNOTATION_SCHEMA` and its version) |
-
-Any other name, underscored or not, is internal and may change in any
-release. The public API is fully annotated, and the package ships a
-`py.typed` marker. [`tests/test_public_api.py`](tests/test_public_api.py)
-checks that every name formal-companion imports is exported.
-
-## Versions and compatibility
-
-The package follows semantic versioning, tied to the format's version
-(`schema_version`, `"<major>.<minor>"`):
-
-- **MAJOR** is the format's major version. Package 1.x reads documents whose
-  `schema_version` is `"1.*"`, and only those. A change a reader of the
-  previous major cannot ignore (a key removed or made required, a value
-  removed or given another meaning) is a new major, of both.
-- **MINOR** is for backward-compatible additions: new optional fields or new
-  enum values (a new format minor, `"1.1"`), or new public Python names. A
-  document valid under X.Y stays valid under X.(Y+1).
-- **PATCH** is for checker and documentation fixes that do not change which
-  documents the spec admits. Fixing a checker that wrongly accepted a
-  document the spec forbids is a patch, since the spec never admitted that
-  document; the CHANGELOG calls out every such fix, because a document that
-  passed before can fail after it.
-
-Also under semver: the CLI's exit statuses (0, 1, 2) and its line formats
-above, and the Python API (`__all__`). The wording of a message is not: match
-on the exit status and the path, not the words.
-
-**The checker picks the schema by the major version alone.** A 1.1 checker
-checks every `"1.*"` document against its 1.1 schema, so a document that says
-`"1.0"` but uses a key added in 1.1 passes. The checker cannot tell that the
-declared minor is wrong, so **writers must declare the minor they wrote
-against**. A reader then knows which keys to expect; an older checker that
-meets a newer minor warns, and refuses the keys it does not know (every
-object is closed) rather than dropping them.
-
-The full rules are in
-[spec section 9](docs/annotations.md#9-versions-and-the-changelog), and each
-release is in [`CHANGELOG.md`](CHANGELOG.md).
-
-## The format identifier is still `lean-companion/annotations`
-
-The project is named formal-companion-annotations, but the identifier every
-document carries is unchanged: the root `schema` key is still
-`"lean-companion/annotations"` (the schema's `schema` const and
-`vocab.ANNOTATION_SCHEMA`), and so is the `lean-companion id:` docstring line
-(spec section 5.1). That is deliberate. The identifier is data inside every
-document and docstring producers have already written, formal-companion's
-exporters and pipeline among them; renaming it would make every one of those
-invalid, for no change in what they mean. It names the format, not the
-repository that hosts it, so it does not follow a rename.
-
-## The schema's `$id`
-
-The schema's `$id` is the raw URL of the schema file at the tag of the
-release that introduced this minor version of the format. For 1.0 that is
-`https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/v1.0.0/schema/annotations-v1.schema.json`.
-It resolves only for clients that can read the repository, which is private
-for now. Validators never fetch it (this checker makes no network request),
-and documents need not carry `$schema`; one that does should give this `$id`.
+`report.warnings` has the same shape. `validate.PROFILES` says what each
+profile owns, `validate.LINTS` names the lints, and `validate.validate()`
+returns the problems as strings. [`ids`](src/formal_companion_annotations/ids.py)
+is the reference implementation of the id rules (statement hashes for
+anonymous declarations, passage ids), and
+[`vocab`](src/formal_companion_annotations/vocab.py) holds every enum. The
+stable Python API is each module's `__all__` (`docs/annotations.md` section
+11.6); the package ships `py.typed`. Any JSON Schema 2020-12 implementation
+can check the schema alone; only this checker also checks the invariants.
 
 ## Repository layout
 
 ```
-schema/annotations-v1.schema.json        the JSON Schema (the package ships the same bytes)
+README.md, CHANGELOG.md, CONTRIBUTING.md, LICENSE
 docs/annotations.md                      the specification
-docs/vocabulary.md                       every enum value and its meaning, the shared sets included
+docs/id-algorithm.md                     the id rules, as an algorithm
+docs/vocabulary.md                       every enum value and its meaning
+docs/mapping-notes.md                    how common attribution conventions map in (informative)
+docs/history.md                          where the code came from (informative)
+docs/w3id/                               the redirect that gives the schema its permanent $id
+schema/annotations-v1.0.schema.json      the JSON Schema (the package ships the same bytes)
 src/formal_companion_annotations/        the package: validate, schemacheck, ids, vocab, schema/
-examples/annotations/                    synthetic documents; the two invalid-*.json fail on purpose
+examples/annotations/                    synthetic documents; invalid-*.json fail on purpose
+conformance/                             language-neutral test vectors, and the Node runner in js/
 tests/                                   stdlib unittest, run with pytest or unittest
-MANIFEST.in                              what the sdist carries beyond the package, so it runs its tests
+pyproject.toml, MANIFEST.in              packaging: the wheel is the package; the sdist runs its tests
+.github/workflows/                       tests.yml (CI) and release.yml (PyPI, trusted publishing)
+.github/ISSUE_TEMPLATE/                  format change proposal, checker bug
 ```
 
-The examples are synthetic: every non-Lean source title says so, and no
-document here quotes a real book.
+The examples are synthetic: every non-Lean source title says so, and nothing
+here quotes a real book.
 
 ## Tests
 
 ```sh
 python3 -m pytest
+```
+
+```sh
 python3 -m unittest discover -s tests
 ```
 
-The suite tests the copy of the package Python imports: an installed one when
-there is one (a regular or an editable install), and otherwise `src/`, which
-it then adds to the path itself, so neither command needs the package
-installed. The sdist carries everything the suite reads (`MANIFEST.in`), so
-an unpacked sdist runs both commands too. When the `jsonschema` package is
-importable, the suite also checks that it agrees with the package's own
-evaluator on every example and on random mutations of them; otherwise those
-tests skip. CI (`.github/workflows/tests.yml`) runs Python 3.11 to 3.14,
-installs `jsonschema` in the 3.13 job, checks an installed wheel's console
-script against the examples, runs the suite against a regular install (and
-checks that it imported the installed copy, not `src/`), and builds the sdist
-and wheel, runs `twine check` on them and runs the unpacked sdist's tests.
+Neither command needs the package installed. When `jsonschema` is importable,
+the suite also checks that it agrees with the package's own evaluator on every
+example and on random mutations of them. CI runs Python 3.11 to 3.14, the
+installed wheel, the sdist, and a Node job that validates the conformance
+documents against the schema with `ajv` and checks the canonical-form vectors
+against a JavaScript reference implementation.
 
-## Known issues
+## Reporting a problem
 
-Both are present, identically, in the copy of the checker formal-companion
-still carries (`scripts/annotations/validate.py` there). They are
-deliberately not fixed in 1.0.0: until the skill vendors this package
-(`SWITCHOVER.md`), the two checkers must accept and reject the same
-documents with the same messages and canonical bytes. Each fix will be a
-patch release, called out in the CHANGELOG.
+A checker that accepts a document the specification forbids, refuses one it
+allows, crashes, or disagrees with the schema or the conformance suite has a
+bug. Report it on the
+[issue tracker](https://github.com/mathlib-initiative/formal-companion-annotations/issues)
+with the "Checker bug" template: the smallest synthetic document that shows
+it, the command with its output and exit status, and the output of
+`--version`. A change to the format itself (a key, a value, a rule, an id
+rule, a profile) uses the "Format change proposal" template. Questions about
+how to express something go to
+[Discussions](https://github.com/mathlib-initiative/formal-companion-annotations/discussions).
 
-- **A number too large for a float passes plain validation, then crashes the
-  canonical form.** `loads()` refuses the `NaN` and `Infinity` literals, but a
-  number such as `1e400` parses, overflows to `inf`, and gets past it. The
-  schema accepts it where any number is allowed (in an `x_` key, say), so the
-  document passes plain validation (exit 0), while `--canonical` and
-  `--print-canonical` crash with a traceback ("ValueError: NaN and Infinity
-  are not JSON") instead of reporting a problem.
-- **`--print-canonical` never validates first.** It canonicalises whatever
-  JSON object it reads, so a malformed document can crash it with a traceback
-  instead of an error message: a `TypeError` (an unhashable value in a list
-  that is sorted as a set, such as `"clusters": [[1]]`, or numbers and strings
-  mixed in a keyed list) or a `UnicodeEncodeError` (a lone surrogate such as
-  `"\ud800"` in a string). Run the checker without the flag first.
-
-## Contributing
+## Contributing and releases
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md): how a change to the format is
-proposed, when it is a minor or a major version, and the rules for the
-schema and the examples. The history of the format before it was extracted,
-and what each release changed, is in [`CHANGELOG.md`](CHANGELOG.md).
+proposed, when it is a minor or a major version, and how a release is cut.
+Each release is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 
 Apache License 2.0 ([`LICENSE`](LICENSE)). Copyright 2026 the
-formal-companion contributors, who wrote this code in the formal-companion
-skill before it moved here.
+formal-companion contributors.

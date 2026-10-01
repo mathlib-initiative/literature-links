@@ -93,11 +93,11 @@
     },
     {
       "anchors": [
-        "instance:8d5e6f532c36@site"
+        "instance:99758575708c@site"
       ],
       "anonymous": true,
       "file": "Notes/Section_2.lean",
-      "id": "instance:8d5e6f532c36",
+      "id": "instance:99758575708c",
       "id_source": "statement_hash",
       "kind": "instance",
       "lean_name": "Notes.instIsProbabilityMeasureCoinMeasure",
@@ -105,7 +105,8 @@
       "module": "Notes.Section_2",
       "namespace": "Notes",
       "private": false,
-      "statement_sha256": "8d5e6f532c36244579669730a68e23d473f11a0d51d02c244c6276107923a46d"
+      "signature": "instance : IsProbabilityMeasure coinMeasure",
+      "statement_sha256": "99758575708ccf89ca3f038af2b1aa3ef711b9b3a501dadc38328d73b78437f2"
     }
   ],
   "destinations": [
@@ -126,10 +127,10 @@
       "site": "verso_literate"
     },
     {
-      "declaration": "instance:8d5e6f532c36",
+      "declaration": "instance:99758575708c",
       "fallback_label": "module page (an anonymous instance has no cross-reference id)",
       "href": "Notes/Section_2/",
-      "id": "instance:8d5e6f532c36@site",
+      "id": "instance:99758575708c@site",
       "resolution": "fallback",
       "site": "verso_literate"
     }
@@ -362,7 +363,7 @@
       }
     },
     {
-      "id": "instance:8d5e6f532c36@site",
+      "id": "instance:99758575708c@site",
       "items": [],
       "provenance": "prov-site",
       "target": {
@@ -428,6 +429,9 @@
       }
     }
   ],
+  "profiles": {
+    "site": "1.0"
+  },
   "provenance": [
     {
       "actor": "tool",
@@ -461,7 +465,7 @@
       }
     }
   ],
-  "schema": "lean-companion/annotations",
+  "schema": "formal-companion/annotations",
   "schema_version": "1.0",
   "sources": [
     {
@@ -473,7 +477,6 @@
       },
       "physical_page_count": 120,
       "printed_page_offset": 10,
-      "role": "audited",
       "sha256": "137fdbd415be1e289866ea88e89cba32b87a4f84fd7fc1ff8c66b0d8e1dc7be8",
       "text_layer": {
         "case": "sensitive",
