@@ -1,11 +1,29 @@
 # Changelog
 
 Releases of formal-companion-annotations. The package follows semantic
-versioning tied to the format's version (`docs/annotations.md` section 12).
+versioning tied to the format's version (`docs/annotations.md` section 7).
 The format's own version is a document's `schema_version`; each profile has
 its own version in `profiles`.
 
-## 1.0.0rc2 (unreleased)
+## 1.0.0rc3 (unreleased)
+
+The repository now holds only the schema, the specification, the checker
+and a few examples. Nothing in the format changed: the checker accepts and
+refuses the same documents with the same codes and paths, and writes the
+same canonical bytes.
+
+- The schema's descriptions say what every field and value means; they
+  replace the separate vocabulary document and the specification's field
+  tables. The specification states only what the schema cannot.
+- One schema file: the wheel ships `schema/` as the package's schema
+  directory, with no second copy in `src/`.
+- The Lean source scanner left `ids` (`scan_file`, `assign_ids`,
+  `ordinal_ids`, `signature_at`, `AnonymousDecl`): finding declarations in
+  Lean is a producer's work. `ids` keeps the format's id rules.
+- The conformance suite, its Node job, the issue templates and the
+  informative documents are removed; the tests are three files.
+
+## 1.0.0rc2 (2026-10-01, tag only)
 
 - **The schema's `$id`** is the raw URL of the schema file on this
   repository's default branch,
@@ -73,15 +91,14 @@ the vocabulary and several fields changed.
 - **Companion.** New optional `toolchain` and `packages` (`{name, rev}`).
 - **Verdicts.** The four fields that carried one audit tool's own verdict,
   finding kind, finding ids and pinned commit are removed; a producer keeps
-  such data under `x_` keys. The vocabulary is the format's own
-  (`docs/vocabulary.md`).
+  such data under `x_` keys. The vocabulary is the format's own.
 - **Ids.** The statement hash now hashes a token-normalised form of the
   header, so formatting-only edits (line breaks, comments, `(x:T)` vs
   `(x : T)`, `=>` vs `↦`, `λ` vs `fun`) keep the id; the display `signature`
   keeps the readable form. Whitespace and identifier characters are defined
-  explicitly. The rules are an algorithm, `docs/id-algorithm.md`, with test
-  vectors under `conformance/ids/`. Ordinals (`~k`) are counted over every
-  `.lean` file tracked at `companion.commit`.
+  explicitly. The rules are stated as an algorithm, with test vectors.
+  Ordinals (`~k`) are counted over every `.lean` file tracked at
+  `companion.commit`.
 - **Scanner fixes.** `public` and `meta` modifiers; a named instance whose
   name is on a later line; typed headers continued at column 0; a trailing
   comment on the previous line no longer declares an id; same-line
@@ -132,16 +149,14 @@ the vocabulary and several fields changed.
 - The public API is defined by this repository alone. Scanner internals left
   `ids.__all__`; `ids.signature_at` and `ids.hash_form` joined it.
 - Docs: the specification was rewritten (RFC 2119 keywords, a glossary, a
-  data-model overview, conformance and pairing sections); informative
-  material moved to `docs/mapping-notes.md` and `docs/history.md`; the
-  README leads with a complete minimal document.
-- Infrastructure: a language-neutral conformance suite (`conformance/`), a
-  Node `ajv` job and a JavaScript reference implementation of the canonical
-  form in CI, a `release` workflow publishing to PyPI through trusted
-  publishing (a release candidate as a pre-release), issue templates.
+  data-model overview, conformance and pairing sections); the README leads
+  with a complete minimal document.
+- Infrastructure: a language-neutral conformance suite, a Node `ajv` job
+  and a JavaScript reference implementation of the canonical form in CI, a
+  `release` workflow publishing to PyPI through trusted publishing (a
+  release candidate as a pre-release), issue templates.
 
 ### Where it comes from
 
 The format was first written inside another repository of the same
-organisation and extracted into this one with its history preserved;
-`docs/history.md` has the details.
+organisation and extracted into this one with its history preserved.

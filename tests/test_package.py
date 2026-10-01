@@ -244,5 +244,22 @@ class TestThePublicApi(unittest.TestCase):
                 self.assertIn(dotted.partition(".")[0], {"companion", *V.RECORD_ARRAYS})
 
 
+class TestTheDocs(unittest.TestCase):
+
+    def test_every_repository_path_the_docs_cite_exists(self):
+        """A backticked or linked path under schema/, docs/, src/, examples/ or tests/ is in the repository."""
+        self.assertEqual(sorted(p.name for p in ROOT.glob("*.md")), ["CHANGELOG.md", "CONTRIBUTING.md", "README.md"])
+        for name in ("README.md", "CONTRIBUTING.md", "docs/annotations.md"):       # the changelog is history
+            text = (ROOT / name).read_text(encoding="utf-8")
+            for token in re.findall(r"(?:`|\]\()((?:schema|docs|src|examples|tests)/[^`)\s]*)", text):
+                if "<" not in token:
+                    with self.subTest(doc=name, path=token):
+                        self.assertTrue((ROOT / token).exists(), f"{name} cites {token}")
+
+    def test_no_em_dash(self):
+        for name in ("README.md", "CONTRIBUTING.md", "CHANGELOG.md", "docs/annotations.md"):
+            self.assertNotIn("\u2014", (ROOT / name).read_text(encoding="utf-8"), name)
+
+
 if __name__ == "__main__":
     unittest.main()
