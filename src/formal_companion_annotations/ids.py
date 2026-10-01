@@ -157,8 +157,6 @@ _LEX = re.compile(r"/-|--|\"|'|«")
 _HOLE = re.compile(r"/-|--|\"|'|«|[{}]")
 _COMMENT_DELIM = re.compile(r"/-|-/")
 _CHAR_ESCAPE = re.compile(r"'\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)'", re.S)
-_NON_NEWLINE = re.compile(r"[^\n]")
-_NEWLINE = re.compile(r"\n")
 _RAW_START = re.compile(r'r#*"')
 
 
