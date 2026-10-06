@@ -80,13 +80,17 @@ class TestStandalone(unittest.TestCase):
             self.assertEqual(headings[0], "Unreleased")
 
     def test_the_schema_ships_as_package_data(self):
-        data = pyproject()["tool"]["setuptools"]["package-data"]["formal_companion_annotations"]
-        self.assertIn("schema/*.json", data)
+        setuptools = pyproject()["tool"]["setuptools"]
+        data = setuptools["package-data"]["formal_companion_annotations.schema"]
+        self.assertIn("*.json", data)
+        self.assertEqual(setuptools["package-dir"]["formal_companion_annotations.schema"], "schema")
         self.assertTrue(V.SCHEMA_PATH.is_file())
         self.assertEqual(Path(V.__file__).resolve().parent, PACKAGE)
-        self.assertEqual(V.SCHEMA_PATH.parent, PACKAGE / "schema")
-        self.assertNotEqual(V.SCHEMA_PATH.resolve().parent, (ROOT / "schema").resolve(),
-                            "the checker must load its own package data, not the repository's schema/")
+        if PACKAGE.is_relative_to(SRC.resolve()):
+            self.assertEqual(V.SCHEMA_PATH.parent, ROOT / "schema")
+        else:
+            self.assertEqual(V.SCHEMA_PATH.parent, PACKAGE / "schema")
+            self.assertNotEqual(V.SCHEMA_PATH.resolve().parent, (ROOT / "schema").resolve())
 
     def test_the_copy_under_test_is_the_installed_one_when_ci_says_so(self):
         if not EXPECT_INSTALLED:
@@ -167,7 +171,7 @@ class TestEntryPoints(unittest.TestCase):
             tmp = str(Path(tmp).resolve())         # the checker reports its resolved path
             broken = Path(tmp) / "formal_companion_annotations"
             shutil.copytree(PACKAGE, broken, ignore=shutil.ignore_patterns("__pycache__"))
-            shutil.rmtree(broken / "schema")
+            shutil.rmtree(broken / "schema", ignore_errors=True)
             env = dict(os.environ, PYTHONPATH=tmp, PYTHONDONTWRITEBYTECODE="1")
             for module in ("formal_companion_annotations", "formal_companion_annotations.validate"):
                 with self.subTest(module=module):
@@ -189,7 +193,8 @@ REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: it cites the skill's paths by design.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md",
-        "docs/companion-v2.md", "docs/migration-v2.md", "docs/design/minimal-core.md")
+        "docs/companion-v2.md", "docs/migration-v2.md", "docs/discovery.md",
+        "docs/design/minimal-core.md", "docs/design/pr-2-synthesis.md")
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):

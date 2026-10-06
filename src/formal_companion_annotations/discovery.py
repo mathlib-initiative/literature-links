@@ -158,7 +158,7 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
             return
         try:
             resolved = path.resolve(strict=True)
-        except (OSError, RuntimeError) as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
             result.problems.append(Problem("PATH", str(path), str(exc)))
             return
         selected.setdefault(resolved, path)
@@ -197,7 +197,7 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
                                                "explicit inputs must not be symlinks"))
                 continue
             mode = path.lstat().st_mode
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             result.problems.append(Problem("PATH", str(path), str(exc)))
             continue
         if stat.S_ISDIR(mode):
@@ -208,7 +208,7 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
             result.problems.append(Problem("PATH", str(path),
                                            "input must be a regular file or directory"))
 
-    result.files = sorted(selected.values(), key=str)
+    result.files = sorted(selected, key=str)
     for path in result.files:
         _read(path, result)
     if not result.records and not result.problems:

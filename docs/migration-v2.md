@@ -1,9 +1,16 @@
 # Migrating a v1 companion
 
 V1 is a rich graph of sources, items, declarations, links, locations, and
-workflow records. V2 is small associations. Migration is a **projection**, not
+workflow records. V2 is independent single associations. Migration is a **projection**, not
 a lossless replacement of the graph. Keep the archive. No files change until
 an explicit command is run; v1 validation remains available.
+
+The supported input is the released `lean-companion/annotations` v1 dialect.
+PR #2's `formal-companion/annotations` rc3 dialect needs a separate adapter and
+is explicitly rejected. It changes core rules as well as its format identifier;
+renaming that identifier would not validate or safely migrate it. See the
+[PR synthesis](design/pr-2-synthesis.md). The earlier unpublished a1 collection
+wrapper is also not an input to this v1 migrator.
 
 ## Command
 
@@ -30,13 +37,16 @@ The output directory must not exist. Conversion and serialization finish in
 a temporary sibling directory before exposing the output. The bundle contains:
 
 - `original-v1.json`: the exact bytes of the supplied input.
-- `companion-001.json`, etc.: validated v2 documents grouped by source and mode.
+- `annotation-001.json`, etc.: one validated v2 annotation per association.
 - `report.json`: output filenames, resolution options, and structured diagnostics
   naming affected v1 records.
 
 Read the report even on success. Exit 0 means a valid bundle was written, not
-that every v1 record became a v2 annotation. Zero companions is valid when
+that every v1 record became a v2 annotation. Zero annotations is valid when
 nothing can be mapped safely. Warnings and generic locators need review.
+To discover just the generated annotations, scan this directory with
+`--include 'annotation-*.json'`. Reports and archives are separate application
+data. These output filenames are the converter's convention, not schema rules.
 
 ## Native and generic locations
 
@@ -54,7 +64,8 @@ For example, RFC 5147 `line=41,47` becomes lines 42 through 47, following its
 [zero-based boundary convention](https://www.rfc-editor.org/rfc/rfc5147.html#section-2.1).
 PDF rotation/box semantics and legacy quote normalization cannot be assumed to
 match the new conventions. One source may yield both native and generic
-documents. No resource is fetched to resolve uncertainties.
+annotations. Every location/destination pair becomes its own independent record,
+even when another record has the same source. No resource is fetched.
 
 ## Targets and metadata
 

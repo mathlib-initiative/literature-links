@@ -100,7 +100,8 @@ jobs:
           formal-companion-annotations format examples/companion-v2/generic-image.json --output "$RUNNER_TEMP/companion.json"
           formal-companion-annotations validate "$RUNNER_TEMP/companion.json"
           formal-companion-annotations migrate-v1 examples/annotations/web-passage.json --output "$RUNNER_TEMP/migration"
-          formal-companion-annotations validate "$RUNNER_TEMP/migration/companion-001.json"
+          formal-companion-annotations validate "$RUNNER_TEMP/migration/annotation-001.json" --format json
+          formal-companion-annotations scan "$RUNNER_TEMP/migration" --include 'annotation-*.json' --format json
           cmp examples/annotations/web-passage.json "$RUNNER_TEMP/migration/original-v1.json"
       - name: invalid examples fail with their recorded error
         run: |
@@ -169,6 +170,7 @@ jobs:
           package = sorted(n for n in names if not n.split("/")[0].endswith(".dist-info"))
           want = ["formal_companion_annotations/__init__.py", "formal_companion_annotations/__main__.py",
                   "formal_companion_annotations/cli.py", "formal_companion_annotations/companion.py",
+                  "formal_companion_annotations/discovery.py",
                   "formal_companion_annotations/ids.py", "formal_companion_annotations/migration.py",
                   "formal_companion_annotations/py.typed",
                   "formal_companion_annotations/schema/annotations-v1.schema.json",

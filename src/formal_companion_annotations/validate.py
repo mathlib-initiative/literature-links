@@ -59,6 +59,8 @@ HERE = Path(__file__).resolve().parent
 #: The schema files ship inside the package (package data), so an installed
 #: copy finds them without the repository's top-level ``schema/`` directory.
 SCHEMA_DIR = HERE / "schema"
+if HERE.parent.name == "src" and (HERE.parent.parent / "pyproject.toml").is_file():
+    SCHEMA_DIR = HERE.parent.parent / "schema"
 
 
 def schema_path(major: int) -> Path:
@@ -1267,7 +1269,8 @@ def check(doc: Any, *, text: str | None = None, canonical: bool = False,
         # not inherit v1 inventories, sorting, URL placement or canonical bytes.
         from . import companion
         minimal = companion.check(doc)
-        report = Report(problems=list(minimal.problems), warnings=list(minimal.warnings))
+        report = Report(problems=[str(problem) for problem in minimal.problems],
+                        warnings=[str(warning) for warning in minimal.warnings])
         if canonical:
             report.problems.append("$: v2 has no canonical byte order; omit --canonical and use format to pretty-print")
         if schema is not None:
@@ -1360,7 +1363,7 @@ def main(argv: list[str] | None = None) -> int:
             for problem in report.problems:
                 print(f"{path}: {problem}")
         else:
-            counts = (f"{len(doc['annotations'])} annotations, {doc['source']['type']}"
+            counts = (f"1 annotation, {doc['source']['type']}"
                       if "version" in doc else
                       ", ".join(f"{len(doc.get(k, []))} {k}" for k in RECORD_ARRAYS if k in doc))
             print(f"{path}: ok ({counts})")
