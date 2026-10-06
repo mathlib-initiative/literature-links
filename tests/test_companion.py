@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import FrozenInstanceError
 import importlib.util
 import json
 import random
@@ -19,11 +20,11 @@ from formal_companion_annotations.schemacheck import Validator
 
 
 def document(mode: str = "latex", location: dict | None = None) -> dict:
-    annotation = {"target": "../formal/Groups.html#Lagrange"}
+    annotation = {"version": 2, "source": {"type": mode, "uri": "chapters/groups.tex"},
+                  "target": "../formal/Groups.html#Lagrange"}
     if location is not None:
         annotation["location"] = location
-    return {"version": 2, "source": {"type": mode, "uri": "chapters/groups.tex"},
-            "annotations": [annotation]}
+    return annotation
 
 
 VALID_LOCATIONS = {
@@ -50,14 +51,19 @@ class TestSmallContract(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertEqual(C.validate(document(mode)), [])
 
-    def test_an_empty_companion_needs_no_invented_declarations(self):
-        doc = document()
-        doc["annotations"] = []
-        self.assertEqual(C.validate(doc), [])
+    def test_collection_shapes_are_not_single_annotations(self):
+        single = document()
+        for records in ([], [single], [single, copy.deepcopy(single)]):
+            for carrier in (records, {"version": 2, "source": single["source"], "annotations": records}):
+                with self.subTest(carrier=carrier):
+                    self.assertTrue(C.validate(carrier))
+        with_extra = document()
+        with_extra["annotations"] = []
+        self.assertTrue(C.validate(with_extra))
 
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
-        for field in ("version", "source", "annotations"):
+        for field in ("version", "source", "target"):
             doc = document()
             del doc[field]
             cases.append(doc)
@@ -65,9 +71,6 @@ class TestSmallContract(unittest.TestCase):
             doc = document()
             del doc["source"][field]
             cases.append(doc)
-        doc = document()
-        doc["annotations"] = [{}]
-        cases.append(doc)
         for bad in cases:
             with self.subTest(document=bad):
                 self.assertTrue(C.validate(bad))
@@ -86,9 +89,9 @@ class TestSmallContract(unittest.TestCase):
 
     def test_core_typos_and_legacy_inventories_are_rejected(self):
         for place, key in (("root", "sources"), ("root", "mode"), ("source", "format"),
-                           ("annotation", "targets"), ("annotation", "locaton")):
+                           ("root", "targets"), ("root", "locaton"), ("root", "annotations")):
             doc = document()
-            node = doc if place == "root" else (doc["source"] if place == "source" else doc["annotations"][0])
+            node = doc if place == "root" else doc["source"]
             node[key] = []
             with self.subTest(place=place, key=key):
                 self.assertTrue(C.validate(doc))
@@ -102,38 +105,42 @@ class TestSmallContract(unittest.TestCase):
         first["source"] = [first["source"], second["source"]]
         self.assertTrue(C.validate(first))
 
-    def test_multiple_targets_repeat_the_association(self):
-        doc = document("latex", {"label": "thm:lagrange"})
-        second = copy.deepcopy(doc["annotations"][0])
+    def test_multiple_targets_are_separate_complete_annotations(self):
+        first = document("latex", {"label": "thm:lagrange"})
+        second = copy.deepcopy(first)
         second["target"] = "urn:lean:other_declaration"
-        doc["annotations"].append(second)
-        self.assertEqual(C.validate(doc), [])
-        doc["annotations"][0]["target"] = ["urn:lean:first", "urn:lean:second"]
-        self.assertTrue(C.validate(doc))
+        self.assertEqual(C.validate(first), [])
+        self.assertEqual(C.validate(second), [])
+        for targets in ([], ["urn:lean:first"], ["urn:lean:first", "urn:lean:second"]):
+            first["target"] = targets
+            with self.subTest(targets=targets):
+                self.assertTrue(C.validate(first))
 
-    def test_annotation_ids_are_optional_but_unique_when_present(self):
+    def test_annotation_id_is_an_optional_nonempty_application_label(self):
         doc = document()
-        doc["annotations"].append(copy.deepcopy(doc["annotations"][0]))
         self.assertEqual(C.validate(doc), [])
-        for annotation in doc["annotations"]:
-            annotation["id"] = "a"
-        self.assertTrue(any("duplicates" in error for error in C.validate(doc)))
-        doc["annotations"][1]["id"] = "b"
+        for identity in ("a", "a label", "α", "https://example.org/annotation/1"):
+            doc["id"] = identity
+            duplicate = copy.deepcopy(doc)
+            duplicate["target"] = "urn:another"
+            self.assertEqual(C.validate(doc), [])
+            self.assertEqual(C.validate(duplicate), [])
         doc["extensions"] = {"id": "a", "tool": {"id": "a"}}
         doc["source"]["extensions"] = {"id": "a"}
         self.assertEqual(C.validate(doc), [])
-        for invalid in ("", None, 3, True):
-            doc["annotations"][1]["id"] = invalid
+        for invalid in ("", None, 3, True, []):
+            doc["id"] = invalid
             with self.subTest(id=invalid):
                 self.assertTrue(C.validate(doc))
 
     def test_check_does_not_mutate_or_sort(self):
         doc = document("generic", {"z": [3, 2, 1], "a": {"key": "value"}})
-        doc["annotations"] = [{"id": "z", "target": "urn:z"}, *doc["annotations"], {"id": "a", "target": "urn:a"}]
+        doc["extensions"] = {"z": {"target": "urn:embedded", "annotations": [3, 2, 1]}, "a": 0}
         before = copy.deepcopy(doc)
         self.assertEqual(C.check(doc), C.Report())
         self.assertEqual(doc, before)
-        self.assertEqual(list(doc["annotations"][1]["location"]), ["z", "a"])
+        self.assertEqual(list(doc["location"]), ["z", "a"])
+        self.assertEqual(list(doc["extensions"]), ["z", "a"])
 
 
 class TestReferencesAndExtensions(unittest.TestCase):
@@ -144,7 +151,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
         for reference in references:
             doc = document()
             doc["source"]["uri"] = reference
-            doc["annotations"][0]["target"] = reference
+            doc["target"] = reference
             with self.subTest(reference=reference):
                 self.assertEqual(C.validate(doc), [])
 
@@ -156,7 +163,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
                 if key == "source":
                     doc["source"]["uri"] = value
                 else:
-                    doc["annotations"][0]["target"] = value
+                    doc["target"] = value
                 with self.subTest(value=value, key=key):
                     self.assertTrue(C.validate(doc))
 
@@ -164,15 +171,15 @@ class TestReferencesAndExtensions(unittest.TestCase):
         doc = document("generic", {"profile": "https://unreachable.invalid/schema", "script": "arbitrary content"})
         doc["$schema"] = "https://unreachable.invalid/companion.json"
         doc["source"]["uri"] = "https://unreachable.invalid/source"
-        doc["annotations"][0]["target"] = "https://unreachable.invalid/target"
+        doc["target"] = "https://unreachable.invalid/target"
         with patch("socket.socket", side_effect=AssertionError("unexpected network access")):
             self.assertEqual(C.validate(doc), [])
 
-    def test_extensions_are_available_without_registration_at_all_three_levels(self):
+    def test_extensions_are_available_without_registration_at_both_levels(self):
         doc = document()
         payload = {"org.example.tool": {"a key with spaces": [None, True, False, 1, 0.5, "α"]},
                    "local": None, "https://example.org/profile": {}}
-        for node in (doc, doc["source"], doc["annotations"][0]):
+        for node in (doc, doc["source"]):
             node["extensions"] = copy.deepcopy(payload)
         self.assertEqual(C.validate(doc), [])
         self.assertEqual(C.loads(C.dumps(doc)), doc)
@@ -190,6 +197,58 @@ class TestReferencesAndExtensions(unittest.TestCase):
             doc["extensions"] = value
             with self.subTest(value=value):
                 self.assertTrue(C.validate(doc))
+
+    def test_whitespace_definition_is_explicit_and_unicode_stable(self):
+        # These cover Unicode White_Space outside ASCII, including characters
+        # whose treatment differs between common regex dialects.
+        forbidden = "\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000"
+        forbidden += "".join(map(chr, range(0x21))) + "".join(map(chr, range(0x7f, 0xa0)))
+        for char in forbidden:
+            for value in ("x" + char + "y", "xy" + char):
+                doc = document()
+                doc["target"] = value
+                with self.subTest(codepoint=ord(char), value=value):
+                    self.assertTrue(C.validate(doc))
+                    doc["target"] = "urn:valid"
+                    doc["extensions"] = {value: None}
+                    self.assertTrue(C.validate(doc))
+        for char in ("\u180e", "\ufeff", "😀"):
+            doc = document()
+            doc["target"] = "urn:" + char
+            doc["extensions"] = {"tool" + char: None}
+            with self.subTest(non_whitespace=char):
+                self.assertEqual(C.validate(doc), [])
+
+
+class TestStructuredDiagnostics(unittest.TestCase):
+    def test_problem_is_frozen_and_has_a_readable_string(self):
+        problem = C.Problem("SCHEMA", "$.target", "must be a string")
+        self.assertEqual(str(problem), "$.target: must be a string")
+        with self.assertRaises(FrozenInstanceError):
+            problem.code = "OTHER"
+
+    def test_stable_codes_paths_and_convenience_strings(self):
+        bad_json = document("generic", {"payload": float("inf")})
+        bad_shape = document()
+        bad_shape["target"] = []
+        cases = [(bad_json, "JSON", '$["location"]["payload"]'),
+                 (bad_shape, "SCHEMA", "$.target"),
+                 (document("pdf", {"page": 1, "rect": [0, 0, 0, 1]}), "PDF_RECT", "$.location.rect"),
+                 (document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}), "PDF_RECT", "$.location.rect"),
+                 (document("latex", {"lines": [5, 2]}), "LATEX_LINES", "$.location.lines")]
+        for doc, code, path in cases:
+            with self.subTest(code=code, path=path):
+                report = C.check(doc)
+                self.assertEqual(report.warnings, [])
+                self.assertTrue(report.problems)
+                self.assertTrue(all(isinstance(problem, C.Problem) for problem in report.problems))
+                self.assertIn((code, path), [(problem.code, problem.path) for problem in report.problems])
+                self.assertEqual(C.validate(doc), [str(problem) for problem in report.problems])
+
+    def test_malformed_structure_prevents_secondary_semantic_failures(self):
+        report = C.check(document("pdf", {"page": 1, "rect": [0, None, 0, "width"]}))
+        self.assertTrue(report.problems)
+        self.assertEqual({problem.code for problem in report.problems}, {"SCHEMA"})
 
 
 class TestLocatorBounds(unittest.TestCase):
@@ -241,7 +300,7 @@ class TestLocatorBounds(unittest.TestCase):
         doc = document("generic", {"page": -1, "lines": [20, 1], "fragment": "#x", "foreign": None})
         self.assertEqual(C.validate(doc), [])
         for value in (None, 2, "locator", [], True):
-            doc["annotations"][0]["location"] = value
+            doc["location"] = value
             with self.subTest(location=value):
                 self.assertTrue(C.validate(doc))
 
@@ -307,8 +366,8 @@ class TestStrictJson(unittest.TestCase):
         text = C.dumps(doc)
         result = C.loads(text)
         self.assertEqual(result, doc)
-        self.assertEqual(list(result["annotations"][0]["location"]), ["z", "a"])
-        self.assertEqual(list(result["annotations"][0]["location"]["z"]), ["β", "α"])
+        self.assertEqual(list(result["location"]), ["z", "a"])
+        self.assertEqual(list(result["location"]["z"]), ["β", "α"])
         self.assertTrue(text.endswith("\n"))
         self.assertIn("β", text)
 
@@ -346,9 +405,6 @@ class TestSchema(unittest.TestCase):
         structural = Validator(C.load_schema())
         invalid = [document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}),
                    document("latex", {"lines": [4, 2]})]
-        duplicate = document()
-        duplicate["annotations"] = [{"id": "same", "target": "urn:a"}, {"id": "same", "target": "urn:b"}]
-        invalid.append(duplicate)
         for doc in invalid:
             with self.subTest(document=doc):
                 self.assertTrue(structural.is_valid(doc))
@@ -369,11 +425,10 @@ class TestSchema(unittest.TestCase):
         for _ in range(160):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
-            annotation = doc["annotations"][0]
-            node, key = randomizer.choice([(doc, "version"), (doc, "annotations"),
+            node, key = randomizer.choice([(doc, "version"), (doc, "source"),
                                            (doc["source"], "type"), (doc["source"], "uri"),
-                                           (annotation, "target"), (annotation, "id"),
-                                           (annotation, "location"), (doc, "extensions")])
+                                           (doc, "target"), (doc, "id"),
+                                           (doc, "location"), (doc, "extensions")])
             node[key] = copy.deepcopy(randomizer.choice(values))
             cases.append(doc)
         for doc in cases:
