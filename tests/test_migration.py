@@ -259,6 +259,22 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(result.documents, [])
         self.assertIn("unusable_destination", codes(result))
 
+    def test_legacy_destination_with_c1_control_is_reported(self):
+        doc = load()
+        doc["destinations"][0]["href"] = "https://formal.example.org/a\u0080"
+        result = migrate_v1(doc)
+        self.assertEqual(result.documents, [])
+        self.assertIn("unusable_destination", codes(result))
+        self.assertEqual(result.original, doc)
+
+    def test_legacy_source_with_c1_control_is_reported(self):
+        doc = load()
+        doc["sources"][0]["url"] = "https://sources.example.org/a\u0080"
+        result = migrate_v1(doc)
+        self.assertEqual(result.documents, [])
+        self.assertIn("missing_source_uri", codes(result))
+        self.assertEqual(result.original, doc)
+
     def test_every_existing_example_has_a_lossless_archive(self):
         for path in EXAMPLES.glob("*.json"):
             if path.name.startswith("invalid-"):

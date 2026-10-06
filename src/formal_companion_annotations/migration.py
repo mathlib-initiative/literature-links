@@ -38,7 +38,7 @@ class MigrationResult:
 
 def _reference(value: Any) -> bool:
     return isinstance(value, str) and bool(value) and not any(
-        char.isspace() or ord(char) < 32 or ord(char) == 127 for char in value
+        char.isspace() or ord(char) < 32 or 127 <= ord(char) <= 159 for char in value
     ) and re.search(r"%(?![0-9a-fA-F]{2})", value) is None
 
 
