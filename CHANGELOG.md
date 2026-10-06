@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.0a2 (unpublished working draft)
+
+- Make the schema describe exactly one informal–formal association: required
+  `version`, `source`, and `target`; optional location, ID, and extensions.
+  This supersedes a1's unpublished source-plus-annotations wrapper.
+- Keep companion assembly outside the schema. Add recursive discovery of JSON
+  objects, array shards, and JSONL/NDJSON with configurable selection, precise
+  origins, preserved relative-reference bases, and explicit failures.
+- Adopt PR #2's structured-diagnostic and one-source-schema packaging ideas.
+  Add JSON validation reports and process all inputs with exit 2 precedence.
+  Keep opaque extensions and large-integer preservation; do not import the
+  PR's aggregate profiles, required provenance, or canonical ordering.
+- Emit independent records from released-v1 migration. Explicitly identify
+  PR #2 rc3 as an incompatible dialect requiring a separate adapter; preserve
+  unsupported legacy selectors as generic rather than invalid native anchors.
+- Document the PR comparison, version conflict, and existing Tao companion
+  boundaries. No PR update, publication, or external integration is implied.
+
 ## 2.0.0a1 (unpublished working draft)
 
 - Add a small v2 document: version, one source, and annotations with formal

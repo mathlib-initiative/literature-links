@@ -1,4 +1,4 @@
-"""Small companion documents, with legacy v1 annotation compatibility.
+"""Single companion annotations and shard discovery, with legacy compatibility.
 
 The v2 format is specified in docs/companion-v2.md and implemented by
 ``companion``. The legacy format is specified in docs/annotations.md; its JSON Schema is
@@ -21,6 +21,6 @@ from __future__ import annotations
 #: modules, each of which states its own names in its ``__all__``.  Listing the
 #: modules does not import them; ``from formal_companion_annotations import *``
 #: does.
-__all__ = ["__version__", "ids", "schemacheck", "validate", "vocab", "companion", "migration", "cli"]
+__all__ = ["__version__", "ids", "schemacheck", "validate", "vocab", "companion", "migration", "cli", "discovery"]
 
-__version__ = "2.0.0a1"
+__version__ = "2.0.0a2"

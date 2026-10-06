@@ -29,10 +29,9 @@ from formal_companion_annotations.schemacheck import SchemaError, Validator     
 
 PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
 EXAMPLES = ROOT / "examples" / "annotations"
-#: The three schema copies, byte-identical: repository, source-tree package data, imported package.
+#: One repository schema, shipped inside installed wheels.
 SCHEMA = ROOT / "schema" / "annotations-v1.schema.json"
-SOURCE_TREE_SCHEMA = SRC / "formal_companion_annotations" / "schema" / "annotations-v1.schema.json"
-PACKAGED_SCHEMA = PACKAGE / "schema" / "annotations-v1.schema.json"
+PACKAGED_SCHEMA = V.SCHEMA_PATH
 SCHEMA_ID = ("https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/"
              "v1.0.0/schema/annotations-v1.schema.json")
 SCHEMA_ID_RULE = re.compile(r"https://raw\.githubusercontent\.com/mathlib-initiative/formal-companion-annotations/"
@@ -117,7 +116,7 @@ class TestTheSchemaFile(unittest.TestCase):
 
     def test_the_packaged_schema_is_the_repositorys_byte_for_byte(self):
         self.assertEqual(PACKAGED_SCHEMA.read_bytes(), SCHEMA.read_bytes())
-        self.assertEqual(SOURCE_TREE_SCHEMA.read_bytes(), SCHEMA.read_bytes())
+        self.assertFalse((SRC / "formal_companion_annotations" / "schema" / "annotations-v1.schema.json").exists())
 
     def test_the_format_identifier_keeps_its_name(self):
         """Only the ``$id`` moved: every existing document still says lean-companion/annotations."""

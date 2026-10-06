@@ -1,7 +1,7 @@
 # Companion v2 working draft
 
-This experimental, unpublished format describes associations from one informal
-source to formal resources. `version: 2` identifies the format; `2.0.0a1` is the
+This experimental, unpublished format describes **one informal–formal link**.
+`version: 2` identifies the draft format; `2.0.0a2` is the
 package prerelease. Its [JSON Schema](../schema/companion-v2.schema.json) ships
 with the checker.
 
@@ -11,23 +11,27 @@ with the checker.
 {
   "version": 2,
   "source": { "type": "pdf", "uri": "notes.pdf" },
-  "annotations": [
-    { "location": { "page": 4 }, "target": "https://example.org/formal/Result.html#result" }
-  ]
+  "location": { "page": 4 },
+  "target": "https://example.org/formal/Result.html#result"
 }
 ```
 
 | Object | Required fields | Optional fields |
 |---|---|---|
-| Document | `version` (number 2), `source`, `annotations` (array) | `$schema`, `extensions` |
+| Annotation | `version` (number 2), `source`, `target` (string) | `location` (object), `id` (nonempty string), `$schema`, `extensions` |
 | Source | `type` (`pdf`, `latex`, `html`, `generic`), `uri` (string) | `extensions` |
-| Annotation | `target` (string) | `location` (object), `id` (nonempty string), `extensions` |
 
-One source identifies one concrete resource. A multi-file project uses several
-documents; collecting them is an application concern. An empty annotations
-array is valid. Multiple formal destinations or several occurrences use separate
-annotations. Optional IDs must be unique within the document; they have no
-global identity semantics. Unknown core fields are invalid.
+Every record contains one source and one formal target. Two formal destinations
+or two informal occurrences require two independent records. Root arrays and an
+`annotations` wrapper are invalid against this schema, even for zero or one link.
+Optional `id` is an opaque application label; this schema imposes no collection
+uniqueness, global identity, ordering, or deduplication rules. Unknown core fields
+are invalid. `source` denotes the informal endpoint; `target` the formal endpoint.
+
+A companion is assembled from discovered records. [Directory traversal and
+shard carriers](discovery.md) are separate from the annotation schema; the schema
+does not require a folder layout, file naming convention, manifest, or one file
+per record. Each member of an array/JSONL carrier still validates independently.
 
 An annotation asserts **an association only**. Neither validation nor a link
 asserts equivalence, proof completion, correctness, human review, or that the
@@ -46,8 +50,9 @@ Unicode, absolute URLs, and opaque URIs such as `urn:example:result:1` are
 allowed. The checker enforces this lexical rule, not full URI grammar or scheme
 support. It preserves these strings and fetches nothing.
 
-Relative source and target references resolve against the **companion document's
-location** using ordinary URI resolution. They do not implicitly resolve against
+Relative source and target references resolve against the **containing shard's
+location** using ordinary URI resolution, including records in arrays/JSONL.
+They do not implicitly resolve against
 the source or a repository root. An in-memory caller supplies the base. Moving a
 document requires preserving its base or deliberately rewriting its references.
 A bare Lean name is merely a relative reference, not an implicit library lookup.
@@ -145,9 +150,8 @@ This convention does not claim W3C TextQuoteSelector interchange.
 {
   "version": 2,
   "source": { "type": "generic", "uri": "urn:example:dataset" },
-  "annotations": [
-    { "location": { "table": "results", "row": "42" }, "target": "urn:example:formal:result" }
-  ]
+  "location": { "table": "results", "row": "42" },
+  "target": "urn:example:formal:result"
 }
 ```
 
@@ -160,8 +164,8 @@ databases, and future formats without adding built-in modes now.
 
 An `extensions` object maps nonempty keys without whitespace/control characters
 to arbitrary JSON values. Namespaced keys such as `org.example.catalog` are
-recommended for exchange; ordinary keys are allowed. Root, source, and
-annotation extensions are independent, with no implied inheritance or merging.
+recommended for exchange; ordinary keys are allowed. Root annotation extensions
+and source extensions are independent, with no implied inheritance or merging.
 Consumers preserve unfamiliar keys and values and do not fetch or execute them.
 Extensions may hold confidence, evidence, grouping, source locks, accessible
 descriptions, or review state without making these mandatory core fields.
@@ -169,7 +173,7 @@ descriptions, or review state without making these mandatory core fields.
 ## Validation and serialization
 
 JSON has unique object keys, finite numbers, and valid Unicode strings. Full
-validation checks the schema plus unique annotation IDs, positive PDF extents
+validation checks the schema plus positive PDF extents
 contained in the page, and ordered LaTeX ranges. These cross-field rules are not
 all expressible in the supplied schema; schema validation alone is insufficient.
 
@@ -181,9 +185,18 @@ Python float decoding; decimal lexemes and original whitespace are not preserved
 Use strings for exact decimal application values. Resource and interpreter
 limits can reject otherwise representable input with a diagnostic.
 
+`check` returns structured `Problem(code, path, message)` findings: `JSON` for
+values outside the JSON data model, `SCHEMA` for structural failures, `PDF_RECT`
+for rectangle bounds/extents, and `LATEX_LINES` for reversed line intervals.
+`validate` returns readable strings for convenience. No directory-wide checks
+belong to this atomic validator.
+
 There is **no canonical byte representation** or required ordering. Formatting
 uses two-space indentation and a trailing newline without sorting. Unknown
 versions fail. V1 remains a separate legacy format using `schema_version`;
-mixed v1/v2 core shapes fail. See [migration](migration-v2.md) and the
+mixed v1/v2 core shapes fail. This a2 draft replaces the unpublished a1
+source-plus-annotations wrapper; old wrappers are rejected rather than silently
+split or merged. PR #2's rc3 graph format is also a distinct dialect.
+See [migration](migration-v2.md), [PR synthesis](design/pr-2-synthesis.md), and the
 [design rationale](design/minimal-core.md), including the relationship to the
 [W3C Web Annotation model](https://www.w3.org/TR/annotation-model/).

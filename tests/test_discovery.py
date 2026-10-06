@@ -172,6 +172,23 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual({p.code for p in result.problems}, {"PATH", "IO"})
         self.assertTrue(any(str(missing) == p.path for p in result.problems))
 
+    def test_alias_paths_keep_canonical_origins_and_read_once(self):
+        file = self.write("link.json", annotation())
+        child = self.root / "child"
+        child.mkdir()
+        alias = child / ".." / file.name
+        result = discovery.collect([alias, file])
+        self.assertEqual(result.problems, [])
+        self.assertEqual(result.files, [file.resolve()])
+        self.assertEqual(result.records[0].path, file.resolve())
+        self.assertEqual(result.records[0].base_uri, file.resolve().as_uri())
+
+    def test_impossible_api_path_is_reported_without_aborting_other_files(self):
+        file = self.write("valid.json", annotation())
+        result = discovery.collect([file, self.root / "invalid\x00name.json"])
+        self.assertEqual(len(result.records), 1)
+        self.assertEqual([problem.code for problem in result.problems], ["PATH"])
+
     def test_unreadable_directory_is_not_silently_empty(self):
         with patch.object(Path, "iterdir", side_effect=PermissionError("test access denied")):
             result = discovery.collect([self.root])

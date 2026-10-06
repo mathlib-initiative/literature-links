@@ -1,176 +1,113 @@
-# Why the companion core is small
+# One annotation is the unit of interchange
 
-The companion format connects informal material to a formal resource. A writer
-can describe one association without first building a declaration index, a proof
-workflow, or an audit database. The [version 2 specification](../companion-v2.md)
-defines the format; this document explains the choices and their costs.
+**Status:** Proposed implementation of the user's single-annotation requirement.
+**Date:** 2026-10-06.
+**Decision owner:** Project maintainers before a public release.
 
-## A complete starting point
+The [annotation specification](../companion-v2.md) defines one informal–formal
+association. The [PR #2 comparison](pr-2-synthesis.md) records why both the PR's
+repository graph and the earlier local source-level collection are larger than
+the requested unit.
+
+## Decision
 
 ```json
 {
   "version": 2,
-  "source": { "type": "latex", "uri": "chapters/groups.tex" },
-  "annotations": [
-    {
-      "location": { "label": "thm:lagrange" },
-      "target": "https://example.org/formal/Groups.html#lagrange"
-    }
-  ]
+  "source": { "type": "latex", "uri": "../chapters/groups.tex" },
+  "location": { "label": "thm:lagrange" },
+  "target": "https://example.org/formal/Groups.html#lagrange"
 }
 ```
 
-This says that a labeled passage is associated with a formal resource. It does
-not claim that the resource proves the passage, that the statements are
-equivalent, or that someone has checked the association. Those are valuable
-claims, but they need their own evidence and meaning.
+This is one complete annotation. A companion is assembled by finding many such
+records. The core does not specify their directory layout, file grouping, or
+collection manifest. Discovery is a separate utility; applications can supply
+other carrier readers without changing the annotation schema.
 
-The required vocabulary stays small: a version, one source, and annotations
-with destinations. PDF, LaTeX, and HTML provide familiar location conventions.
-Generic input provides room for applications with different conventions.
+The link asserts association only. Resource existence, anchor resolution,
+proof completion, faithful mathematical correspondence, and review are separate
+claims. A viewer must not turn an unresolved anchor into a whole-resource link
+or present an unknown generic locator as a successfully anchored highlight.
 
-## Decisions and costs
+## Options considered
 
-| Decision | Benefit | Cost and response |
+| Unit | Advantages | Costs | Decision |
+|---|---|---|---|
+| Entire companion graph, as in PR #2 | Shared inventories and repository-wide consistency | Mandatory registry/provenance/ID machinery; difficult to exchange one link alone | Keep graph data in its producer |
+| One source with an annotations array, as in local a1 | Avoids repeating source metadata | Couples a link to its wrapper and makes regrouping semantic | Superseded |
+| One independent annotation | Each link can validate, move, or be consumed independently | Repeats source references; collections need their own reader | Adopt for the core |
+
+A source reference can still be relative, so moving a record requires retaining
+or deliberately changing its containing carrier's URI base. Independence from a
+registry does not make relative references independent of location.
+
+## Tradeoffs and consequences
+
+| Choice | Benefit | Responsibility left to applications |
 |---|---|---|
-| One concrete source resource per document | No cross-reference tables or site manifests are needed to interpret an annotation. | A book's PDF, LaTeX files, and HTML pages need separate documents. A companion application can collect them. |
-| A destination is a URI/IRI reference | Works with different formal libraries, local files, hosted pages, and unpublished identifiers. | A bare identifier may not open in a browser. Library-specific resolution belongs to the consuming application. |
-| One destination per annotation | A record has one clear association and can stand alone. | Several destinations repeat a location. A tool can group those records through extensions. |
-| Location can be omitted | Associating a whole resource requires no artificial anchor. | Consumers must distinguish an absent location from an unresolved or malformed location. |
-| Built-in locations have a closed shape | Misspelled fields fail early rather than quietly changing the selection. | New anchor conventions use generic mode until there is reason to standardize them. |
-| Generic locations are opaque objects | A database, image tool, or wiki can participate without registering a new core mode. | Core validation cannot tell whether its locator selects the intended content. The application owns that interpretation. |
-| Metadata lives in explicit extension objects | The shared core stays readable and tools can preserve their own information. | Two tools do not automatically understand each other's metadata. Shared extension conventions can be agreed separately. |
-| No required source hash, formal revision, or provenance | Handwritten annotations and local unpublished work remain easy. | Moving sources and destinations can make links stale. Applications needing reproducibility should pin resources and record evidence. |
-| No required identifiers or canonical ordering | A small document can be written directly without an ID generator. | Synchronization and stable references require a tool to supply optional annotation IDs and define its own update policy. |
+| Exactly one informal source and formal destination | Clear association with no cross-reference tables | Multiple targets/occurrences use multiple records |
+| Four modes: PDF, LaTeX, HTML, generic | Small shared locator vocabulary with an escape hatch | Unknown locators need application-specific support |
+| Optional location | Whole-resource associations are simple | Absence differs from a failed/malformed locator |
+| Closed core fields | Typos fail early | New anchor conventions start in generic mode |
+| Opaque JSON extensions | Custom evidence and metadata survive exchange | Consumers agree on their meaning separately |
+| No required source lock or provenance | Handwritten and unpublished annotations work | Reproducibility requires explicit pinning/evidence where needed |
+| Optional opaque ID | No central identity service or generated IDs | Synchronization and ID conflicts need a consumer policy |
+| No canonical bytes or ordering | Writers preserve supplied data | Signing/deduplication policies are external |
+| No mandatory storage envelope | A directory can mix singles, arrays, and JSONL | A reader identifies carriers and retains origins |
 
-Keep an association even when its locator cannot be resolved, but do not display
-it as a successfully anchored highlight. Structural validity, successful
-resource resolution, correct location, and faithful mathematical correspondence
-are separate claims. The core checker establishes only the first.
+Root annotation and source extensions have separate scopes. Neither inherits
+from the other. Namespaced extension keys are recommended, not mandatory.
+A generic location can be any JSON object; `profile` is optional caller data,
+not an instruction to fetch or execute something.
 
-## Examples to adapt
+## Examples
 
-All eight examples use synthetic references and application conventions. They
-are not endorsements of particular libraries, actual database records, or
-registered extension standards. Their referenced resources need not exist for
-the JSON to validate.
+The [nine examples](../../examples/companion-v2) use synthetic resources.
+Their references need not resolve for the data to validate.
 
-| Example | What it shows |
-|---|---|
-| [PDF](../../examples/companion-v2/pdf.json) | Associate a physical PDF page with a formal destination. |
-| [LaTeX](../../examples/companion-v2/latex.json) | Select a label in one source file. |
-| [HTML](../../examples/companion-v2/html.json) | Select an element by its fragment identifier. |
-| [Generic](../../examples/companion-v2/generic.json) | Associate an entire resource identified by a URN; no location or metadata is required. |
-| [PDF region and multiple links](../../examples/companion-v2/pdf-region-and-links.json) | Repeat a location for different formal destinations; add optional grouping, review information, and accessible display text. |
-| [Custom image](../../examples/companion-v2/generic-image.json) | Use a tool's own pixel-region convention and descriptions for an image. |
-| [Database record](../../examples/companion-v2/generic-database.json) | Select a table cell using a tool-owned locator, without requiring a profile identifier or namespace for every field. |
-| [Markdown block](../../examples/companion-v2/generic-markdown.json) | Add a custom block locator and roadmap metadata without introducing a Markdown mode. |
+- [PDF page](../../examples/companion-v2/pdf.json), [LaTeX label](../../examples/companion-v2/latex.json),
+  [HTML fragment](../../examples/companion-v2/html.json), and
+  [whole generic resource](../../examples/companion-v2/generic.json).
+- Two links from the same PDF region are
+  [two independent records](../../examples/companion-v2/pdf-region-first.json)
+  ([second record](../../examples/companion-v2/pdf-region-second.json)).
+  Their optional grouping/review metadata imposes no collection schema.
+- [Image region](../../examples/companion-v2/generic-image.json),
+  [database record](../../examples/companion-v2/generic-database.json), and
+  [Markdown block](../../examples/companion-v2/generic-markdown.json) demonstrate
+  custom locators, including one without a mandatory profile or namespace.
 
-Namespaces are recommended for extension keys that will be exchanged between
-tools; the database example deliberately uses an ordinary `catalog` key to show
-that namespaces are not a requirement. The `profile` fields in the image and
-Markdown locations are also application choices, not special core fields. A
-consumer must not treat their presence as permission to fetch or execute them.
+## Discovery and existing systems
 
-The PDF location convention works without a text layer, including scanned
-pages. An image region can also be represented through generic mode. A viewer
-should offer useful text alongside a purely visual highlight; the examples
-show descriptions in application metadata without making one particular viewer
-vocabulary mandatory.
+The [included reader](../discovery.md) recursively selects files and validates
+complete records from JSON objects, arrays, and JSONL/NDJSON. It keeps origins
+rather than silently rebasing or deduplicating. A graph file or review ledger
+beside the shards is separate data, selected only deliberately.
 
-## Whole projects stay in applications
+WikiLean can retain matching evidence and its SQL catalog while exporting
+individual links. Autoform can retain its roadmap/proof graph and use generic
+locators for blueprint material. The Tao companions can export from their
+existing graph and overlay records. Their exporters and renderers remain
+separate work; the [repository findings](../discovery.md#relation-to-existing-companions)
+identify actual inputs and coordinate/base conversions.
 
-A LaTeX project with `main.tex` and several included chapters can publish one
-annotation document for each relevant file. An HTML site can do the same for
-each page. A PDF rendering is another resource, with its own annotations. The
-core does not infer that a label, HTML fragment, and PDF rectangle are the same
-passage merely because their text resembles one another.
-
-An application may carry a common identity in extensions or maintain a separate
-catalog of related resources. Relative source and destination references must
-retain their base when a document is moved or exported; a tool must not silently
-reinterpret a relative destination as relative to the informal source.
-
-Legacy paths need special care: a repository-relative path in a v1 document is
-not necessarily relative to the directory containing that document. Migration
-needs the original base or an explicit source mapping before relocation can be
-trusted. A tool that chooses the input document's directory as a default must
-state that convention and provide an override; it cannot infer the repository
-root from the annotation alone.
-
-This leaves several useful systems possible:
-
-- WikiLean can publish simple associations while retaining matching scores,
-  revisions, extraction records, and editorial decisions in its database.
-- A formal companion viewer can render standard locations and offer richer
-  controls when it understands an extension.
-- An Autoform blueprint or another local wiki can express its own anchors in
-  generic mode and preserve its dependency graph and work state separately.
-
-These are design boundaries, not claims that integration or rendering support
-has already been implemented in those projects.
-
-## Relationship to W3C annotations
+## W3C relationship
 
 The [W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/)
-provides the useful distinction between resources and selectors. Its broader
-model also supports metadata and structured relationships. The companion core
-borrows the idea of selecting part of a resource without requiring JSON-LD,
-remote contexts, a graph store, or an annotation transport protocol.
+motivates independent annotations and selection of parts of resources.
+This draft does not require JSON-LD or claim W3C serialization conformance.
 
-An interchange adapter must be explicit about naming: in a usual W3C mapping,
-the informal resource being annotated is the W3C **target**, and the associated
-formal resource is a **body**. The companion field named `target` means the
-formal destination. Similar field names do not make the two formats identical.
+Field orientation must be explicit: our `source` is informal and `target`
+is the formal destination. In a usual W3C mapping, the informal resource being
+annotated is the W3C target, and the formal resource is a body. Similar names do
+not imply an identity mapping. A future adapter must translate selector
+semantics and preserve or report unsupported data.
 
-The core format is not a claim of W3C conformance, and a small subset need not
-promise lossless interchange for arbitrary W3C annotations. Preserve unfamiliar
-information or report conversion loss; do not reinterpret it as a stronger
-mathematical claim.
+## Follow-through
 
-## Cases to verify before relying on a consumer
-
-This checklist describes acceptance cases for format implementations and
-applications. It does not imply that the core checker fetches resources or
-performs these rendering checks.
-
-- A one-page PDF, a scanned PDF, and a page whose CropBox and rotation differ
-  from the original page coordinates. Page numbers are physical, independent
-  of printed Roman numerals or page labels.
-- A rectangle at a page boundary; an out-of-bounds rectangle; zero-width and
-  zero-height regions; non-finite numeric input.
-- A LaTeX label with punctuation, a missing label, duplicate labels, and an
-  inclusive line range containing exactly one line. A valid label string does
-  not prove a unique label exists in the source.
-- An HTML element with a non-ASCII identifier, a missing element, an invalid
-  CSS selector, a CSS selector matching several elements, a quotation with no
-  match, and a quotation repeated in several places. Rendering must handle
-  ambiguity explicitly.
-- A source resource with no location, plus a malformed built-in location. These
-  must never be silently treated as the same case.
-- Two formal destinations associated with one passage and one formal
-  destination associated with several different passages.
-- A custom image or database locator that another consumer does not understand.
-  The consumer can preserve the object without pretending to render it.
-- A document using relative references moved with its resource bundle, and one
-  moved alone. A consumer needs the document's base to resolve references.
-- Extension data with nesting, Unicode, false values, zero, and null. Loading
-  and writing must preserve their JSON values rather than dropping them as
-  empty metadata.
-- A source or formal destination changed since annotation. Structural
-  validation must not be presented as proof that an anchor is still correct.
-- A legacy annotation with no destination URL and one with several candidate
-  destinations. Migration needs explicit diagnostics instead of guessed URLs.
-- Legacy verdicts, provenance, roles, and dependency records with no core
-  counterpart. Migration must report omissions or preserve that data in a
-  clearly documented extension, rather than silently declaring the conversion
-  lossless.
-
-## Boundaries for later work
-
-Add another built-in mode only after several applications need the same
-location semantics. Markdown and wikitext can start in generic mode. Standard
-extension conventions for declaration identity, revision pinning, confidence,
-accessible text, or provenance can be useful without becoming mandatory core
-fields. A storage schema, renderer, search service, or proof workflow should
-remain free to evolve independently of a document that expresses one link.
+The local draft implements single-record validation, explicit v1 projection,
+independent discovery, origin-preserving reports, and synthetic tests.
+Before release, maintainers must coordinate the version/identifier with PR #2.
+PR rc3 migration requires its own actual schema/rule reader and mappings;
+viewer rendering and WikiLean/Autoform/Tao exporters remain application work.

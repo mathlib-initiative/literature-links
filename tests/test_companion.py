@@ -394,10 +394,10 @@ class TestStrictJson(unittest.TestCase):
 
 
 class TestSchema(unittest.TestCase):
-    def test_both_repository_and_installed_schema_copies_match(self):
+    def test_schema_has_one_source_and_matches_installed_bytes(self):
         repo = ROOT / "schema" / "companion-v2.schema.json"
         source = ROOT / "src" / "formal_companion_annotations" / "schema" / "companion-v2.schema.json"
-        self.assertEqual(repo.read_bytes(), source.read_bytes())
+        self.assertFalse(source.exists())
         self.assertEqual(repo.read_bytes(), C.SCHEMA_PATH.read_bytes())
         self.assertEqual(C.load_schema()["$schema"], "https://json-schema.org/draft/2020-12/schema")
 
