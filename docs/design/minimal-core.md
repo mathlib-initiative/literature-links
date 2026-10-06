@@ -86,12 +86,22 @@ complete records from JSON objects, arrays, and JSONL/NDJSON. It keeps origins
 rather than silently rebasing or deduplicating. A graph file or review ledger
 beside the shards is separate data, selected only deliberately.
 
-WikiLean can retain matching evidence and its SQL catalog while exporting
-individual links. Autoform can retain its roadmap/proof graph and use generic
-locators for blueprint material. The Tao companions can export from their
-existing graph and overlay records. Their exporters and renderers remain
-separate work; the [repository findings](../discovery.md#relation-to-existing-companions)
-identify actual inputs and coordinate/base conversions.
+WikiLean's requested target is native storage and editing of these records as
+its link authority, with review/coverage items and private moderation state kept
+as application data. Targetless work items are not yet informal–formal links.
+Its current converter is a transitional bridge, not a permanent format boundary.
+
+For Autoform, the recommended model keeps Markdown wiki articles as independent
+informal resources and attaches separate companion records to them. An article
+can have no links or many links. The roadmap/proof graph remains application
+state, and ordinary citations to an original paper do not automatically transfer
+an article's formal associations to that paper. Generic locations can select
+parts of Markdown without adding a new core mode.
+
+The Tao companions can adopt records from their existing graph and overlays.
+Native application storage, migration and rendering remain application work;
+the [repository findings](../discovery.md#relation-to-existing-companions) identify
+actual inputs and coordinate/base conversions.
 
 ## W3C relationship
 
@@ -111,4 +121,4 @@ The local draft implements single-record validation, explicit v1 projection,
 independent discovery, origin-preserving reports, and synthetic tests.
 Before release, maintainers must coordinate the version/identifier with PR #2.
 PR rc3 migration requires its own actual schema/rule reader and mappings;
-viewer rendering and WikiLean/Autoform/Tao exporters remain application work.
+viewer rendering and native WikiLean/Autoform/Tao adoption remain application work.
