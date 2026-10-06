@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "source": {
+    "type": "generic",
+    "uri": "notes/groups.md",
+    "extensions": {
+      "org.example.markdown": { "mediaType": "text/markdown" }
+    }
+  },
+  "annotations": [
+    {
+      "id": "groups-claim-1",
+      "location": {
+        "profile": "https://example.org/profiles/markdown-block/v1",
+        "block": "^lagrange"
+      },
+      "target": "formal/Groups.html#lagrange",
+      "extensions": {
+        "org.example.roadmap": {
+          "status": "draft",
+          "dependsOn": ["subgroup-definition"]
+        }
+      }
+    }
+  ]
+}
