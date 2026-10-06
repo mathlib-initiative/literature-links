@@ -35,7 +35,7 @@ def codes(result) -> set[str]:
 
 
 def associations(result) -> list[dict]:
-    return [annotation for document in result.documents for annotation in document["annotations"]]
+    return result.documents
 
 
 class TestMigration(unittest.TestCase):
@@ -132,8 +132,8 @@ class TestMigration(unittest.TestCase):
         doc["locations"][0]["target"]["selector"] = [{"type": "FragmentSelector",
             "conformsTo": "http://tools.ietf.org/rfc/rfc8118", "value": "page=7"}]
         result = migrate_v1(doc)
-        self.assertEqual([document["source"]["type"] for document in result.documents], ["pdf", "generic"])
-        self.assertEqual(result.documents[0]["annotations"][0]["location"], {"page": 7})
+        self.assertEqual({document["source"]["type"] for document in result.documents}, {"pdf", "generic"})
+        self.assertEqual(result.documents[0]["location"], {"page": 7})
 
     def test_tex_lines_convert_half_open_zero_based_to_inclusive_one_based(self):
         doc = load("tex-lines")
@@ -210,6 +210,49 @@ class TestMigration(unittest.TestCase):
         self.assertEqual(migrate_v1(doc, target_base="https://formal.example.org/"),
                          migrate_v1(doc, target_base="https://formal.example.org/"))
 
+    def test_each_location_and_destination_pair_is_an_independent_record(self):
+        doc = load("ledger-graph")
+        exact_destination(doc, "Notes.Box")
+        second = deepcopy(next(destination for destination in doc["destinations"]
+                               if destination.get("declaration") == "Notes.Box"))
+        second["id"] += "-second"
+        second["href"] = "https://another.example.org/decl"
+        doc["destinations"].append(second)
+        doc["destinations"].sort(key=lambda destination: destination["id"])
+        result = migrate_v1(doc)
+        self.assertEqual(len(result.documents), 4)
+        pairs = [(annotation["extensions"][EXTENSION]["location_id"], annotation["target"])
+                 for annotation in result.documents]
+        self.assertEqual(len(set(pairs)), 4)
+        self.assertEqual([pair[0] for pair in pairs],
+                         ["definition-1.1@p007", "definition-1.1@p007",
+                          "definition-1.1@p007-2", "definition-1.1@p007-2"])
+        for annotation in result.documents:
+            self.assertNotIn("annotations", annotation)
+            self.assertEqual(annotation["source"]["extensions"][EXTENSION]["source"], doc["sources"][0])
+        result.documents[0]["source"]["extensions"][EXTENSION]["source"]["title"] = "Changed first copy"
+        self.assertEqual(result.documents[1]["source"]["extensions"][EXTENSION]["source"], doc["sources"][0])
+        result.documents[0]["location"]["target"]["selector"].clear()
+        self.assertTrue(result.documents[1]["location"]["target"]["selector"])
+
+    def test_different_sources_and_modes_have_no_shared_wrapper(self):
+        doc = load("mixed")
+        doc["links"].append({"id": "passage-bcffcbba/key/Notes.Box", "item": "passage-bcffcbba",
+                             "declaration": "Notes.Box", "role": "key", "provenance": "prov-curation"})
+        doc["links"].sort(key=lambda link: link["id"])
+        doc["locations"].append({"id": "passage-bcffcbba@html", "items": ["passage-bcffcbba"],
+                                 "provenance": "prov-curation", "target": {"source": "notes-errata",
+                                 "selector": [{"type": "CssSelector", "value": "#correction"}]}})
+        doc["locations"].sort(key=lambda location: location["id"])
+        result = migrate_v1(doc, target_base="https://formal.example.org/")
+        self.assertEqual(len(result.documents), 3)
+        self.assertEqual([annotation["source"]["type"] for annotation in result.documents],
+                         ["html", "generic", "generic"])
+        self.assertEqual(result.documents[0]["source"]["uri"], "https://notes.example.org/errata.html")
+        self.assertEqual(result.documents[0]["location"], {"css": "#correction"})
+        self.assertTrue(all(annotation["source"]["uri"].endswith("elementary-sets.pdf")
+                            for annotation in result.documents[1:]))
+
     def test_no_fetching(self):
         with patch("urllib.request.urlopen", side_effect=AssertionError("must stay offline")):
             self.assertTrue(migrate_v1(load()).documents)
@@ -219,6 +262,19 @@ class TestMigration(unittest.TestCase):
             migrate_v1(load("invalid-dangling-reference"))
         with self.assertRaisesRegex(MigrationError, "Invalid v1 document"):
             migrate_v1({"version": 2, "source": {"type": "pdf", "uri": "notes.pdf"}, "annotations": []})
+
+    def test_pr_release_candidate_is_explicitly_unsupported(self):
+        # Its marker identifies a distinct dialect, even if other fields happen
+        # to overlap. The legacy validator must not be applied after renaming it.
+        doc = {"schema": "formal-companion/annotations", "schema_version": "1.0",
+               "companion": {"name": "Synthetic release candidate"},
+               "sources": [], "items": [], "declarations": [], "links": [], "provenance": []}
+        before = deepcopy(doc)
+        with patch("formal_companion_annotations.migration.legacy.check",
+                   side_effect=AssertionError("wrong validator must not run")):
+            with self.assertRaisesRegex(MigrationError, "Unsupported PR #2 release-candidate dialect"):
+                migrate_v1(doc)
+        self.assertEqual(doc, before)
 
     def test_non_json_extension_values_fail_before_traversal(self):
         for value in (float("inf"), {1: "integer key"}, {1, 2}):
@@ -285,8 +341,10 @@ class TestMigration(unittest.TestCase):
                 doc = json.loads(path.read_text(encoding="utf-8"))
                 result = migrate_v1(doc)
                 self.assertEqual(result.original, doc)
-                self.assertEqual(len(result.documents), len({(d["source"]["uri"], d["source"]["type"])
-                                                           for d in result.documents}))
+                for annotation in result.documents:
+                    self.assertIn("source", annotation)
+                    self.assertIn("target", annotation)
+                    self.assertNotIn("annotations", annotation)
 
 
 if __name__ == "__main__":
