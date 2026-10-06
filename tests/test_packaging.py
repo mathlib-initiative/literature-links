@@ -100,7 +100,8 @@ class TestEntryPoints(unittest.TestCase):
 
     def test_the_console_script_names_the_checkers_main(self):
         scripts = pyproject()["project"]["scripts"]
-        self.assertEqual(scripts, {"formal-companion-annotations-validate": "formal_companion_annotations.validate:main"})
+        self.assertEqual(scripts, {"formal-companion-annotations-validate": "formal_companion_annotations.validate:main",
+                                   "formal-companion-annotations": "formal_companion_annotations.cli:main"})
 
     def run_module(self, module: str, *argv: str, env: dict | None = None) -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, "-m", module, *argv], capture_output=True, text=True,
@@ -187,7 +188,8 @@ class TestEntryPoints(unittest.TestCase):
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: it cites the skill's paths by design.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md")
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md",
+        "docs/companion-v2.md", "docs/migration-v2.md", "docs/design/minimal-core.md")
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):

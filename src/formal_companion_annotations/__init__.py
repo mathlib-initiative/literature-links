@@ -1,6 +1,7 @@
-"""The formal-companion annotation format: schema checks, id rules, canonical form.
+"""Small companion documents, with legacy v1 annotation compatibility.
 
-The format is specified in docs/annotations.md and its JSON Schema is
+The v2 format is specified in docs/companion-v2.md and implemented by
+``companion``. The legacy format is specified in docs/annotations.md; its JSON Schema is
 schema/annotations-v1.schema.json (schema_version "1.0"), shipped inside this
 package as ``schema/annotations-v1.schema.json``.  ``validate`` is the checker
 (and a CLI) and the RFC 8785 canonicaliser, ``schemacheck`` the small JSON
@@ -16,10 +17,10 @@ formal_companion_annotations.validate`` runs without a double import.
 """
 from __future__ import annotations
 
-#: The stable public API (README.md, "Public API"): the version and the four
+#: The public API (README.md): the version and the public
 #: modules, each of which states its own names in its ``__all__``.  Listing the
 #: modules does not import them; ``from formal_companion_annotations import *``
 #: does.
-__all__ = ["__version__", "ids", "schemacheck", "validate", "vocab"]
+__all__ = ["__version__", "ids", "schemacheck", "validate", "vocab", "companion", "migration", "cli"]
 
-__version__ = "1.0.0"
+__version__ = "2.0.0a1"

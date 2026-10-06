@@ -1,9 +1,10 @@
 # Contributing
 
 - Open an issue before changing the format (a key, value, rule, invariant, canonical form or id rule).
-- A format change updates, in one pull request: `docs/annotations.md`, `docs/vocabulary.md` for a value, both schema copies, `src/formal_companion_annotations/vocab.py` for an enum, the checker, a test or example, and `CHANGELOG.md` under "Unreleased".
-- Minor or major: spec section 9. A name leaves `__all__` only in a major release; keep public callables annotated.
-- The two schema copies are byte-identical: `cp schema/annotations-v1.schema.json src/formal_companion_annotations/schema/`.
-- Examples are synthetic: no text from a real book anywhere in this repository. An `invalid-*` example records its expected error in `x_expected_error`. Keep examples canonical.
+- V2 format changes update `docs/companion-v2.md`, both copies of `schema/companion-v2.schema.json`, `src/formal_companion_annotations/companion.py`, relevant tests/examples, and `CHANGELOG.md` together. Explain tradeoffs in `docs/design/minimal-core.md` when useful. Keep the required core small.
+- V1 changes still update `docs/annotations.md`, `docs/vocabulary.md` for values, both v1 schema copies, `src/formal_companion_annotations/vocab.py` for enums, the legacy checker, and tests. Do not reinterpret existing v1 data as v2.
+- Package 2 retains a v1 reader and adds the v2 draft. V1 version rules remain in its spec section 9; the v2 prerelease is experimental. Keep public callables annotated and existing v1 exports available.
+- Each repository schema matches its packaged copy byte-for-byte: `cp schema/*.json src/formal_companion_annotations/schema/`.
+- Examples are synthetic: no text from a real book anywhere in this repository. Legacy `invalid-*` examples record `x_expected_error` and legacy examples stay canonical. V2 has no canonical order; preserve unknown JSON and annotation order.
 - `python3 -m pytest` must pass (install `jsonschema` to run the agreement tests).
-- Release: move "Unreleased" under the version, set it in `pyproject.toml` and `src/formal_companion_annotations/__init__.py`, set the schema `$id` to the new tag for a new format minor, and tag `vX.Y.Z`.
+- Add changes to "Unreleased" or the current explicitly unpublished prerelease entry. Before an authorized release, update the changelog and versions in `pyproject.toml` and `src/formal_companion_annotations/__init__.py`, decide the final schema identifier, and build/test both wheel and sdist. A draft schema identifier does not imply that URL is hosted. Tagging and publication are separate release actions.

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Validate a formal-companion annotation document: schema, then invariants.
+"""Validate v2 companions or legacy v1 graphs: schema, then invariants.
+
+Documents with a ``version`` key use :mod:`companion`; canonical operations
+apply only to v1. The remaining description documents the legacy checker.
 
 Extracted from the formal-companion skill (scripts/annotations/
 validate.py), where it was new code, implementing docs/annotations.md
@@ -162,7 +165,9 @@ def loads(text: str) -> Any:
     """Parse strictly: no duplicate keys, no NaN or Infinity."""
     try:
         return json.loads(text, object_pairs_hook=_no_duplicate_keys, parse_constant=_no_constants)
-    except json.JSONDecodeError as exc:
+    except LoadError:
+        raise
+    except (ValueError, RecursionError) as exc:
         raise LoadError(f"not JSON: {exc}") from exc
 
 
@@ -272,13 +277,15 @@ def _emit(value: Any, depth: int, out: list[str]) -> None:
 
 
 def canonical_dumps(doc: Any) -> str:
-    """The canonical text (docs/annotations.md section 7).
+    """The legacy v1 canonical text (docs/annotations.md section 7).
 
     RFC 8785 (JCS) for key order (UTF-16 code units) and for numbers
     (:func:`jcs_number`); strings escaped as ECMAScript ``JSON.stringify``
     does, with non-ASCII written as UTF-8; laid out with a two-space indent,
     ``": "`` after a key, LF line ends and a final newline.
     """
+    if isinstance(doc, dict) and "version" in doc:
+        raise ValueError("canonical_dumps is v1-only; use companion.dumps for v2")
     out: list[str] = []
     _emit(doc, 0, out)
     return "".join(out) + "\n"
@@ -302,11 +309,13 @@ def _set(rec: dict, dotted: str, value: Any) -> None:
 
 
 def canonicalize(doc: dict) -> dict:
-    """A copy with every record array sorted by id and every set field sorted.
+    """A v1 copy with every record array sorted by id and every set field sorted.
 
     Everything sorts in the section 7 order (:func:`order_key`): UTF-16 code
     units, the order RFC 8785 gives object keys.
     """
+    if isinstance(doc, dict) and "version" in doc:
+        raise ValueError("canonicalize is v1-only; use companion.dumps for v2")
     out = copy.deepcopy(doc)
     for name in RECORD_ARRAYS:
         records = out.get(name)
@@ -1253,6 +1262,17 @@ def check(doc: Any, *, text: str | None = None, canonical: bool = False,
     overrides the choice by major version.  Semantic checks run only on a
     document the schema accepts: they rely on its shape.
     """
+    if isinstance(doc, dict) and "version" in doc:
+        # The small companion format has its own rules. In particular, it does
+        # not inherit v1 inventories, sorting, URL placement or canonical bytes.
+        from . import companion
+        minimal = companion.check(doc)
+        report = Report(problems=list(minimal.problems), warnings=list(minimal.warnings))
+        if canonical:
+            report.problems.append("$: v2 has no canonical byte order; omit --canonical and use format to pretty-print")
+        if schema is not None:
+            report.problems.append("$: a schema override is supported only for legacy v1 documents")
+        return report
     report = Report()
     if schema is None:
         path, problems, warnings = select_schema(doc)
@@ -1284,25 +1304,21 @@ def validate(doc: Any, *, text: str | None = None, canonical: bool = False,
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="formal-companion-annotations-validate",
-        description="Validate formal-companion annotation documents (schema v1).")
+        description="Validate simple v2 companions or legacy v1 annotation documents.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("documents", nargs="+", type=Path, help="annotation JSON files")
     parser.add_argument("--canonical", action="store_true",
-                        help="also require the canonical serialisation, byte for byte")
+                        help="legacy v1 only: also require canonical bytes")
     parser.add_argument("--print-canonical", action="store_true",
-                        help="print the canonical form of the (single) document and exit")
+                        help="legacy v1 only: print canonical form of one document")
     parser.add_argument("--schema", type=Path, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if args.print_canonical and len(args.documents) != 1:
         parser.error("--print-canonical takes exactly one document")
-    schema = load_schema(args.schema) if args.schema is not None else None
-    own = schema_path(vocab.ANNOTATION_SCHEMA_MAJOR)
-    if schema is None and not args.print_canonical and not own.is_file():
-        # A broken install, not a problem with any document: the schema ships as
-        # package data, and without it every document would be refused as
-        # "no schema for major version 1".
-        print(f"{parser.prog}: schema file not found: {own} (it ships inside the package as "
-              f"package data; reinstall formal-companion-annotations)", file=sys.stderr)
+    try:
+        schema = load_schema(args.schema) if args.schema is not None else None
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
+        print(f"{parser.prog}: cannot read schema: {exc}", file=sys.stderr)
         return 2
     status = 0
     for path in args.documents:
@@ -1316,9 +1332,27 @@ def main(argv: list[str] | None = None) -> int:
             if not isinstance(doc, dict):
                 print(f"{path}: the document must be a JSON object", file=sys.stderr)
                 return 1
-            sys.stdout.write(canonical_dumps(canonicalize(doc)))
+            if "version" in doc:
+                print(f"{path}: --print-canonical is for legacy v1; v2 preserves annotation and extension order", file=sys.stderr)
+                return 2
+            try:
+                sys.stdout.write(canonical_dumps(canonicalize(doc)))
+            except (ValueError, TypeError, OverflowError, RecursionError) as exc:
+                print(f"{path}: cannot serialize: {exc}", file=sys.stderr)
+                return 2
             return 0
-        report = check(doc, text=text, canonical=args.canonical, schema=schema)
+        if schema is None:
+            from . import companion
+            own = companion.SCHEMA_PATH if isinstance(doc, dict) and "version" in doc else SCHEMA_PATH
+            if not own.is_file():
+                print(f"{parser.prog}: schema file not found: {own} (it ships inside the package as "
+                      f"package data; reinstall formal-companion-annotations)", file=sys.stderr)
+                return 2
+        try:
+            report = check(doc, text=text, canonical=args.canonical, schema=schema)
+        except (OSError, UnicodeError, ValueError, TypeError, OverflowError, RecursionError) as exc:
+            print(f"{path}: cannot validate: {exc}", file=sys.stderr)
+            return 2
         for warning in report.warnings:
             print(f"{path}: warning: {warning}")
         if report.problems:
@@ -1326,7 +1360,9 @@ def main(argv: list[str] | None = None) -> int:
             for problem in report.problems:
                 print(f"{path}: {problem}")
         else:
-            counts = ", ".join(f"{len(doc.get(k, []))} {k}" for k in RECORD_ARRAYS if k in doc)
+            counts = (f"{len(doc['annotations'])} annotations, {doc['source']['type']}"
+                      if "version" in doc else
+                      ", ".join(f"{len(doc.get(k, []))} {k}" for k in RECORD_ARRAYS if k in doc))
             print(f"{path}: ok ({counts})")
     return status
 
