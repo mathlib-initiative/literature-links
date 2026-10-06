@@ -1,6 +1,6 @@
 # One annotation is the unit of interchange
 
-**Status:** Proposed implementation of the user's single-annotation requirement.
+**Status:** Implemented locally; unreleased.
 **Date:** 2026-10-06.
 **Decision owner:** Project maintainers before a public release.
 
@@ -86,17 +86,23 @@ complete records from JSON objects, arrays, and JSONL/NDJSON. It keeps origins
 rather than silently rebasing or deduplicating. A graph file or review ledger
 beside the shards is separate data, selected only deliberately.
 
-WikiLean's requested target is native storage and editing of these records as
-its link authority, with review/coverage items and private moderation state kept
-as application data. Targetless work items are not yet informal–formal links.
-Its current converter is a transitional bridge, not a permanent format boundary.
+The local WikiLean integration stores and edits these records directly as its
+link authority. Review/coverage items, targetless occurrences, internal IDs and
+private moderation state remain application data. Existing databases require an
+explicit migration of a copied snapshot; new records need no exporter. Its
+application storage marker is not an annotation version. WikiLean's JavaScript
+storage rejects unsafe integers rather than silently rounding opaque extensions;
+the FCA reader and Python/SQLite interchange retain arbitrary JSON integers.
 
-For Autoform, the recommended model keeps Markdown wiki articles as independent
+The local Autoform integration keeps Markdown wiki articles as independent
 informal resources and attaches separate companion records to them. An article
 can have no links or many links. The roadmap/proof graph remains application
 state, and ordinary citations to an original paper do not automatically transfer
 an article's formal associations to that paper. Generic locations can select
-parts of Markdown without adding a new core mode.
+parts of Markdown without adding a new core mode. Explicit source-to-article
+bindings and an article digest are application configuration. Retained records
+and their original carrier bases feed the renderer directly; stale bindings show
+historical associations. These annotations never change proof or review state.
 
 The Tao companions can adopt records from their existing graph and overlays.
 Native application storage, migration and rendering remain application work;
@@ -121,4 +127,5 @@ The local draft implements single-record validation, explicit v1 projection,
 independent discovery, origin-preserving reports, and synthetic tests.
 Before release, maintainers must coordinate the version/identifier with PR #2.
 PR rc3 migration requires its own actual schema/rule reader and mappings;
-viewer rendering and native WikiLean/Autoform/Tao adoption remain application work.
+native WikiLean and Autoform integrations remain local application branches, and
+Tao adoption remains separate application work.
