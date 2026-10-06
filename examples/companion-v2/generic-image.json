@@ -10,19 +10,20 @@
       }
     }
   },
-  "annotations": [
-    {
-      "location": {
-        "profile": "https://example.org/profiles/image-pixels/v1",
-        "region": { "x": 40, "y": 20, "width": 180, "height": 120 }
-      },
-      "target": "https://example.org/formal/Geometry.html#pythagoras",
-      "extensions": {
-        "org.example.image-viewer": {
-          "label": "Pythagorean relation",
-          "description": "The selected triangle illustrates a squared plus b squared equals c squared."
-        }
-      }
+  "location": {
+    "profile": "https://example.org/profiles/image-pixels/v1",
+    "region": {
+      "x": 40,
+      "y": 20,
+      "width": 180,
+      "height": 120
     }
-  ]
+  },
+  "target": "https://example.org/formal/Geometry.html#pythagoras",
+  "extensions": {
+    "org.example.image-viewer": {
+      "label": "Pythagorean relation",
+      "description": "The selected triangle illustrates a squared plus b squared equals c squared."
+    }
+  }
 }

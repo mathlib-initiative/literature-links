@@ -4,10 +4,8 @@
     "type": "html",
     "uri": "https://example.org/notes/groups.html"
   },
-  "annotations": [
-    {
-      "location": { "fragment": "lagrange" },
-      "target": "https://example.org/formal/Groups.html#lagrange"
-    }
-  ]
+  "location": {
+    "fragment": "lagrange"
+  },
+  "target": "https://example.org/formal/Groups.html#lagrange"
 }

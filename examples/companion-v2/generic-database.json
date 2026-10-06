@@ -9,20 +9,18 @@
       }
     }
   },
-  "annotations": [
-    {
-      "location": {
-        "table": "curves",
-        "key": { "label": "example-curve-1" },
-        "column": "rank"
-      },
-      "target": "urn:example:formal:curves:example-curve-1:rank",
-      "extensions": {
-        "org.example.database-browser": {
-          "displayValue": 1,
-          "annotationOrigin": "manual-example"
-        }
-      }
+  "location": {
+    "table": "curves",
+    "key": {
+      "label": "example-curve-1"
+    },
+    "column": "rank"
+  },
+  "target": "urn:example:formal:curves:example-curve-1:rank",
+  "extensions": {
+    "org.example.database-browser": {
+      "displayValue": 1,
+      "annotationOrigin": "manual-example"
     }
-  ]
+  }
 }

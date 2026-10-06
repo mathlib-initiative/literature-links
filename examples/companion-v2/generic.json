@@ -4,9 +4,5 @@
     "type": "generic",
     "uri": "urn:example:informal-record:17"
   },
-  "annotations": [
-    {
-      "target": "urn:example:formal-record:42"
-    }
-  ]
+  "target": "urn:example:formal-record:42"
 }
