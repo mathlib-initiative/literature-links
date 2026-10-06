@@ -1,0 +1,293 @@
+{
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "$ref": "#/$defs/reference"
+    },
+    "version": {
+      "const": 2
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/annotation"
+      }
+    },
+    "extensions": {
+      "$ref": "#/$defs/extensions"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "source",
+    "annotations"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mathlib-initiative.github.io/formal-companion-annotations/schema/companion-v2.schema.json",
+  "title": "Formal Companion Annotations v2 working draft",
+  "description": "One informal source and its associations to formal destinations. This is an experimental standalone format, not a W3C Web Annotation serialization. Omitted location selects the whole source. Generic locations and extensions are opaque JSON. Semantic checks also enforce unique annotation IDs, PDF rectangle bounds and ordered LaTeX lines. Schema identifiers are not fetched.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "type": {
+                "const": "pdf"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "items": {
+              "properties": {
+                "location": {
+                  "$ref": "#/$defs/pdf_location"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "type": {
+                "const": "latex"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "items": {
+              "properties": {
+                "location": {
+                  "$ref": "#/$defs/latex_location"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "type": {
+                "const": "html"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "items": {
+              "properties": {
+                "location": {
+                  "$ref": "#/$defs/html_location"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "reference": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+(?![\\s\\S])",
+      "description": "Nonempty URI/IRI reference with no literal whitespace or control characters. Absolute, relative and opaque references are preserved; no resource is fetched."
+    },
+    "extensions": {
+      "type": "object",
+      "patternProperties": {
+        "^[^\\s\\u0000-\\u001f\\u007f-\\u009f]+(?![\\s\\S])": true
+      },
+      "additionalProperties": false,
+      "description": "Tool-owned JSON values under nonempty keys without whitespace/control characters. Namespaced keys are recommended; consumers preserve unknown values."
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "pdf",
+            "latex",
+            "html",
+            "generic"
+          ]
+        },
+        "uri": {
+          "$ref": "#/$defs/reference"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "uri"
+      ]
+    },
+    "annotation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "$ref": "#/$defs/reference"
+        },
+        "location": {
+          "type": "object"
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "target"
+      ]
+    },
+    "pdf_location": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rect": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "[x,y,width,height], normalized to the displayed CropBox after intrinsic rotation, from the top-left. Width/height must be positive; the rectangle must fit inside the page (semantic checks)."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "page"
+      ]
+    },
+    "latex_location": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Inclusive one-based line range [start,end], with end >= start (semantic check)."
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "label"
+          ]
+        },
+        {
+          "required": [
+            "lines"
+          ]
+        }
+      ]
+    },
+    "html_location": {
+      "type": "object",
+      "properties": {
+        "fragment": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "not": {
+                "pattern": "^#"
+              }
+            }
+          ],
+          "description": "Decoded HTML element ID without a leading #. The validator does not resolve the element."
+        },
+        "css": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quote": {
+          "$ref": "#/$defs/quote"
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "fragment"
+          ]
+        },
+        {
+          "required": [
+            "css"
+          ]
+        },
+        {
+          "required": [
+            "quote"
+          ]
+        }
+      ]
+    },
+    "quote": {
+      "type": "object",
+      "properties": {
+        "exact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "suffix": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exact"
+      ]
+    }
+  }
+}
