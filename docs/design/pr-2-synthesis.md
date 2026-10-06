@@ -12,14 +12,13 @@ describe a companion, a source registry, or a collection of annotations.
 
 ```json
 {
-  "version": 2,
   "source": { "type": "pdf", "uri": "../notes.pdf" },
   "location": { "page": 4 },
   "target": "https://example.org/formal/Result.html#result"
 }
 ```
 
-`version`, `source`, and `target` are required. The informal `source` requires
+`source` and `target` are required. The informal `source` requires
 a `type` and `uri`. `location`, `id`, `$schema`, and `extensions` are optional.
 PDF, LaTeX, and HTML supply small built-in location formats; generic mode
 allows application-defined JSON locations. An absent location selects the
@@ -38,7 +37,7 @@ document is not an atomic annotation even if it contains only one link.
 | Concern | PR #2 | Earlier local draft | This synthesis |
 |---|---|---|---|
 | Schema unit | Entire companion repository | One source and many annotations | One annotation |
-| Required root | Eight fields: schema identity/version, companion metadata, sources, items, declarations, links, provenance | Version, source, annotations | Version, source, target |
+| Required root | Eight fields: schema identity/version, companion metadata, sources, items, declarations, links, provenance | Version, source, annotations | Source, target |
 | Source | Registry record, edition pinning rules | Concrete resource and mode | Concrete resource and mode |
 | Link | References to item, declaration or cluster, and provenance; role and ID | Formal target, optional locator and ID | Same small association, at the root |
 | Additional data | Graph, site, audit, history profiles | Extensions | Extensions; collection applications own their graph and workflow |
@@ -116,14 +115,15 @@ Three distinct formats must not be confused:
 1. The original `lean-companion/annotations` v1 graph.
 2. PR #2's `formal-companion/annotations` release-candidate graph, which still
    declares `schema_version: "1.0"` at the reviewed commit.
-3. This unpublished atomic draft, identified by `version: 2`.
+3. This unpublished, unversioned atomic draft, requiring only `source` and `target`.
 
 The [PR version comment](https://github.com/mathlib-initiative/formal-companion-annotations/pull/2#issuecomment-5930681089)
 already identifies the release candidate's format identity and ID-rule changes
 as requiring a new major rather than reuse of the original 1.0.0 identity.
 Its proposed `2.0.0` and this local draft's `2.0.0a2` are not evidence of
-compatibility. A published version and schema identifier need coordination
-before either is released. This work neither resolves that release decision
+compatibility. These are software versions; the current annotation itself has
+no version field. Public releases and schema identifiers need coordination
+before publication. This work neither resolves that release decision
 nor presents its draft schema identifier as a public hosted endpoint.
 
 The current migrator supports only the original v1 dialect. It validates that

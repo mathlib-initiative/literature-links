@@ -1,6 +1,6 @@
 """Single companion annotations and shard discovery, with legacy compatibility.
 
-The v2 format is specified in docs/companion-v2.md and implemented by
+The unversioned annotation format is specified in docs/companion.md and implemented by
 ``companion``. The legacy format is specified in docs/annotations.md; its JSON Schema is
 schema/annotations-v1.schema.json (schema_version "1.0"), shipped inside this
 package as ``schema/annotations-v1.schema.json``.  ``validate`` is the checker

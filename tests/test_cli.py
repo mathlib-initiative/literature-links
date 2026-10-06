@@ -21,8 +21,8 @@ import formal_companion_annotations
 from formal_companion_annotations import cli, companion, validate
 
 
-def v2() -> dict:
-    return {"version": 2, "source": {"type": "generic", "uri": "../source.json"},
+def current_annotation() -> dict:
+    return {"source": {"type": "generic", "uri": "../source.json"},
             "id": "z", "target": "urn:formal:first",
             "location": {"custom": {"z": 2**100, "a": [3, 2, 1]}},
             "extensions": {"tool": {"z": "α", "a": None}, "owner.example": {"unrecognized": True}}}
@@ -66,7 +66,7 @@ class CommandCase(unittest.TestCase):
 
 class TestValidationCommands(CommandCase):
     def test_both_formats_work_through_new_and_legacy_entry_points(self):
-        small, legacy = self.write("small.json", v2()), self.write("legacy.json", v1())
+        small, legacy = self.write("small.json", current_annotation()), self.write("legacy.json", v1())
         status, out, err = self.run_command("validate", str(small), str(legacy))
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(out.count(": ok ("), 2)
@@ -76,7 +76,7 @@ class TestValidationCommands(CommandCase):
             self.assertIn(": ok (", out)
 
     def test_invalid_documents_exit_one_with_paths(self):
-        doc = v2()
+        doc = current_annotation()
         doc["target"] = "with spaces"
         path = self.write("invalid.json", doc)
         status, out, err = self.run_command("validate", str(path))
@@ -85,16 +85,28 @@ class TestValidationCommands(CommandCase):
         self.assertIn("target", out)
         self.assertNotIn("Traceback", out + err)
 
+    def test_version_is_rejected_by_both_validation_entry_points(self):
+        for key, value in (("version", 2), ("schema_version", "1.0")):
+            doc = current_annotation()
+            doc[key] = value
+            path = self.write("versioned.json", doc)
+            for entry, arguments in ((cli.main, ("validate", str(path))),
+                                     (validate.main, (str(path),))):
+                with self.subTest(key=key, entry=entry.__module__):
+                    status, out, err = self.run_command(*arguments, entry=entry)
+                    self.assertEqual(status, 1)
+                    self.assertNotIn("Traceback", out + err)
+
     def test_new_validate_reports_mixed_valid_and_invalid_files(self):
-        first, second = self.write("valid.json", v2()), self.write("invalid.json", {"version": 3})
+        first, second = self.write("valid.json", current_annotation()), self.write("invalid.json", {"version": 3})
         status, out, err = self.run_command("validate", str(first), str(second))
         self.assertEqual(status, 1)
         self.assertIn(f"{first}: ok", out)
         self.assertIn(str(second), out)
         self.assertEqual(err, "")
 
-    def test_v2_rejects_legacy_canonical_apis_and_flags(self):
-        doc = v2()
+    def test_single_annotations_reject_legacy_canonical_apis_and_flags(self):
+        doc = current_annotation()
         with self.assertRaisesRegex(ValueError, "v1-only"):
             validate.canonicalize(doc)
         with self.assertRaisesRegex(ValueError, "v1-only"):
@@ -126,7 +138,7 @@ class TestValidationCommands(CommandCase):
                 status, out, err = self.run_command(*command)
                 with self.subTest(command=command, content=content):
                     # The legacy parser reads 1e999 as inf; schema validation
-                    # still rejects it. The v2 codec rejects it on loading.
+                    # still rejects it. The single-annotation codec rejects it on loading.
                     self.assertIn(status, (1, 2))
                     self.assertNotIn("Traceback", out + err)
         status, out, err = self.run_command("validate", str(self.directory / "missing.json"))
@@ -148,7 +160,7 @@ class TestValidationCommands(CommandCase):
 
     def test_lone_surrogate_is_reported_without_writing_invalid_utf8(self):
         path = self.directory / "surrogate.json"
-        doc = v2()
+        doc = current_annotation()
         doc["extensions"] = {"tool": "\ud800"}
         path.write_text(json.dumps(doc, ensure_ascii=True), encoding="utf-8")
         for command in (("validate", str(path)), ("format", str(path))):
@@ -160,7 +172,7 @@ class TestValidationCommands(CommandCase):
 
 class TestFormattingCommands(CommandCase):
     def test_stdout_format_preserves_large_integer_order_and_unknown_payloads(self):
-        doc = v2()
+        doc = current_annotation()
         path = self.write("small.json", doc)
         before = path.read_bytes()
         status, out, err = self.run_command("format", str(path))
@@ -171,12 +183,12 @@ class TestFormattingCommands(CommandCase):
         self.assertEqual(companion.loads(out)["location"]["custom"]["a"], [3, 2, 1])
 
     def test_explicit_output_writes_valid_json_without_changing_input(self):
-        path = self.write("small.json", v2())
+        path = self.write("small.json", current_annotation())
         before = path.read_bytes()
         output = self.directory / "formatted.json"
         status, out, err = self.run_command("format", str(path), "--output", str(output))
         self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(output.read_text()), v2())
+        self.assertEqual(companion.loads(output.read_text()), current_annotation())
         self.assertEqual(path.read_bytes(), before)
         self.assertEqual(sorted(p.name for p in self.directory.iterdir()), ["formatted.json", "small.json"])
 
@@ -192,7 +204,7 @@ class TestFormattingCommands(CommandCase):
             self.assertEqual(path.read_bytes(), original)
         self.assertFalse(list(self.directory.glob(".companion-*")))
 
-    def test_legacy_documents_are_not_rewritten_as_v2_by_format(self):
+    def test_legacy_documents_are_not_rewritten_as_single_annotations_by_format(self):
         path = self.write("legacy.json", v1())
         before = path.read_bytes()
         status, out, err = self.run_command("format", str(path), "--output", str(path))
@@ -200,7 +212,7 @@ class TestFormattingCommands(CommandCase):
         self.assertEqual(path.read_bytes(), before)
 
     def test_failed_output_creation_does_not_change_source(self):
-        path = self.write("small.json", v2())
+        path = self.write("small.json", current_annotation())
         before = path.read_bytes()
         status, out, err = self.run_command("format", str(path), "--output", str(self.directory / "missing" / "out.json"))
         self.assertEqual(status, 2)
@@ -208,7 +220,7 @@ class TestFormattingCommands(CommandCase):
         self.assertNotIn("Traceback", out + err)
 
     def test_failed_atomic_replace_preserves_existing_output_and_cleans_staging(self):
-        path = self.write("small.json", v2())
+        path = self.write("small.json", current_annotation())
         output = self.directory / "existing.json"
         output.write_bytes(b"keep this output")
         with patch.object(cli.os, "replace", side_effect=OSError("simulated write failure")):
@@ -219,10 +231,10 @@ class TestFormattingCommands(CommandCase):
 
     def test_explicit_in_place_formatting_preserves_companion_data(self):
         path = self.directory / "small.json"
-        path.write_text(json.dumps(v2(), ensure_ascii=False), encoding="utf-8")
+        path.write_text(json.dumps(current_annotation(), ensure_ascii=False), encoding="utf-8")
         status, out, err = self.run_command("format", str(path), "--output", str(path))
         self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(path.read_text()), v2())
+        self.assertEqual(companion.loads(path.read_text()), current_annotation())
 
 
 class TestMigrationCommands(CommandCase):
@@ -360,7 +372,7 @@ class TestMigrationCommands(CommandCase):
         real_dumps = companion.dumps
 
         def fail_on_projection(value):
-            if isinstance(value, dict) and value.get("version") == 2:
+            if isinstance(value, dict) and "source" in value and "target" in value:
                 raise companion.LoadError("simulated projection serialization failure")
             return real_dumps(value)
 
@@ -376,7 +388,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
     def test_machine_validation_reports_every_input_and_read_error_wins(self):
         invalid = self.write("invalid.json", {"version": 3})
         missing = self.directory / "missing.json"
-        valid = self.write("valid.json", v2())
+        valid = self.write("valid.json", current_annotation())
         status, out, err = self.run_command("validate", str(invalid), str(missing), str(valid), "--format", "json")
         reports = [json.loads(line) for line in out.splitlines()]
         self.assertEqual((status, err), (2, ""))
@@ -394,11 +406,11 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertIn("PR #2", report["problems"][0]["message"])
 
     def test_collection_carriers_are_separate_from_single_annotation_validation(self):
-        first = self.write("chapter.json", [v2(), v2()])
+        first = self.write("chapter.json", [current_annotation(), current_annotation()])
         nested = self.directory / "nested"
         nested.mkdir()
         second = nested / "generated.jsonl"
-        second.write_text("\n" + json.dumps(v2()) + "\n", encoding="utf-8")
+        second.write_text("\n" + json.dumps(current_annotation()) + "\n", encoding="utf-8")
         status, _, _ = self.run_command("validate", str(first))
         self.assertEqual(status, 1)
         status, out, err = self.run_command("scan", str(self.directory), str(first), "--format", "json")
@@ -406,7 +418,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(len(report["files"]), 2)
         records = report["records"]
-        self.assertEqual([record["annotation"] for record in records], [v2(), v2(), v2()])
+        self.assertEqual([record["annotation"] for record in records], [current_annotation(), current_annotation(), current_annotation()])
         self.assertEqual([record["origin"]["pointer"] for record in records], ["/0", "/1", ""])
         self.assertEqual(records[2]["origin"]["line"], 2)
         self.assertEqual(records[0]["origin"]["base_uri"], first.resolve().as_uri())
@@ -414,9 +426,9 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertNotEqual(records[0]["origin"]["base_uri"], records[2]["origin"]["base_uri"])
 
     def test_scan_preserves_valid_records_but_reports_failure_and_exact_origins(self):
-        self.write("array.json", [v2(), {"version": 99}])
+        self.write("array.json", [current_annotation(), {"version": 99}])
         stream = self.directory / "stream.jsonl"
-        stream.write_text(json.dumps(v2()) + "\n{\n" + json.dumps(v2()) + "\n", encoding="utf-8")
+        stream.write_text(json.dumps(current_annotation()) + "\n{\n" + json.dumps(current_annotation()) + "\n", encoding="utf-8")
         status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
         result = json.loads(out)
         self.assertEqual((status, err), (2, ""))
@@ -427,8 +439,8 @@ class TestSingleAnnotationDiscovery(CommandCase):
                             for problem in result["problems"]))
 
     def test_scope_patterns_leave_graph_and_reports_as_application_data(self):
-        self.write("one.annotations.json", v2())
-        self.write("graph.json", {"nodes": [{"annotation": v2()}]})
+        self.write("one.annotations.json", current_annotation())
+        self.write("graph.json", {"nodes": [{"annotation": current_annotation()}]})
         status, _, _ = self.run_command("scan", str(self.directory))
         self.assertEqual(status, 1)
         status, out, err = self.run_command("scan", str(self.directory), "--include", "*.annotations.json", "--format", "json")
@@ -439,14 +451,14 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
 
     def test_scan_broken_install_keeps_machine_error_output(self):
-        path = self.write("one.json", v2())
+        path = self.write("one.json", current_annotation())
         with patch.object(companion, "SCHEMA_PATH", self.directory / "missing-schema.json"):
             status, out, err = self.run_command("scan", str(path), "--format", "json")
         self.assertEqual((status, err), (2, ""))
         self.assertFalse(json.loads(out)["valid"])
 
     def test_source_collection_draft_is_not_silently_unwrapped(self):
-        old = {"version": 2, "source": v2()["source"], "annotations": [{"target": "urn:formal:one"}]}
+        old = {"source": current_annotation()["source"], "annotations": [{"target": "urn:formal:one"}]}
         path = self.write("old-draft.json", old)
         before = path.read_bytes()
         status, _, _ = self.run_command("format", str(path), "--output", str(path))

@@ -5,10 +5,6 @@
       "$ref": "#/$defs/reference",
       "description": "Optional tooling hint identifying a schema; never fetched or used to override the bundled validator."
     },
-    "version": {
-      "const": 2,
-      "description": "Format version, exactly 2. This schema describes one annotation, not a collection."
-    },
     "source": {
       "$ref": "#/$defs/source",
       "description": "The single informal resource participating in this association."
@@ -33,13 +29,12 @@
   },
   "additionalProperties": false,
   "required": [
-    "version",
     "source",
     "target"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mathlib-initiative.github.io/formal-companion-annotations/schema/companion-v2.schema.json",
-  "title": "Formal Companion single-annotation v2 working draft",
+  "$id": "https://mathlib-initiative.github.io/formal-companion-annotations/schema/companion.schema.json",
+  "title": "Formal Companion single-annotation working draft",
   "description": "Exactly one association between an informal source and a formal destination. Collections, directories and shard containers are outside this schema. This is an experimental application format, not a W3C Web Annotation serialization. Omitted location selects the whole source. Generic locations and extensions are opaque JSON. Semantic checks also enforce PDF rectangle bounds and ordered LaTeX lines. Schema identifiers are not fetched.",
   "allOf": [
     {

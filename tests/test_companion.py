@@ -1,4 +1,4 @@
-"""The v2 companion contract: small associations, opaque data, offline checks."""
+"""The single-annotation companion contract: small associations, opaque data, offline checks."""
 from __future__ import annotations
 
 import copy
@@ -20,7 +20,7 @@ from formal_companion_annotations.schemacheck import Validator
 
 
 def document(mode: str = "latex", location: dict | None = None) -> dict:
-    annotation = {"version": 2, "source": {"type": mode, "uri": "chapters/groups.tex"},
+    annotation = {"source": {"type": mode, "uri": "chapters/groups.tex"},
                   "target": "../formal/Groups.html#Lagrange"}
     if location is not None:
         annotation["location"] = location
@@ -40,6 +40,13 @@ VALID_LOCATIONS = {
 
 
 class TestSmallContract(unittest.TestCase):
+    def test_only_source_and_target_are_required(self):
+        schema = C.load_schema()
+        self.assertEqual(set(schema["required"]), {"source", "target"})
+        self.assertNotIn("version", schema["properties"])
+        self.assertEqual(set(document()), {"source", "target"})
+        self.assertEqual(C.validate(document()), [])
+
     def test_every_builtin_and_generic_location(self):
         for mode, locations in VALID_LOCATIONS.items():
             for location in locations:
@@ -54,7 +61,7 @@ class TestSmallContract(unittest.TestCase):
     def test_collection_shapes_are_not_single_annotations(self):
         single = document()
         for records in ([], [single], [single, copy.deepcopy(single)]):
-            for carrier in (records, {"version": 2, "source": single["source"], "annotations": records}):
+            for carrier in (records, {"source": single["source"], "annotations": records}):
                 with self.subTest(carrier=carrier):
                     self.assertTrue(C.validate(carrier))
         with_extra = document()
@@ -63,7 +70,7 @@ class TestSmallContract(unittest.TestCase):
 
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
-        for field in ("version", "source", "target"):
+        for field in ("source", "target"):
             doc = document()
             del doc[field]
             cases.append(doc)
@@ -75,12 +82,13 @@ class TestSmallContract(unittest.TestCase):
             with self.subTest(document=bad):
                 self.assertTrue(C.validate(bad))
 
-    def test_only_explicit_version_two_and_supported_modes(self):
-        for version in (None, True, False, "2", 1, 3, 2.1, "2.0"):
-            doc = document()
-            doc["version"] = version
-            with self.subTest(version=version):
-                self.assertTrue(C.validate(doc))
+    def test_version_fields_and_unsupported_modes_are_rejected(self):
+        for key in ("version", "schema_version"):
+            for version in (None, True, False, "2", 1, 2, 3, 2.1, "2.0"):
+                doc = document()
+                doc[key] = version
+                with self.subTest(key=key, version=version):
+                    self.assertTrue(C.validate(doc))
         for mode in ("markdown", "wikitext", "tex", "web", "PDF", "", None):
             doc = document()
             doc["source"]["type"] = mode
@@ -395,8 +403,8 @@ class TestStrictJson(unittest.TestCase):
 
 class TestSchema(unittest.TestCase):
     def test_schema_has_one_source_and_matches_installed_bytes(self):
-        repo = ROOT / "schema" / "companion-v2.schema.json"
-        source = ROOT / "src" / "formal_companion_annotations" / "schema" / "companion-v2.schema.json"
+        repo = ROOT / "schema" / "companion.schema.json"
+        source = ROOT / "src" / "formal_companion_annotations" / "schema" / "companion.schema.json"
         self.assertFalse(source.exists())
         self.assertEqual(repo.read_bytes(), C.SCHEMA_PATH.read_bytes())
         self.assertEqual(C.load_schema()["$schema"], "https://json-schema.org/draft/2020-12/schema")
