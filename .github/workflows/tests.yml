@@ -96,8 +96,8 @@ jobs:
       - name: minimal companions validate and format with the installed CLI
         run: |
           formal-companion-annotations --version
-          formal-companion-annotations validate examples/companion-v2/*.json
-          formal-companion-annotations format examples/companion-v2/generic-image.json --output "$RUNNER_TEMP/companion.json"
+          formal-companion-annotations validate examples/companion/*.json
+          formal-companion-annotations format examples/companion/generic-image.json --output "$RUNNER_TEMP/companion.json"
           formal-companion-annotations validate "$RUNNER_TEMP/companion.json"
           formal-companion-annotations migrate-v1 examples/annotations/web-passage.json --output "$RUNNER_TEMP/migration"
           formal-companion-annotations validate "$RUNNER_TEMP/migration/annotation-001.json" --format json
@@ -174,7 +174,7 @@ jobs:
                   "formal_companion_annotations/ids.py", "formal_companion_annotations/migration.py",
                   "formal_companion_annotations/py.typed",
                   "formal_companion_annotations/schema/annotations-v1.schema.json",
-                  "formal_companion_annotations/schema/companion-v2.schema.json",
+                  "formal_companion_annotations/schema/companion.schema.json",
                   "formal_companion_annotations/schemacheck.py", "formal_companion_annotations/validate.py",
                   "formal_companion_annotations/vocab.py"]
           assert package == want, package

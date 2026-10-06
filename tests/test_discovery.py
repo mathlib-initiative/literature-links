@@ -19,7 +19,7 @@ from formal_companion_annotations import companion, discovery
 
 
 def annotation(page: int = 1) -> dict:
-    return {"version": 2, "source": {"type": "pdf", "uri": "../source/book.pdf"},
+    return {"source": {"type": "pdf", "uri": "../source/book.pdf"},
             "target": "../site/Module.html#result", "location": {"page": page}}
 
 
@@ -153,7 +153,7 @@ class TestDiscovery(unittest.TestCase):
                 self.assertEqual([p.code for p in result.problems], ["JSON"])
 
     def test_generic_locations_and_extension_values_are_opaque(self):
-        value = {"version": 2, "source": {"type": "generic", "uri": "urn:example:record"},
+        value = {"source": {"type": "generic", "uri": "urn:example:record"},
                  "target": "urn:example:formal", "location": {"z": [3, 2, 1], "a": {}},
                  "extensions": {"example": {"large": 2 ** 100, "order": [False, None, "a"]}}}
         path = self.write("link.json", value)

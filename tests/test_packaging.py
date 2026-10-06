@@ -193,7 +193,7 @@ REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: it cites the skill's paths by design.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md",
-        "docs/companion-v2.md", "docs/migration-v2.md", "docs/discovery.md",
+        "docs/companion.md", "docs/migration.md", "docs/discovery.md",
         "docs/design/minimal-core.md", "docs/design/pr-2-synthesis.md")
 
 

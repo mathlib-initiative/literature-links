@@ -3,8 +3,11 @@
 ## 2.0.0a2 (unpublished working draft)
 
 - Make the schema describe exactly one informal–formal association: required
-  `version`, `source`, and `target`; optional location, ID, and extensions.
+  `source` and `target`; optional location, ID, and extensions.
   This supersedes a1's unpublished source-plus-annotations wrapper.
+- Keep the unreleased annotation format unversioned; remove its `version` field
+  and use neutral schema, specification, and example paths. Software package
+  version `2.0.0a2` is unchanged.
 - Keep companion assembly outside the schema. Add recursive discovery of JSON
   objects, array shards, and JSONL/NDJSON with configurable selection, precise
   origins, preserved relative-reference bases, and explicit failures.

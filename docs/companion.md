@@ -1,15 +1,14 @@
-# Companion v2 working draft
+# Companion annotation working draft
 
 This experimental, unpublished format describes **one informal–formal link**.
-`version: 2` identifies the draft format; `2.0.0a2` is the
-package prerelease. Its [JSON Schema](../schema/companion-v2.schema.json) ships
-with the checker.
+The annotation has no version field. `2.0.0a2` identifies the software package
+prerelease, not an annotation field. Its
+[JSON Schema](../schema/companion.schema.json) ships with the checker.
 
 ## Core document
 
 ```json
 {
-  "version": 2,
   "source": { "type": "pdf", "uri": "notes.pdf" },
   "location": { "page": 4 },
   "target": "https://example.org/formal/Result.html#result"
@@ -18,7 +17,7 @@ with the checker.
 
 | Object | Required fields | Optional fields |
 |---|---|---|
-| Annotation | `version` (number 2), `source`, `target` (string) | `location` (object), `id` (nonempty string), `$schema`, `extensions` |
+| Annotation | `source`, `target` (string) | `location` (object), `id` (nonempty string), `$schema`, `extensions` |
 | Source | `type` (`pdf`, `latex`, `html`, `generic`), `uri` (string) | `extensions` |
 
 Every record contains one source and one formal target. Two formal destinations
@@ -148,7 +147,6 @@ This convention does not claim W3C TextQuoteSelector interchange.
 
 ```json
 {
-  "version": 2,
   "source": { "type": "generic", "uri": "urn:example:dataset" },
   "location": { "table": "results", "row": "42" },
   "target": "urn:example:formal:result"
@@ -192,11 +190,13 @@ for rectangle bounds/extents, and `LATEX_LINES` for reversed line intervals.
 belong to this atomic validator.
 
 There is **no canonical byte representation** or required ordering. Formatting
-uses two-space indentation and a trailing newline without sorting. Unknown
-versions fail. V1 remains a separate legacy format using `schema_version`;
-mixed v1/v2 core shapes fail. This a2 draft replaces the unpublished a1
+uses two-space indentation and a trailing newline without sorting. The current
+annotation is unversioned: `version` and `schema_version` are unknown core
+fields and are rejected. V1 remains a separate legacy format using
+`schema_version`; mixed legacy/atomic shapes fail. This a2 draft replaces the
+unpublished a1
 source-plus-annotations wrapper; old wrappers are rejected rather than silently
 split or merged. PR #2's rc3 graph format is also a distinct dialect.
-See [migration](migration-v2.md), [PR synthesis](design/pr-2-synthesis.md), and the
+See [migration](migration.md), [PR synthesis](design/pr-2-synthesis.md), and the
 [design rationale](design/minimal-core.md), including the relationship to the
 [W3C Web Annotation model](https://www.w3.org/TR/annotation-model/).

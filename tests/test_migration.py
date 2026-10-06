@@ -280,7 +280,7 @@ class TestMigration(unittest.TestCase):
         with self.assertRaisesRegex(MigrationError, "Invalid v1 document"):
             migrate_v1(load("invalid-dangling-reference"))
         with self.assertRaisesRegex(MigrationError, "Invalid v1 document"):
-            migrate_v1({"version": 2, "source": {"type": "pdf", "uri": "notes.pdf"}, "annotations": []})
+            migrate_v1({"source": {"type": "pdf", "uri": "notes.pdf"}, "target": "urn:formal:result"})
 
     def test_pr_release_candidate_is_explicitly_unsupported(self):
         # Its marker identifies a distinct dialect, even if other fields happen
@@ -309,7 +309,7 @@ class TestMigration(unittest.TestCase):
         result = migrate_v1(doc)
         self.assertEqual(result.documents[0]["source"]["uri"], "chapter%3A1/50%25%23theorem%3F.tex")
 
-    def test_all_projected_documents_pass_v2_validation(self):
+    def test_all_projected_documents_pass_current_validation(self):
         from formal_companion_annotations import companion
         for path in EXAMPLES.glob("*.json"):
             if path.name.startswith("invalid-"):
@@ -319,6 +319,7 @@ class TestMigration(unittest.TestCase):
             result = migrate_v1(doc, source_uris=mappings, target_base="https://formal.example.org/")
             for projected in result.documents:
                 with self.subTest(example=path.name, mode=projected["source"]["type"]):
+                    self.assertNotIn("version", projected)
                     self.assertEqual(companion.validate(projected), [])
 
     def test_invalid_configuration_is_rejected(self):

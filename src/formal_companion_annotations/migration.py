@@ -144,7 +144,7 @@ def migrate_v1(
     document: dict[str, Any], *, source_uris: dict[str, str] | None = None,
     target_base: str | None = None,
 ) -> MigrationResult:
-    """Project valid original v1 links into independent v2 annotation records.
+    """Project valid original v1 links into independent annotation records.
 
     ``source_uris`` maps original source IDs to concrete resource references.
     It overrides missing or unsuitable source addresses. ``target_base`` is an
@@ -197,7 +197,7 @@ def migrate_v1(
             diagnostic["record_id"] = record_id
         diagnostics.append(diagnostic)
 
-    diagnose("original_archived", "The complete v1 graph is retained in original; v2 documents are projections.",
+    diagnose("original_archived", "The complete v1 graph is retained in original; single annotations are projections.",
              severity="info")
     for warning in report.warnings:
         diagnose("legacy_validation_warning", warning)
@@ -285,7 +285,6 @@ def migrate_v1(
                         if key in link:
                             metadata[key] = deepcopy(link[key])
                     documents.append({
-                        "version": 2,
                         "source": {"type": mode, "uri": uri,
                                    "extensions": {_EXTENSION: {"source": deepcopy(source)}}},
                         "id": f"v1-link-{link_index + 1}-location-{location_index + 1}-target-{target_index + 1}",
@@ -310,5 +309,5 @@ def migrate_v1(
     for converted in documents:
         problems = companion.validate(converted)
         if problems:
-            raise MigrationError("Projected document is not valid v2:\n" + "\n".join(problems))
+            raise MigrationError("Projected annotation is not valid:\n" + "\n".join(problems))
     return MigrationResult(documents, diagnostics, deepcopy(document))

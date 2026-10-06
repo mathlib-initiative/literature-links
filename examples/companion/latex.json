@@ -1,11 +1,10 @@
 {
-  "version": 2,
   "source": {
-    "type": "pdf",
-    "uri": "https://example.org/notes.pdf"
+    "type": "latex",
+    "uri": "chapters/groups.tex"
   },
   "location": {
-    "page": 7
+    "label": "thm:lagrange"
   },
   "target": "https://example.org/formal/Groups.html#lagrange"
 }

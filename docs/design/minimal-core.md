@@ -4,7 +4,7 @@
 **Date:** 2026-10-06.
 **Decision owner:** Project maintainers before a public release.
 
-The [annotation specification](../companion-v2.md) defines one informal–formal
+The [annotation specification](../companion.md) defines one informal–formal
 association. The [PR #2 comparison](pr-2-synthesis.md) records why both the PR's
 repository graph and the earlier local source-level collection are larger than
 the requested unit.
@@ -13,14 +13,15 @@ the requested unit.
 
 ```json
 {
-  "version": 2,
   "source": { "type": "latex", "uri": "../chapters/groups.tex" },
   "location": { "label": "thm:lagrange" },
   "target": "https://example.org/formal/Groups.html#lagrange"
 }
 ```
 
-This is one complete annotation. A companion is assembled by finding many such
+This is one complete annotation. Only `source` and `target` are required.
+The unreleased format has no annotation version field; software releases retain
+their own package versions. A companion is assembled by finding many such
 records. The core does not specify their directory layout, file grouping, or
 collection manifest. Discovery is a separate utility; applications can supply
 other carrier readers without changing the annotation schema.
@@ -63,19 +64,19 @@ not an instruction to fetch or execute something.
 
 ## Examples
 
-The [nine examples](../../examples/companion-v2) use synthetic resources.
+The [nine examples](../../examples/companion) use synthetic resources.
 Their references need not resolve for the data to validate.
 
-- [PDF page](../../examples/companion-v2/pdf.json), [LaTeX label](../../examples/companion-v2/latex.json),
-  [HTML fragment](../../examples/companion-v2/html.json), and
-  [whole generic resource](../../examples/companion-v2/generic.json).
+- [PDF page](../../examples/companion/pdf.json), [LaTeX label](../../examples/companion/latex.json),
+  [HTML fragment](../../examples/companion/html.json), and
+  [whole generic resource](../../examples/companion/generic.json).
 - Two links from the same PDF region are
-  [two independent records](../../examples/companion-v2/pdf-region-first.json)
-  ([second record](../../examples/companion-v2/pdf-region-second.json)).
+  [two independent records](../../examples/companion/pdf-region-first.json)
+  ([second record](../../examples/companion/pdf-region-second.json)).
   Their optional grouping/review metadata imposes no collection schema.
-- [Image region](../../examples/companion-v2/generic-image.json),
-  [database record](../../examples/companion-v2/generic-database.json), and
-  [Markdown block](../../examples/companion-v2/generic-markdown.json) demonstrate
+- [Image region](../../examples/companion/generic-image.json),
+  [database record](../../examples/companion/generic-database.json), and
+  [Markdown block](../../examples/companion/generic-markdown.json) demonstrate
   custom locators, including one without a mandatory profile or namespace.
 
 ## Discovery and existing systems

@@ -1,6 +1,6 @@
 # Vocabulary of the annotation format
 
-This page describes **legacy v1**. The [v2 working draft](companion-v2.md) uses
+This page describes **legacy v1**. The [unversioned working draft](companion.md) uses
 four source modes and open extension data; it does not inherit this inventory.
 
 Every enum of `schema/annotations-v1.schema.json` is a set in

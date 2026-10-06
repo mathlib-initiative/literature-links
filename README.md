@@ -5,18 +5,19 @@ assembled from these independent annotations, wherever its author stores them.
 
 ```json
 {
-  "version": 2,
   "source": { "type": "latex", "uri": "../chapters/groups.tex" },
   "location": { "label": "thm:lagrange" },
   "target": "https://example.org/formal/Groups.html#lagrange"
 }
 ```
 
-This is the complete record. It needs no companion manifest, declaration index,
+Only `source` and `target` are required; the unreleased annotation format has
+no version field. It needs no companion manifest, declaration index,
 generated ID, provenance table, or proof workflow. The association alone does
 not assert equivalence, proof completion, or human review.
 
 This private repository contains an **unpublished draft, package 2.0.0a2**.
+The software package version is separate from the unversioned annotation data.
 The single-record design supersedes the earlier a1 source-plus-annotations
 wrapper. PR #2's release-candidate format and published legacy v1 are distinct
 formats; see the [comparison and synthesis](docs/design/pr-2-synthesis.md).
@@ -36,9 +37,9 @@ destinations or two informal occurrences. Root `id`, `$schema`, and
 Generic mode accommodates images, database records, Markdown, wikitext, and
 custom formats without registering a new mode or profile.
 
-Read the [annotation specification](docs/companion-v2.md),
+Read the [annotation specification](docs/companion.md),
 [design rationale](docs/design/minimal-core.md), and
-[nine synthetic annotations](examples/companion-v2).
+[nine synthetic annotations](examples/companion).
 
 ## Build a companion by discovery
 
@@ -50,8 +51,8 @@ not extra schema modes. Other applications may choose other carriers.
 
 ```sh
 python3 -m pip install .
-formal-companion-annotations validate examples/companion-v2/*.json
-formal-companion-annotations scan examples/companion-v2
+formal-companion-annotations validate examples/companion/*.json
+formal-companion-annotations scan examples/companion
 formal-companion-annotations scan path/to/repository --include '*.annotations.json' --include '*.jsonl'
 formal-companion-annotations scan path/to/shards --format json
 ```
@@ -104,7 +105,7 @@ Legacy v1 validation, canonicalization, vocabulary, and ID APIs remain available
 `formal-companion-annotations-validate` and `python3 -m formal_companion_annotations`
 also accept single annotations. Canonical operations apply only to legacy v1.
 
-[Migration](docs/migration-v2.md) emits one independent annotation per projected
+[Migration](docs/migration.md) emits one independent annotation per projected
 association, a diagnostic report, and the exact original input. Its supported
 input is released v1 (`lean-companion/annotations`), **not PR #2's rc3 dialect**.
 It does not invent formal URLs. The [PR comparison](docs/design/pr-2-synthesis.md)

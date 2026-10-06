@@ -1,4 +1,4 @@
-"""Small, offline validator and JSON codec for one v2 companion annotation.
+"""Small, offline validator and JSON codec for one unversioned companion annotation.
 
 Validation checks the document's shape and local invariants. It does not fetch
 resources, resolve anchors, execute selectors, or verify a mathematical claim.
@@ -18,9 +18,9 @@ from .schemacheck import Validator
 __all__ = ["SCHEMA_PATH", "LoadError", "Problem", "Report", "check", "dumps", "load_schema", "loads", "validate"]
 
 _HERE = Path(__file__).resolve().parent
-_PACKAGE_SCHEMA = _HERE / "schema" / "companion-v2.schema.json"
+_PACKAGE_SCHEMA = _HERE / "schema" / "companion.schema.json"
 _SOURCE_CHECKOUT = _HERE.parent.name == "src" and (_HERE.parent.parent / "pyproject.toml").is_file()
-SCHEMA_PATH = (_HERE.parent.parent / "schema" / "companion-v2.schema.json"
+SCHEMA_PATH = (_HERE.parent.parent / "schema" / "companion.schema.json"
                if not _PACKAGE_SCHEMA.is_file() and _SOURCE_CHECKOUT else _PACKAGE_SCHEMA)
 
 
@@ -150,7 +150,7 @@ def load_schema() -> dict[str, Any]:
 
 
 def check(document: Any) -> Report:
-    """Check one v2 annotation's structure and local invariants without mutation.
+    """Check one annotation's structure and local invariants without mutation.
 
     Diagnostic codes are ``JSON`` for values outside the JSON data model,
     ``SCHEMA`` for structural failures, ``PDF_RECT`` for rectangle semantics,

@@ -1,7 +1,8 @@
 # Migrating a v1 companion
 
 V1 is a rich graph of sources, items, declarations, links, locations, and
-workflow records. V2 is independent single associations. Migration is a **projection**, not
+workflow records. The current format consists of independent, unversioned
+associations. Migration is a **projection**, not
 a lossless replacement of the graph. Keep the archive. No files change until
 an explicit command is run; v1 validation remains available.
 
@@ -37,12 +38,12 @@ The output directory must not exist. Conversion and serialization finish in
 a temporary sibling directory before exposing the output. The bundle contains:
 
 - `original-v1.json`: the exact bytes of the supplied input.
-- `annotation-001.json`, etc.: one validated v2 annotation per association.
+- `annotation-001.json`, etc.: one validated unversioned annotation per association.
 - `report.json`: output filenames, resolution options, and structured diagnostics
   naming affected v1 records.
 
 Read the report even on success. Exit 0 means a valid bundle was written, not
-that every v1 record became a v2 annotation. Zero annotations is valid when
+that every v1 record became a single annotation. Zero annotations is valid when
 nothing can be mapped safely. Warnings and generic locators need review.
 To discover just the generated annotations, scan this directory with
 `--include 'annotation-*.json'`. Reports and archives are separate application
@@ -50,7 +51,7 @@ data. These output filenames are the converter's convention, not schema rules.
 
 ## Native and generic locations
 
-| V1 data | V2 projection |
+| V1 data | Single-annotation projection |
 |---|---|
 | Simple physical PDF page fragment | PDF `page` |
 | One printed PDF page with known offset | Physical PDF `page` |
@@ -103,7 +104,7 @@ diagnostics = result.diagnostics
 original = result.original
 ```
 
-The API validates v1 and every projected v2 document, leaves input unchanged,
+The API validates v1 and every projected annotation, leaves input unchanged,
 and returns an independent deep copy in `original`. This copy preserves decoded
 data, not original whitespace. API callers may keep relative sources with a
 `relative_source_context` warning and must preserve their original base when

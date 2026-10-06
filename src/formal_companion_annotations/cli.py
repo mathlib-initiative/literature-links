@@ -1,4 +1,4 @@
-"""Offline commands for the companion v2 draft and explicit v1 migration."""
+"""Offline commands for the unversioned companion draft and explicit v1 migration."""
 from __future__ import annotations
 
 import argparse
@@ -43,7 +43,8 @@ def _validate(args: argparse.Namespace) -> int:
         try:
             text = path.read_bytes().decode("utf-8")
             document = companion.loads(text)
-            if isinstance(document, dict) and "version" in document:
+            if not (isinstance(document, dict)
+                    and any(key in document for key in ("schema", "schema_version"))):
                 report = companion.check(document)
                 problems = [asdict(problem) for problem in report.problems]
                 warnings = [asdict(warning) for warning in report.warnings]
@@ -176,7 +177,7 @@ def _migrate(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     parser = argparse.ArgumentParser(prog="formal-companion-annotations",
-                                     description="Single formal/informal annotations and companion discovery (v2 draft).")
+                                     description="Single formal/informal annotations and companion discovery (unversioned draft).")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     validation = subparsers.add_parser("validate", help="validate single annotations or legacy v1 JSON")
@@ -188,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     scanning.add_argument("--include", action="append", help="select root-relative file patterns (repeatable)")
     scanning.add_argument("--exclude", action="append", default=[], help="exclude root-relative file patterns (repeatable)")
     scanning.add_argument("--format", choices=("text", "json"), default="text")
-    formatting = subparsers.add_parser("format", help="pretty-print v2 while retaining data and ordering")
+    formatting = subparsers.add_parser("format", help="pretty-print a single annotation while retaining data and ordering")
     formatting.add_argument("document", type=Path)
     formatting.add_argument("--output", type=Path,
                             help="write to a file; relative references stay unchanged, so preserve their base")
