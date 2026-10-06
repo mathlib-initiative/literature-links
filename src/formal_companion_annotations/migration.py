@@ -1,4 +1,4 @@
-"""Conservative, offline projection of v1 graphs into small companion documents.
+"""Conservative, offline projection of v1 graphs into single annotations.
 
 The complete v1 input travels separately as ``MigrationResult.original``.  The
 documents are useful associations, not a replacement for the archived graph.
@@ -141,20 +141,29 @@ def migrate_v1(
     document: dict[str, Any], *, source_uris: dict[str, str] | None = None,
     target_base: str | None = None,
 ) -> MigrationResult:
-    """Project valid v1 links with explicit exact destinations into v2 documents.
+    """Project valid original v1 links into independent v2 annotation records.
 
     ``source_uris`` maps original source IDs to concrete resource references.
     It overrides missing or unsuitable source addresses. ``target_base`` is an
     explicit absolute base for relative formal destinations; without one their
     resolution context is unknown and they remain archived with a diagnostic.
-    Sources are visited in input order, then modes in first-use order. Annotation
-    order follows links, locations, and destinations from the original arrays.
+    Sources are visited in input order. Annotation order then follows links,
+    locations, and destinations from the original arrays. Every association gets
+    its own record; the return list is an API result, not a companion schema.
+    The distinct release-candidate dialect from PR #2 is not supported.
     No source, repository, schema, or destination is fetched.
     """
     try:
         companion.dumps(document)
     except companion.LoadError as exc:
         raise MigrationError(f"Invalid v1 JSON value: {exc}") from exc
+    if isinstance(document, dict) and document.get("schema") == "formal-companion/annotations":
+        raise MigrationError(
+            "Unsupported PR #2 release-candidate dialect: formal-companion/annotations. "
+            "migrate_v1 supports only the original lean-companion/annotations format; "
+            "the release candidate needs its own schema/rule validation and explicit "
+            "source/target mappings. Renaming its schema identifier is not a migration."
+        )
     if (not isinstance(document, dict) or document.get("schema") != "lean-companion/annotations"
             or "version" in document):
         raise MigrationError("Invalid v1 document: expected lean-companion/annotations legacy format")
@@ -218,7 +227,6 @@ def migrate_v1(
         if source_links and not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", uri):
             diagnose("relative_source_context", "Relative source URI keeps its original resolution context; relocate with an explicit source_uris mapping.",
                      "source", source["id"])
-        by_mode: dict[str, dict[str, Any]] = {}
         for link_index, link in source_links:
             if link.get("orphaned"):
                 diagnose("orphaned_link", "Retired formal target remains archived, without a live association.",
@@ -264,11 +272,6 @@ def migrate_v1(
                 if mode == "generic":
                     diagnose("generic_locator", "Legacy locator semantics are preserved opaquely; generic support is required.",
                              "location" if location_id else "item", location_id or item["id"])
-                if mode not in by_mode:
-                    converted = {"version": 2, "source": {"type": mode, "uri": uri,
-                                 "extensions": {_EXTENSION: {"source": deepcopy(source)}}}, "annotations": []}
-                    by_mode[mode] = converted
-                    documents.append(converted)
                 for target_index, (destination_id, href) in enumerate(targets):
                     metadata = {"link_id": link["id"], "item_id": item["id"],
                                 "destination_id": destination_id, "role": link["role"],
@@ -278,7 +281,10 @@ def migrate_v1(
                     for key in ("relation", "note", "sub", "confidence"):
                         if key in link:
                             metadata[key] = deepcopy(link[key])
-                    by_mode[mode]["annotations"].append({
+                    documents.append({
+                        "version": 2,
+                        "source": {"type": mode, "uri": uri,
+                                   "extensions": {_EXTENSION: {"source": deepcopy(source)}}},
                         "id": f"v1-link-{link_index + 1}-location-{location_index + 1}-target-{target_index + 1}",
                         "location": deepcopy(locator), "target": href, "extensions": {_EXTENSION: metadata},
                     })
