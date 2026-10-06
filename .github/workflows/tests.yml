@@ -76,11 +76,13 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          from formal_companion_annotations import validate as V
-          assert V.SCHEMA_PATH.is_file(), V.SCHEMA_PATH
-          assert "site-packages" in str(V.SCHEMA_PATH), V.SCHEMA_PATH
-          assert V.SCHEMA_PATH.read_bytes() == Path("schema/annotations-v1.schema.json").read_bytes()
-          print("ok:", V.SCHEMA_PATH)
+          from formal_companion_annotations import companion, validate
+          for module in (companion, validate):
+              schema = module.SCHEMA_PATH
+              assert schema.is_file(), schema
+              assert "site-packages" in str(schema), schema
+              assert schema.read_bytes() == (Path("schema") / schema.name).read_bytes()
+              print("ok:", schema)
           PY
       - name: the console script reports the package version
         run: |
@@ -91,6 +93,15 @@ jobs:
       - name: valid examples pass, in canonical form
         run: |
           formal-companion-annotations-validate --canonical $(ls examples/annotations/*.json | grep -v '/invalid-')
+      - name: minimal companions validate and format with the installed CLI
+        run: |
+          formal-companion-annotations --version
+          formal-companion-annotations validate examples/companion-v2/*.json
+          formal-companion-annotations format examples/companion-v2/generic-image.json --output "$RUNNER_TEMP/companion.json"
+          formal-companion-annotations validate "$RUNNER_TEMP/companion.json"
+          formal-companion-annotations migrate-v1 examples/annotations/web-passage.json --output "$RUNNER_TEMP/migration"
+          formal-companion-annotations validate "$RUNNER_TEMP/migration/companion-001.json"
+          cmp examples/annotations/web-passage.json "$RUNNER_TEMP/migration/original-v1.json"
       - name: invalid examples fail with their recorded error
         run: |
           set -u
@@ -157,8 +168,11 @@ jobs:
           names = zipfile.ZipFile(wheel).namelist()
           package = sorted(n for n in names if not n.split("/")[0].endswith(".dist-info"))
           want = ["formal_companion_annotations/__init__.py", "formal_companion_annotations/__main__.py",
-                  "formal_companion_annotations/ids.py", "formal_companion_annotations/py.typed",
+                  "formal_companion_annotations/cli.py", "formal_companion_annotations/companion.py",
+                  "formal_companion_annotations/ids.py", "formal_companion_annotations/migration.py",
+                  "formal_companion_annotations/py.typed",
                   "formal_companion_annotations/schema/annotations-v1.schema.json",
+                  "formal_companion_annotations/schema/companion-v2.schema.json",
                   "formal_companion_annotations/schemacheck.py", "formal_companion_annotations/validate.py",
                   "formal_companion_annotations/vocab.py"]
           assert package == want, package

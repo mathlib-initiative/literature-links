@@ -1,5 +1,8 @@
 # Vocabulary of the annotation format
 
+This page describes **legacy v1**. The [v2 working draft](companion-v2.md) uses
+four source modes and open extension data; it does not inherit this inventory.
+
 Every enum of `schema/annotations-v1.schema.json` is a set in
 `src/formal_companion_annotations/vocab.py`. **The format owns every value it uses.**
 A new value is a minor version; a value removed or given another meaning is a major version.

@@ -1,5 +1,8 @@
 # Annotation documents: `lean-companion/annotations`, schema v1
 
+This is the retained **legacy v1** specification. New small companions use the
+[v2 working draft](companion-v2.md); [migration](migration-v2.md) is explicit.
+
 One JSON document per companion says which Lean declarations formalise which
 items of which sources, and where those items sit in the sources. It is the
 standard format the adapters, a PDF overlay, a web viewer and a WikiLean-style

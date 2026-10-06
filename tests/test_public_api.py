@@ -17,7 +17,7 @@ if importlib.util.find_spec("formal_companion_annotations") is None:
 import formal_companion_annotations                                  # noqa: E402
 
 PACKAGE = "formal_companion_annotations"
-MODULES = ("ids", "schemacheck", "validate", "vocab")
+MODULES = ("ids", "schemacheck", "validate", "vocab", "companion", "migration", "cli")
 
 SHARED_SETS = ("FINDING_KINDS", "LEDGER_VERDICTS", "RESOLUTION_PREFIXES", "SORRY_CLASSES", "SOURCE_ROLES",
                "STATIC_RESOLUTIONS", "VIEWER_SEVERITIES", "VIEWER_STATUS", "VIEWER_VERDICTS")

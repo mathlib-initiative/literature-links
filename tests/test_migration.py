@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import importlib.util
 import json
 from pathlib import Path
 import sys
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+if importlib.util.find_spec("formal_companion_annotations") is None:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from formal_companion_annotations.migration import MigrationError, migrate_v1
 

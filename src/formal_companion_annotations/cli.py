@@ -1,0 +1,143 @@
+"""Offline commands for the companion v2 draft and explicit v1 migration."""
+from __future__ import annotations
+
+import argparse
+import os
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+from urllib.parse import quote, urljoin, urlsplit
+
+from . import __version__, companion, migration, validate as legacy
+
+__all__ = ["main"]
+
+
+def _absolute(reference: str) -> bool:
+    return bool(urlsplit(reference).scheme)
+
+
+def _write_text(path: Path, text: str) -> None:
+    """Replace one explicitly requested output only after writing it completely."""
+    descriptor, name = tempfile.mkstemp(prefix=".companion-", dir=path.parent)
+    staged = Path(name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+            stream.write(text)
+        os.replace(staged, path)
+    finally:
+        staged.unlink(missing_ok=True)
+
+
+def _migrate(args: argparse.Namespace) -> int:
+    # Read the original bytes separately: the archive is identical to the input,
+    # while the strict codec rejects values that cannot survive JSON interchange.
+    original_bytes = args.document.read_bytes()
+    document = companion.loads(original_bytes.decode("utf-8"))
+    mappings: dict[str, str] = {}
+    for assignment in args.source_uri:
+        identity, separator, uri = assignment.partition("=")
+        if not separator or not identity or not uri or identity in mappings:
+            raise ValueError("--source-uri requires a distinct SOURCE_ID=URI for each source")
+        mappings[identity] = uri
+    if args.source_base is not None:
+        if (not args.source_base or any(char.isspace() or ord(char) < 32 or 127 <= ord(char) <= 159
+                                        for char in args.source_base)
+                or not _absolute(args.source_base)):
+            raise ValueError("--source-base must be an absolute URI without whitespace/controls, "
+                             "such as file:///path/to/project/")
+    # The v1 source path is commonly repository-relative. The CLI must not
+    # assume that the directory containing annotations.json was that repository.
+    # Obtain the original mode/records only after the adapter validates v1.
+    result = migration.migrate_v1(document, source_uris=mappings, target_base=args.target_base)
+    if args.source_base is not None:
+        for source in document["sources"]:
+            uri = mappings.get(source["id"])
+            if uri is None:
+                uri = quote(source["path"], safe="/") if "path" in source else source.get("url")
+            if isinstance(uri, str) and not _absolute(uri):
+                mappings[source["id"]] = urljoin(args.source_base, uri)
+        result = migration.migrate_v1(document, source_uris=mappings, target_base=args.target_base)
+    for converted in result.documents:
+        uri = converted["source"]["uri"]
+        if not _absolute(uri):
+            raise ValueError("migration would relocate a relative source reference; supply --source-base "
+                             "or an absolute --source-uri for " + repr(uri))
+        problems = companion.validate(converted)
+        if problems:
+            raise ValueError("migration produced an invalid companion: " + "; ".join(problems))
+
+    destination = args.output
+    if destination.exists() or destination.is_symlink():
+        raise ValueError(f"migration output already exists: {destination}")
+    staged = Path(tempfile.mkdtemp(prefix=".companion-migration-", dir=destination.parent))
+    try:
+        manifest = {"format": "companion-v1-migration-report", "version": 1,
+                    "original": "original-v1.json", "documents": [], "diagnostics": result.diagnostics,
+                    "options": {"source_base": args.source_base, "source_uris": mappings,
+                                "target_base": args.target_base}}
+        (staged / "original-v1.json").write_bytes(original_bytes)
+        for index, converted in enumerate(result.documents, start=1):
+            name = f"companion-{index:03d}.json"
+            (staged / name).write_text(companion.dumps(converted), encoding="utf-8")
+            manifest["documents"].append(name)
+        (staged / "report.json").write_text(companion.dumps(manifest), encoding="utf-8")
+        # All conversion and serialization has succeeded before exposing output.
+        if destination.exists() or destination.is_symlink():
+            raise ValueError(f"migration output already exists: {destination}")
+        staged.rename(destination)
+    finally:
+        if staged.exists():
+            shutil.rmtree(staged)
+    warning_count = sum(item["severity"] == "warning" for item in result.diagnostics)
+    print(f"{destination}: {len(result.documents)} companions, {warning_count} warnings; "
+          "review report.json; original preserved in original-v1.json")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
+    parser = argparse.ArgumentParser(prog="formal-companion-annotations",
+                                     description="Small PDF, LaTeX, HTML and generic companions (v2 draft).")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+    validation = subparsers.add_parser("validate", help="validate v2 or legacy v1 JSON")
+    validation.add_argument("documents", nargs="+", type=Path)
+    validation.add_argument("--canonical", action="store_true", help="legacy v1 only")
+    formatting = subparsers.add_parser("format", help="pretty-print v2 while retaining data and ordering")
+    formatting.add_argument("document", type=Path)
+    formatting.add_argument("--output", type=Path,
+                            help="write to a file; relative references stay unchanged, so preserve their base")
+    conversion = subparsers.add_parser("migrate-v1", help="project legacy links and archive their original graph")
+    conversion.add_argument("document", type=Path)
+    conversion.add_argument("--output", type=Path, required=True, help="new output directory (must not exist)")
+    conversion.add_argument("--source-uri", action="append", default=[], metavar="SOURCE_ID=URI")
+    conversion.add_argument("--source-base", help="absolute base URI for relative source paths; directory bases end in /")
+    conversion.add_argument("--target-base", help="absolute base URI for relative formal destinations")
+    args = parser.parse_args(argv)
+    try:
+        if args.command == "validate":
+            forwarded = (["--canonical"] if args.canonical else []) + ["--", *(str(p) for p in args.documents)]
+            return legacy.main(forwarded)
+        if args.command == "migrate-v1":
+            return _migrate(args)
+        document = companion.loads(args.document.read_text(encoding="utf-8"))
+        problems = companion.validate(document)
+        if problems:
+            for problem in problems:
+                print(f"{args.document}: {problem}", file=sys.stderr)
+            return 1
+        formatted = companion.dumps(document)
+        if args.output is None:
+            sys.stdout.write(formatted)
+        else:
+            _write_text(args.output, formatted)
+        return 0
+    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
+        print(f"{parser.prog}: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
