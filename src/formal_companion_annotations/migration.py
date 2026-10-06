@@ -77,7 +77,10 @@ def _native_selector(source: dict[str, Any], target: dict[str, Any]) -> dict[str
         if match:
             # RFC 5147 uses zero-based, half-open line boundaries.
             return {"lines": [int(match[1]) + 1, int(match[2])]}
-    if mode == "html" and grammar == _HTML_GRAMMAR and "%" not in value:
+    if (mode == "html" and grammar == _HTML_GRAMMAR and "%" not in value
+            and not value.startswith("#") and _reference(value)):
+        # Legacy HTML IDs admit some control characters that the atomic core
+        # excludes. Preserve those selectors generically instead of aborting.
         return {"fragment": value}
     return None
 

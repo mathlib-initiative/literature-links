@@ -122,6 +122,25 @@ class TestMigration(unittest.TestCase):
             "type": "FragmentSelector", "conformsTo": "http://tools.ietf.org/rfc/rfc3236", "value": "a%20b"}]}
         self.assertEqual(migrate_v1(doc).documents[0]["source"]["type"], "generic")
 
+    def test_legacy_html_fragment_controls_remain_generic_without_loss(self):
+        from formal_companion_annotations import companion, validate
+        for control in ("\u0000", "\u0007", "\u007f", "\u0080", "\u009f"):
+            with self.subTest(control=repr(control)):
+                doc = load()
+                target = {"source": doc["sources"][0]["id"], "selector": [{
+                    "type": "FragmentSelector", "conformsTo": "http://tools.ietf.org/rfc/rfc3236",
+                    "value": "definition" + control}]}
+                doc["locations"][0]["target"] = target
+                self.assertEqual(validate.check(doc).problems, [])
+                result = migrate_v1(doc)
+                self.assertEqual(len(result.documents), 1)
+                annotation = result.documents[0]
+                self.assertEqual(annotation["source"]["type"], "generic")
+                self.assertEqual(annotation["location"]["target"], target)
+                self.assertEqual(companion.validate(annotation), [])
+                self.assertEqual(result.original, doc)
+                self.assertIn("generic_locator", codes(result))
+
     def test_pdf_page_maps_but_region_does_not_assume_rotation(self):
         doc = load("ledger-graph")
         exact_destination(doc, "Notes.Box")
