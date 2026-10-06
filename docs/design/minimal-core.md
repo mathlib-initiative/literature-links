@@ -91,6 +91,13 @@ catalog of related resources. Relative source and destination references must
 retain their base when a document is moved or exported; a tool must not silently
 reinterpret a relative destination as relative to the informal source.
 
+Legacy paths need special care: a repository-relative path in a v1 document is
+not necessarily relative to the directory containing that document. Migration
+needs the original base or an explicit source mapping before relocation can be
+trusted. A tool that chooses the input document's directory as a default must
+state that convention and provide an override; it cannot infer the repository
+root from the annotation alone.
+
 This leaves several useful systems possible:
 
 - WikiLean can publish simple associations while retaining matching scores,
