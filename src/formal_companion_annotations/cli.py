@@ -15,6 +15,7 @@ import tempfile
 from urllib.parse import quote, urljoin
 
 from . import __version__, companion, discovery, migration, validate as legacy
+from ._output import write_json
 
 __all__ = ["main"]
 
@@ -102,8 +103,8 @@ def _validate(args: argparse.Namespace) -> int:
             problems = [{"code": code, "path": "$", "message": str(exc)}]
         status = max(status, item_status)
         if args.format == "json":
-            print(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
-                              "problems": problems, "warnings": warnings}, ensure_ascii=True, allow_nan=False))
+            write_json(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
+                                   "problems": problems, "warnings": warnings}, ensure_ascii=True, allow_nan=False) + "\n")
         else:
             for warning in warnings:
                 print(f"{path}: warning: {warning['path']}: {warning['message']} [{warning['code']}]")
@@ -130,7 +131,7 @@ def _scan(args: argparse.Namespace) -> int:
                                           "line": record.line, "base_uri": record.base_uri}}
                               for record in collection.records],
                   "problems": [asdict(problem) for problem in collection.problems]}
-        print(companion.dumps(result), end="")
+        write_json(companion.dumps(result))
     else:
         for problem in collection.problems:
             print(f"{problem.path}: {problem.message} [{problem.code}]")
@@ -251,14 +252,14 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         formatted = companion.dumps(document)
         if args.output is None:
-            sys.stdout.write(formatted)
+            write_json(formatted)
         else:
             _write_text(args.output, formatted)
         return 0
     except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         if args.command == "scan" and args.format == "json":
-            print(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
-                                   "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}), end="")
+            write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
+                                        "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}))
             return 2
         print(f"{parser.prog}: {exc}", file=sys.stderr)
         return 2

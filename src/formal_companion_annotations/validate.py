@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from . import __version__, ids, vocab
+from ._output import write_json
 from .schemacheck import Validator
 
 #: The stable public API of this module (README.md, "Public API"): exactly these
@@ -1347,7 +1348,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{path}: --print-canonical is for legacy v1; single annotations preserve annotation and extension order", file=sys.stderr)
                 return 2
             try:
-                sys.stdout.write(canonical_dumps(canonicalize(doc)))
+                write_json(canonical_dumps(canonicalize(doc)))
             except (ValueError, TypeError, OverflowError, RecursionError) as exc:
                 print(f"{path}: cannot serialize: {exc}", file=sys.stderr)
                 return 2
