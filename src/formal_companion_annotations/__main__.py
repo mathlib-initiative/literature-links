@@ -11,6 +11,6 @@ __all__: list[str] = []
 if __name__ == "__main__":
     arguments = sys.argv[1:]
     current = not arguments or arguments[0] in {
-        "validate", "scan", "format", "migrate-v1", "-h", "--help", "--version",
+        "validate", "scan", "-h", "--help", "--version",
     }
     sys.exit(cli.main(arguments) if current else validate.main(arguments))

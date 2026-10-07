@@ -52,8 +52,7 @@ Keep these sources in agreement:
 
 Each schema has one maintained source in `schema/`. Packaging places that same
 file in the installed package; do not add a second maintained copy under `src/`.
-Record substantive changes in [the changelog](CHANGELOG.md). Explain design
-trade-offs in [the rationale](docs/design/minimal-core.md) when they affect users.
+Record substantive changes in [the changelog](CHANGELOG.md).
 
 ## Review expectations
 
@@ -69,9 +68,7 @@ trade-offs in [the rationale](docs/design/minimal-core.md) when they affect user
 - Cover changed behavior with focused tests. Check independent schema agreement
   and installed behavior when a change touches those boundaries.
 
-The [compatibility guide](docs/compatibility.md) separates the active draft from
-the retained legacy APIs. Changes must not silently reinterpret legacy records.
-Public callables remain annotated, and each module declares its public names
+Changes must not silently reinterpret legacy records. Public callables remain annotated, and each module declares its public names
 in `__all__`.
 
 ## Preparing a release

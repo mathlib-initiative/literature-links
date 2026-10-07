@@ -2,7 +2,6 @@
 include CHANGELOG.md CONTRIBUTING.md MANIFEST.in
 graft docs
 graft examples
-graft conformance
 graft schema
 graft tests
 graft .github

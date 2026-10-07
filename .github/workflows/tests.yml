@@ -80,12 +80,10 @@ jobs:
       - run: python -m pytest -q -rs
         env:
           FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED: '1'
-      - name: Exercise installed migration and shard discovery
+      - name: Exercise installed validation and shard discovery
         run: |
           formal-companion-annotations validate examples/companion/*.json
-          formal-companion-annotations migrate-v1 examples/annotations/web-passage.json --output "$RUNNER_TEMP/migration"
-          formal-companion-annotations scan "$RUNNER_TEMP/migration" --include 'annotation-*.json' --format json
-          cmp examples/annotations/web-passage.json "$RUNNER_TEMP/migration/original-v1.json"
+          formal-companion-annotations scan examples/companion --format json
 
   distribution:
     name: source and wheel distributions

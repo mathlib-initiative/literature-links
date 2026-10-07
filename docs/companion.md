@@ -4,10 +4,9 @@ One Formal Companion Annotation (FCA) associates **one informal source, or a
 location in it, with one formal destination**. Only `source` and `target` are
 required. The format is an unversioned working draft.
 
-Start with the [local tutorial](../examples/tutorial/README.md), which includes
-both endpoints, or browse the [examples](../examples/README.md). The
-[JSON Schema](../schema/companion.schema.json) describes the record's structure;
-the additional checks below complete its validation rules.
+The [JSON Schema](../schema/companion.schema.json) describes the record's structure;
+the additional checks below complete its validation rules. See the
+[examples](../examples/companion/).
 
 ## One association
 
@@ -33,8 +32,7 @@ FCA is **inspired by, but is not a serialization of, the W3C Web Annotation Data
 Model**. W3C annotations use a body/target model and a JSON-LD context; FCA's
 `source` and `target` are its own field names, not a renaming of those roles.
 Interchange needs an explicit adapter, including a choice of roles and selector
-mapping. See the [W3C model](https://www.w3.org/TR/annotation-model/#annotations)
-and the repository's [compatibility notes](compatibility.md).
+mapping. See the [W3C model](https://www.w3.org/TR/annotation-model/#annotations).
 
 ## Fields
 
@@ -56,7 +54,7 @@ also reject unknown fields. Put application metadata in `extensions`, or use
 
 Two formal destinations or two informal occurrences require two records. Repeat
 the source fields as needed; no shared defaults are inferred. An array or an
-`annotations` wrapper is not an annotation. [Discovery](discovery.md) can read
+`annotations` wrapper is not an annotation. [Discovery](#discovery) can read
 arrays and JSONL as carriers of independently valid records, without requiring
 a manifest, folder layout, or one file per record.
 
@@ -207,8 +205,7 @@ Relative references use the **containing carrier's URI** as their base, followin
 [URI reference resolution](https://www.rfc-editor.org/rfc/rfc3986#section-5).
 This also applies to records inside an array or JSONL file. They do not implicitly
 use the informal source, annotation ID, repository root, or working directory
-as a base. An in-memory caller must retain or supply that carrier context. See
-[worked examples](discovery.md#origins-and-relative-references).
+as a base. An in-memory caller must retain or supply that carrier context.
 
 Moving a record requires preserving its original base or deliberately rebasing
 its relative references. Formatting alone does neither. Do not treat arbitrary
@@ -262,5 +259,37 @@ There is no canonical byte representation or required property order. The
 formatter preserves object/array order, uses two-space indentation and a trailing
 newline, and does not preserve original whitespace or numeric spellings.
 `version` and `schema_version` are unknown core fields and are rejected. Software
-release numbers are separate; see [compatibility](compatibility.md) for earlier
-formats and [design rationale](design/minimal-core.md) for the choices here.
+release numbers are separate.
+
+## Discovery
+
+`formal-companion-annotations scan` and `discovery.collect` read annotations
+from local files. This is a reader convention, not part of the schema.
+
+| Carrier | Records | Origin of each record |
+|---|---|---|
+| JSON object | One annotation | Pointer `""` |
+| JSON array | One annotation per member | Pointer `/0`, `/1`, ... |
+| JSONL or NDJSON | One annotation per nonblank line | Line number, from 1 |
+
+Files are UTF-8. A JSONL line must hold an object, not an array. An empty array
+or a blank JSONL file holds no records.
+
+- A directory is walked recursively. It selects `.json`, `.jsonl` and `.ndjson`
+  files, ignoring case. A file named explicitly may have any suffix.
+- `.jsonl` and `.ndjson` files are read line by line. Other files are one JSON value.
+- `--include` patterns replace the suffix filter. `--exclude` patterns always win.
+  Patterns are case-sensitive shell wildcards on the path relative to the root.
+  `*` also matches `/`, and a leading `**/` also matches files in the root.
+- Hidden directories are not skipped. Symlinks found while walking are skipped.
+  A symlink named explicitly is an error.
+- Files are read in sorted path order. A file selected twice is read once.
+
+Every selected file must be a carrier. Unrelated or malformed JSON is reported,
+not skipped. Valid records from other files are still returned. Repeated `id`
+values and identical records are kept. Relative references in a record resolve
+against the URI of the file that contains it.
+
+`scan` exits 0 when it finds annotations and no problems. It exits 1 when an
+annotation or carrier shape is invalid. It exits 2 on a read, JSON, path or
+symlink failure, or when no annotation is found. Status 2 wins over 1.

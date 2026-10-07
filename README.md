@@ -55,7 +55,6 @@ formal-companion-annotations scan examples/companion
 ```
 
 On Windows, activate the environment with `.venv\Scripts\activate` instead.
-The [worked example](examples/tutorial/README.md) includes local sources you can inspect.
 
 Store one annotation per JSON file, group records into JSON arrays, or use
 JSONL/NDJSON. The included reader traverses the directories you select and
@@ -64,13 +63,11 @@ validates every record. These are reader conventions, not additional schemas.
 ```sh
 formal-companion-annotations scan path/to/repository --include '*.annotations.json'
 formal-companion-annotations validate annotation.json --format json
-formal-companion-annotations format annotation.json --output formatted.json
 ```
 
 Relative references use the containing annotation file as their base. Keep that
-base when moving records; formatting does not rewrite references. The reader
-preserves duplicates and reports malformed selected files. See
-[discovery and storage](docs/discovery.md) for selection rules and diagnostics.
+base when moving records. The reader preserves duplicates and reports malformed
+selected files. See [discovery](docs/companion.md#discovery) for selection rules.
 
 ## What validation means
 
@@ -87,14 +84,8 @@ produce and display annotations; they are not implied by a valid record.
 
 | Guide | Purpose |
 |---|---|
-| [Examples](examples/README.md) | Start with a worked example and see each source mode |
+| [Examples](examples/companion/) | See each source mode |
 | [Specification](docs/companion.md) | Fields, locations, references, and validation rules |
-| [Discovery and storage](docs/discovery.md) | Assemble a companion from arbitrary shards |
-| [Python API](docs/python.md) | Validate and read records in your own tools |
-| [Conformance cases](conformance/README.md) | Check another implementation against shared examples |
-| [Design rationale](docs/design/minimal-core.md) | Decisions, alternatives, and trade-offs |
-| [Integrations](docs/integrations.md) | Responsibilities of WikiLean, Autoform, and viewers |
-| [Compatibility](docs/compatibility.md) | Legacy formats and explicit migration |
 | [Contributing](CONTRIBUTING.md) | Development setup and review expectations |
 
 Licensed under [Apache 2.0](LICENSE). See the [changelog](CHANGELOG.md) for
