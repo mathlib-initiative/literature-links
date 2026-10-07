@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 from dataclasses import asdict
+import errno
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import tempfile
-from urllib.parse import quote, urljoin, urlsplit
+from urllib.parse import quote, urljoin
 
 from . import __version__, companion, discovery, migration, validate as legacy
 
@@ -17,7 +20,7 @@ __all__ = ["main"]
 
 
 def _absolute(reference: str) -> bool:
-    return bool(urlsplit(reference).scheme)
+    return re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", reference) is not None
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -30,6 +33,34 @@ def _write_text(path: Path, text: str) -> None:
         os.replace(staged, path)
     finally:
         staged.unlink(missing_ok=True)
+
+
+def _publish_directory(source: Path, destination: Path) -> None:
+    """Atomically publish a new directory without replacing a racing writer."""
+    if sys.platform == "win32":
+        # Windows rename refuses an existing destination, including directories.
+        os.rename(source, destination)
+        return
+    if not (sys.platform.startswith("linux") or sys.platform == "darwin"):
+        raise OSError(errno.ENOTSUP, "atomic no-replace directory publication is unavailable on this platform")
+    library = ctypes.CDLL(None, use_errno=True)
+    try:
+        if sys.platform.startswith("linux"):
+            rename = library.renameat2
+            rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int,
+                               ctypes.c_char_p, ctypes.c_uint]
+            rename.restype = ctypes.c_int
+            result = rename(-100, os.fsencode(source), -100, os.fsencode(destination), 1)  # AT_FDCWD, RENAME_NOREPLACE
+        elif sys.platform == "darwin":
+            rename = library.renamex_np
+            rename.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
+            rename.restype = ctypes.c_int
+            result = rename(os.fsencode(source), os.fsencode(destination), 0x00000004)  # RENAME_EXCL
+    except AttributeError as exc:
+        raise OSError(errno.ENOTSUP, "atomic no-replace directory publication is unavailable on this platform") from exc
+    if result:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error), destination)
 
 
 def _validate(args: argparse.Namespace) -> int:
@@ -135,7 +166,13 @@ def _migrate(args: argparse.Namespace) -> int:
             if uri is None:
                 uri = quote(source["path"], safe="/") if "path" in source else source.get("url")
             if isinstance(uri, str) and not _absolute(uri):
-                mappings[source["id"]] = urljoin(args.source_base, uri)
+                try:
+                    resolved = urljoin(args.source_base, uri)
+                except ValueError as exc:
+                    raise ValueError("--source-base cannot resolve source reference " + repr(uri)) from exc
+                if not _absolute(resolved):
+                    raise ValueError("--source-base cannot resolve source reference " + repr(uri))
+                mappings[source["id"]] = resolved
         result = migration.migrate_v1(document, source_uris=mappings, target_base=args.target_base)
     for converted in result.documents:
         uri = converted["source"]["uri"]
@@ -162,9 +199,7 @@ def _migrate(args: argparse.Namespace) -> int:
             manifest["documents"].append(name)
         (staged / "report.json").write_text(companion.dumps(manifest), encoding="utf-8")
         # All conversion and serialization has succeeded before exposing output.
-        if destination.exists() or destination.is_symlink():
-            raise ValueError(f"migration output already exists: {destination}")
-        staged.rename(destination)
+        _publish_directory(staged, destination)
     finally:
         if staged.exists():
             shutil.rmtree(staged)
@@ -177,7 +212,8 @@ def _migrate(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     parser = argparse.ArgumentParser(prog="formal-companion-annotations",
-                                     description="Single formal/informal annotations and companion discovery (unversioned draft).")
+                                     description="Single formal/informal annotations and companion discovery (unversioned draft).",
+                                     epilog="Legacy bare-file commands remain available through python -m formal_companion_annotations.validate.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     validation = subparsers.add_parser("validate", help="validate single annotations or legacy v1 JSON")

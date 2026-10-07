@@ -1,0 +1,10 @@
+{
+  "source": {
+    "type": "html",
+    "uri": "informal.html"
+  },
+  "location": {
+    "fragment": "reflexivity"
+  },
+  "target": "formal.html#reflexivity"
+}

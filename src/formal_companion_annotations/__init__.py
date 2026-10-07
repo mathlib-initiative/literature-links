@@ -1,19 +1,15 @@
-"""Single companion annotations and shard discovery, with legacy compatibility.
+"""One informal–formal association per annotation, with offline validation.
 
-The unversioned annotation format is specified in docs/companion.md and implemented by
-``companion``. The legacy format is specified in docs/annotations.md; its JSON Schema is
-schema/annotations-v1.schema.json (schema_version "1.0"), shipped inside this
-package as ``schema/annotations-v1.schema.json``.  ``validate`` is the checker
-(and a CLI) and the RFC 8785 canonicaliser, ``schemacheck`` the small JSON
-Schema evaluator it runs, because this package is standard library only,
-``ids`` the mechanical id rules of docs/annotations.md section 5 (statement-hash
-ids for anonymous declarations, and quote- or page-and-title-hash ids for
-unnumbered passages), and ``vocab`` the format's enums and id grammar.
+``companion`` defines the current unversioned format and its strict JSON codec.
+``discovery`` reads complete annotations from selected files and directories.
+``migration`` explicitly projects original v1 data into the current format.
 
-Extracted from the formal-companion skill (scripts/annotations/ and the
-annotation block of scripts/cflib/vocab.py); CHANGELOG.md names the commits.
-The submodules are not imported here, so ``python3 -m
-formal_companion_annotations.validate`` runs without a double import.
+The retained ``validate``, ``ids``, and ``vocab`` modules implement legacy v1.
+``schemacheck`` is the limited, dependency-free evaluator used by both schemas;
+its public API is not a general-purpose JSON Schema implementation. See the
+specification and compatibility guide in docs/ for the format boundaries.
+
+Submodules are not imported eagerly. Each declares its public names in __all__.
 """
 from __future__ import annotations
 

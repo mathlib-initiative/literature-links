@@ -41,6 +41,16 @@ class TestDiscovery(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
         return path
 
+    def symlink(self, path: Path, target: Path, *, directory: bool = False) -> None:
+        try:
+            path.symlink_to(target, target_is_directory=directory)
+        except NotImplementedError:
+            self.skipTest("symbolic links are unavailable on this platform")
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("this Windows user cannot create symbolic links")
+            raise
+
     def test_mixed_carriers_recurse_and_keep_deterministic_origins(self):
         single = self.write("a.json", annotation(1))
         array = self.write("chapter/b.json", [annotation(2), annotation(3)])
@@ -62,6 +72,18 @@ class TestDiscovery(unittest.TestCase):
                          [first.as_uri(), first.as_uri(), second.as_uri()])
         self.assertEqual(result.records[0].annotation["source"]["uri"], "../source/book.pdf")
         self.assertEqual(result.records[0].annotation["target"], "../site/Module.html#result")
+
+    def test_captured_carrier_base_does_not_follow_later_filesystem_changes(self):
+        carrier = self.write("original/link.json", annotation())
+        record = discovery.collect([carrier]).records[0]
+        captured = record.base_uri
+        carrier.parent.rename(self.root / "moved")
+        replacement = self.root / "replacement"
+        replacement.mkdir()
+        self.symlink(carrier.parent, replacement, directory=True)
+        self.assertEqual(record.path, carrier)
+        self.assertEqual(record.base_uri, captured)
+        self.assertEqual(record.base_uri, carrier.as_uri())
 
     def test_repeated_ids_equal_records_and_equal_targets_are_preserved(self):
         first = annotation()
@@ -209,9 +231,9 @@ class TestDiscovery(unittest.TestCase):
     def test_symlink_loops_and_escapes_are_skipped_but_explicit_links_error(self):
         good = self.write("good.json", annotation())
         link = self.root / "alias.json"
-        link.symlink_to(good)
-        (self.root / "loop").symlink_to(self.root, target_is_directory=True)
-        (self.root / "broken.json").symlink_to(self.root / "absent")
+        self.symlink(link, good)
+        self.symlink(self.root / "loop", self.root, directory=True)
+        self.symlink(self.root / "broken.json", self.root / "absent")
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [good])

@@ -1,0 +1,588 @@
+{
+  "description": "Language-neutral examples for the current unversioned single-annotation contract. This file is a test corpus, not an annotation carrier.",
+  "cases": [
+    {
+      "id": "whole-resource",
+      "description": "Only source and target are required. Omission of location selects the whole informal resource.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result"
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "pdf-page",
+      "description": "PDF physical pages start at one.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 1
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "pdf-rectangle-edge",
+      "description": "Decimal rectangle extents may meet the page edge exactly.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 2,
+          "rect": [
+            0.9,
+            0.9,
+            0.1,
+            0.1
+          ]
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "latex-label",
+      "description": "A literal Unicode LaTeX label is preserved.",
+      "annotation": {
+        "source": {
+          "type": "latex",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "label": "thm:α_2.1"
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "latex-integer-valued-lines",
+      "description": "JSON numbers with zero fractional part are integers; equal inclusive endpoints are allowed.",
+      "annotation": {
+        "source": {
+          "type": "latex",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "lines": [
+            2.0,
+            2.0
+          ]
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "html-literal-fragment",
+      "description": "The decoded element ID is literal; its percent sequence is not decoded again.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "fragment": "thm:α%20"
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "html-css-is-opaque",
+      "description": "Validation does not parse, execute, or resolve CSS selectors.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "css": "["
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "html-quote-preserved",
+      "description": "Quote strings and optional empty context are preserved, not normalized by the validator.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "quote": {
+            "exact": "α\nβ  γ",
+            "prefix": "",
+            "suffix": " "
+          }
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "opaque-generic-and-extensions",
+      "description": "Unknown selectors, nested keys, schema-looking data, and exact integers remain application-owned JSON.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes",
+          "extensions": {
+            "example:source": {
+              "edition": "draft"
+            }
+          }
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "future-selector": {
+            "path": [
+              null,
+              true,
+              1.25
+            ]
+          },
+          "$ref": "https://example.org/not-fetched"
+        },
+        "extensions": {
+          "example:tool": {
+            "$schema": "urn:example:unknown",
+            "": [
+              "α",
+              null
+            ],
+            "large_integer": 9007199254740993
+          }
+        }
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "generic-empty-location",
+      "description": "An explicit empty generic object is valid application data; it is distinct from omitted location.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {}
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "opaque-id",
+      "description": "An ID is any nonempty opaque label, with no URI syntax or uniqueness requirement.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "id": " "
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "unicode-relative-and-opaque-references",
+      "description": "Unicode relative sources and opaque formal references are preserved without fetching or grammar parsing.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "chapters/群.tex?edition=2#label"
+        },
+        "target": "urn:lean:Groups.lagrange"
+      },
+      "schema_valid": true,
+      "valid": true,
+      "problem_codes": []
+    },
+    {
+      "id": "missing-target",
+      "description": "A targetless work item is not an annotation.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "multiple-targets",
+      "description": "Multiple associations require separate annotations.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": [
+          "a.html#one",
+          "b.html#two"
+        ]
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "unknown-root-version",
+      "description": "The current annotation has no version member; unknown core keys are rejected.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "version": 2
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "unknown-source-mode",
+      "description": "Custom formats use generic mode rather than adding a source type.",
+      "annotation": {
+        "source": {
+          "type": "markdown",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result"
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "null-location",
+      "description": "Null does not stand for omitted location.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": null
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "empty-builtin-location",
+      "description": "An empty PDF locator is not an alias for the whole resource.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {}
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "zero-pdf-page",
+      "description": "Physical page zero is invalid.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 0
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "boolean-pdf-page",
+      "description": "Booleans are not JSON numbers.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": true
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "zero-rectangle-extent",
+      "description": "The schema accepts coordinates in range, but the full checker requires positive width and height.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 1,
+          "rect": [
+            0,
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "schema_valid": true,
+      "valid": false,
+      "problem_codes": [
+        "PDF_RECT"
+      ]
+    },
+    {
+      "id": "rectangle-overflow",
+      "description": "Do not round 0.9 + 0.10000000000000002 down to one when checking page bounds.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 1,
+          "rect": [
+            0.9,
+            0,
+            0.10000000000000002,
+            1
+          ]
+        }
+      },
+      "schema_valid": true,
+      "valid": false,
+      "problem_codes": [
+        "PDF_RECT"
+      ]
+    },
+    {
+      "id": "rectangle-coordinate-outside",
+      "description": "Each normalized coordinate must already be within the closed interval zero to one.",
+      "annotation": {
+        "source": {
+          "type": "pdf",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "page": 1,
+          "rect": [
+            -0.1,
+            0,
+            0.5,
+            0.5
+          ]
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "reversed-latex-lines",
+      "description": "The schema accepts two positive integers, but the full checker requires end at least start.",
+      "annotation": {
+        "source": {
+          "type": "latex",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "lines": [
+            4,
+            2
+          ]
+        }
+      },
+      "schema_valid": true,
+      "valid": false,
+      "problem_codes": [
+        "LATEX_LINES"
+      ]
+    },
+    {
+      "id": "multiple-latex-locators",
+      "description": "A built-in locator chooses exactly one alternative.",
+      "annotation": {
+        "source": {
+          "type": "latex",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "label": "thm:a",
+          "lines": [
+            1,
+            2
+          ]
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "leading-hash-fragment",
+      "description": "An HTML fragment stores the decoded ID without a leading hash.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "fragment": "#theorem"
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "multiple-html-locators",
+      "description": "A fragment and CSS selector cannot share one HTML location.",
+      "annotation": {
+        "source": {
+          "type": "html",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": {
+          "fragment": "theorem",
+          "css": "#theorem"
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "nonobject-generic-location",
+      "description": "Opaque generic locations must still be JSON objects.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "location": [
+          "selector"
+        ]
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "reference-whitespace",
+      "description": "References exclude Unicode White_Space, including a trailing no-break space.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "formal.html#theorem "
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    },
+    {
+      "id": "empty-extension-key",
+      "description": "Only the outer extension keys have the nonempty/no-whitespace key restriction.",
+      "annotation": {
+        "source": {
+          "type": "generic",
+          "uri": "../informal/notes"
+        },
+        "target": "../formal/results.html#result",
+        "extensions": {
+          "": {
+            "anything": true
+          }
+        }
+      },
+      "schema_valid": false,
+      "valid": false,
+      "problem_codes": [
+        "SCHEMA"
+      ]
+    }
+  ]
+}

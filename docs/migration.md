@@ -42,6 +42,11 @@ a temporary sibling directory before exposing the output. The bundle contains:
 - `report.json`: output filenames, resolution options, and structured diagnostics
   naming affected v1 records.
 
+Publication uses an atomic operation that refuses an existing destination,
+including one created while conversion is running. If the platform or filesystem
+does not support that operation, the command fails without publishing a partial
+bundle or replacing the destination.
+
 Read the report even on success. Exit 0 means a valid bundle was written, not
 that every v1 record became a single annotation. Zero annotations is valid when
 nothing can be mapped safely. Warnings and generic locators need review.

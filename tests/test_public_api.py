@@ -1,4 +1,4 @@
-"""The stable API is each module's ``__all__``; every name formal-companion imports (at d4deedb) must be in it."""
+"""Explicit module exports, annotations, and retained legacy API compatibility."""
 from __future__ import annotations
 
 import dataclasses
@@ -22,7 +22,9 @@ MODULES = ("ids", "schemacheck", "validate", "vocab", "companion", "migration", 
 SHARED_SETS = ("FINDING_KINDS", "LEDGER_VERDICTS", "RESOLUTION_PREFIXES", "SORRY_CLASSES", "SOURCE_ROLES",
                "STATIC_RESOLUTIONS", "VIEWER_SEVERITIES", "VIEWER_STATUS", "VIEWER_VERDICTS")
 
-SKILL_USES = {
+# Names consumed by the original formal-companion tooling. Keep this compatibility
+# surface explicit while new integrations use companion and discovery.
+LEGACY_API = {
     "ids": (
         "AnonymousDecl", "DECLARED_ID", "assign_ids", "blank_literals", "item_label_id", "named_signature",
         "normalize_text", "ordinal_ids", "passage_page_id", "passage_quote_id", "private_id", "scan_file",
@@ -114,14 +116,14 @@ class TestTyped(unittest.TestCase):
                             self.assertIsNot(p.annotation, inspect.Parameter.empty, p.name)
 
 
-class TestTheSkillsImports(unittest.TestCase):
+class TestLegacyCompatibility(unittest.TestCase):
 
-    def test_every_name_the_skill_uses_is_exported(self):
-        for name, used in SKILL_USES.items():
+    def test_existing_legacy_imports_remain_exported(self):
+        for name, used in LEGACY_API.items():
             exported = set(module(name).__all__)
             for attr in used:
                 with self.subTest(module=name, name=attr):
-                    self.assertIn(attr, exported, f"the skill uses {name}.{attr}, which is not in __all__")
+                    self.assertIn(attr, exported, f"legacy tooling uses {name}.{attr}, which is not in __all__")
 
     def test_the_record_types_keep_their_fields(self):
         ids, validate = module("ids"), module("validate")

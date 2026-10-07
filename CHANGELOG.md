@@ -2,6 +2,20 @@
 
 ## 2.0.0a2 (unpublished working draft)
 
+- Reorganize the documentation around a short overview, local worked example,
+  specification, Python API, and integration guide. Separate compatibility and
+  historical design notes from the introduction.
+- Clarify the W3C relationship, source-selection conventions, strict JSON
+  requirements, and the limits of structural and mathematical validation.
+- Add 30 language-neutral conformance cases separating structural validity from
+  full annotation validation. Reject nonzero JSON numbers that underflow to zero
+  in the Python decoder instead of silently changing their value.
+- Preserve discovered reference bases when the filesystem changes. Publish
+  migration output without replacing a destination created concurrently, and
+  diagnose source bases that cannot resolve relative references.
+- Support current subcommands through `python -m formal_companion_annotations`
+  while retaining legacy bare-file invocation. Strengthen malformed-schema
+  diagnostics, installed-package checks, and local documentation-link checks.
 - Make the schema describe exactly one informal–formal association: required
   `source` and `target`; optional location, ID, and extensions.
   This supersedes a1's unpublished source-plus-annotations wrapper.
