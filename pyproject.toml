@@ -1,33 +1,20 @@
-# The formal-companion annotation format as an installable package: the JSON
-# Schema (shipped as package data), the checker and its console script, the
-# mechanical id rules and the format's vocabulary.
-#
-# Standard library only at run time, as the checker was in the
-# formal-companion skill it was extracted from: `dependencies` is empty
-# on purpose. `jsonschema` is used by the test suite when it is importable
-# (the agreement tests), never by the checker.
-
 [build-system]
 requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "formal-companion-annotations"
-version = "1.0.0"                        # kept in step with src/formal_companion_annotations/__init__.py
-description = "The formal-companion annotation format: which Lean declarations formalise which items of which sources, with a standard-library validator."
+version = "2.0.0a2"  # Kept in step with the package's __version__.
+description = "Single formal/informal annotations for PDF, LaTeX, HTML and generic input, with offline shard discovery."
 readme = "README.md"
-# 3.11 is the floor the checker was written and tested against in the skill,
-# and the changelog `at` check needs it: before 3.11 `datetime.fromisoformat`
-# accepts LESS (only what `isoformat()` writes), so 3.10 rejects a timestamp
-# the schema allows, such as "2026-09-05T10:20:30.5Z" (a one-digit fraction),
-# and would refuse a valid changelog.  Tests use `tomllib` (3.11) too.
+# The test suite requires Python 3.11 or newer (tomllib).
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "the formal-companion contributors" }]
-keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema", "web-annotation"]
+authors = [{ name = "Formal Companion Annotations contributors" }]
+keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
+  "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",
@@ -39,7 +26,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Mathematics",
   "Typing :: Typed",
 ]
-dependencies = []
+dependencies = []  # Validation and discovery use only the standard library.
 
 [project.urls]
 Source = "https://github.com/mathlib-initiative/formal-companion-annotations"
@@ -48,18 +35,21 @@ Changelog = "https://github.com/mathlib-initiative/formal-companion-annotations/
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
-# Only for TestAgreementWithJsonschema: the package's evaluator against the real one.
+# Independent schema-agreement checks; never a runtime requirement.
 jsonschema = ["jsonschema>=4.18"]
 
 [project.scripts]
-formal-companion-annotations-validate = "formal_companion_annotations.validate:main"
+formal-companion-annotations = "formal_companion_annotations.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+# One source copy of the schema; installed wheels carry it inside the package.
+packages = ["formal_companion_annotations", "formal_companion_annotations.schema"]
+package-dir = { "" = "src", "formal_companion_annotations.schema" = "schema" }
 
 [tool.setuptools.package-data]
 # py.typed: the public API is fully annotated (tests/test_public_api.py checks it).
-formal_companion_annotations = ["schema/*.json", "py.typed"]
+formal_companion_annotations = ["py.typed"]
+"formal_companion_annotations.schema" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
