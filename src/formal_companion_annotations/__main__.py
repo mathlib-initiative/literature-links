@@ -1,16 +1,12 @@
-"""Run the current CLI, retaining historical bare-file validator commands."""
+"""``python -m formal_companion_annotations``: the command, as the console script runs it."""
 from __future__ import annotations
 
 import sys
 
-from . import cli, validate
+from .cli import main
 
-#: An entry point, not an API: use ``cli.main`` or ``validate.main``.
+#: An entry point, not an API: nothing here is public (use ``cli.main``).
 __all__: list[str] = []
 
 if __name__ == "__main__":
-    arguments = sys.argv[1:]
-    current = not arguments or arguments[0] in {
-        "validate", "scan", "-h", "--help", "--version",
-    }
-    sys.exit(cli.main(arguments) if current else validate.main(arguments))
+    sys.exit(main())

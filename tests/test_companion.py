@@ -568,6 +568,10 @@ class TestSchemaEvaluator(unittest.TestCase):
         with self.assertRaises(SchemaError):
             nonterminating.errors(None)
 
+    def test_unimplemented_keywords_are_refused(self):
+        with self.assertRaises(SchemaError):
+            Validator({"type": "string", "format": "date-time"})
+
     def test_other_dialects_and_nested_resources_are_explicitly_unsupported(self):
         for schema in (
             {"$schema": "http://json-schema.org/draft-07/schema#"},

@@ -64,7 +64,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      # Non-editable: test the wheel, including both packaged schemas and py.typed.
+      # Non-editable: test the wheel, including the packaged schema and py.typed.
       - run: python -m pip install . pytest
       - name: Verify installed import and entry points
         run: |
@@ -73,9 +73,8 @@ jobs:
           import formal_companion_annotations as package
           assert 'site-packages' in package.__file__, package.__file__
           assert not any(p.rstrip('/').endswith('/src') for p in sys.path), sys.path
-          for command in ('formal-companion-annotations', 'formal-companion-annotations-validate'):
-              actual = subprocess.check_output([command, '--version'], text=True)
-              assert actual == f'{command} {package.__version__}\n', actual
+          actual = subprocess.check_output(['formal-companion-annotations', '--version'], text=True)
+          assert actual == f'formal-companion-annotations {package.__version__}\n', actual
           PY
       - run: python -m pytest -q -rs
         env:
