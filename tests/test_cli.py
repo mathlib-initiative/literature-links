@@ -45,7 +45,7 @@ class CommandCase(unittest.TestCase):
 
     def write(self, name: str, document: dict) -> Path:
         path = self.directory / name
-        path.write_text(companion.dumps(document), encoding="utf-8")
+        path.write_text(companion.dumps(document), encoding="utf-8", newline="\n")
         return path
 
     def run_command(self, *arguments: str, entry=cli.main) -> tuple[int, str, str]:
@@ -57,10 +57,20 @@ class CommandCase(unittest.TestCase):
                 status = exc.code
         return status, stdout.getvalue(), stderr.getvalue()
 
-    def run_module(self, module: str, *arguments: str) -> subprocess.CompletedProcess:
+    def run_module(self, module: str, *arguments: str, parser_failure: bool = False) -> subprocess.CompletedProcess:
         package_root = str(Path(formal_companion_annotations.__file__).resolve().parent.parent)
         environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1")
-        return subprocess.run([sys.executable, "-m", module, *arguments], cwd=self.directory,
+        if parser_failure:
+            script = """import json, runpy, sys
+from unittest.mock import patch
+sys.argv = sys.argv[1:]
+with patch.object(json, 'loads', side_effect=RecursionError('simulated JSON parser limit')):
+    runpy.run_module(sys.argv[0], run_name='__main__')
+"""
+            command = [sys.executable, "-c", script, module, *arguments]
+        else:
+            command = [sys.executable, "-m", module, *arguments]
+        return subprocess.run(command, cwd=self.directory,
                               env=environment, capture_output=True, text=True, check=False)
 
 
@@ -125,7 +135,7 @@ class TestValidationCommands(CommandCase):
     def test_legacy_canonical_command_still_works(self):
         path = self.directory / "legacy.json"
         doc = validate.canonicalize(v1())
-        path.write_text(validate.canonical_dumps(doc), encoding="utf-8")
+        path.write_bytes(validate.canonical_dumps(doc).encode("utf-8"))
         status, out, err = self.run_command("validate", str(path), "--canonical")
         self.assertEqual((status, err), (0, ""))
         self.assertIn(": ok", out)
@@ -145,17 +155,29 @@ class TestValidationCommands(CommandCase):
         self.assertEqual(status, 2)
         self.assertNotIn("Traceback", out + err)
 
-    def test_parser_limit_failures_are_clean_in_supported_module_entry_points(self):
+    def test_deep_input_fails_cleanly_in_supported_module_entry_points(self):
         path = self.directory / "too-deep.json"
-        # Python 3.14's C JSON parser permits considerably deeper nesting than
-        # sys.getrecursionlimit(); this exceeds both old and new parser limits.
+        # Parser nesting limits vary between Python releases. A parser may
+        # reject this input, or accept it and let validation reject its shape.
         path.write_text("[" * 100_000 + "0" + "]" * 100_000, encoding="utf-8")
         for module, arguments in (("formal_companion_annotations.cli", ["validate", str(path)]),
                                   ("formal_companion_annotations.validate", [str(path)]),
                                   ("formal_companion_annotations", [str(path)])):
             result = self.run_module(module, *arguments)
             with self.subTest(module=module):
-                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn(result.returncode, (1, 2), result.stdout + result.stderr)
+                self.assertIn(str(path), result.stdout + result.stderr)
+                self.assertNotIn("Traceback", result.stdout + result.stderr)
+
+    def test_parser_failures_exit_two_in_supported_module_entry_points(self):
+        path = self.write("annotation.json", current_annotation())
+        for module, arguments in (("formal_companion_annotations.cli", ["validate", str(path)]),
+                                  ("formal_companion_annotations.validate", [str(path)]),
+                                  ("formal_companion_annotations", [str(path)])):
+            result = self.run_module(module, *arguments, parser_failure=True)
+            with self.subTest(module=module):
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("simulated JSON parser limit", result.stdout + result.stderr)
                 self.assertNotIn("Traceback", result.stdout + result.stderr)
 
     def test_lone_surrogate_is_reported_without_writing_invalid_utf8(self):
@@ -188,7 +210,7 @@ class TestFormattingCommands(CommandCase):
         output = self.directory / "formatted.json"
         status, out, err = self.run_command("format", str(path), "--output", str(output))
         self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(output.read_text()), current_annotation())
+        self.assertEqual(companion.loads(output.read_text(encoding="utf-8")), current_annotation())
         self.assertEqual(path.read_bytes(), before)
         self.assertEqual(sorted(p.name for p in self.directory.iterdir()), ["formatted.json", "small.json"])
 
@@ -234,7 +256,7 @@ class TestFormattingCommands(CommandCase):
         path.write_text(json.dumps(current_annotation(), ensure_ascii=False), encoding="utf-8")
         status, out, err = self.run_command("format", str(path), "--output", str(path))
         self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(path.read_text()), current_annotation())
+        self.assertEqual(companion.loads(path.read_text(encoding="utf-8")), current_annotation())
 
 
 class TestMigrationCommands(CommandCase):
@@ -247,11 +269,11 @@ class TestMigrationCommands(CommandCase):
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(original.read_bytes(), content)
         self.assertEqual((output / "original-v1.json").read_bytes(), content)
-        report = companion.loads((output / "report.json").read_text())
+        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
         self.assertTrue(report["documents"])
         self.assertTrue(any(item["code"] == "unresolved_target" for item in report["diagnostics"]))
         for name in report["documents"]:
-            self.assertEqual(companion.validate(companion.loads((output / name).read_text())), [])
+            self.assertEqual(companion.validate(companion.loads((output / name).read_text(encoding="utf-8"))), [])
         self.assertIn("review report.json", out)
 
     def test_relative_sources_require_explicit_context(self):
@@ -271,8 +293,8 @@ class TestMigrationCommands(CommandCase):
         status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
                                             "--source-base", "https://sources.example.org/revision/")
         self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text())
-        documents = [companion.loads((output / name).read_text()) for name in report["documents"]]
+        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
+        documents = [companion.loads((output / name).read_text(encoding="utf-8")) for name in report["documents"]]
         self.assertEqual({doc["source"]["uri"] for doc in documents},
                          {"https://sources.example.org/revision/blueprint/src/chapter1.tex"})
 
@@ -284,8 +306,8 @@ class TestMigrationCommands(CommandCase):
         status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
                                             "--source-base", "file:///work/project/")
         self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text())
-        converted = companion.loads((output / report["documents"][0]).read_text())
+        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
+        converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
         self.assertEqual(converted["source"]["uri"], "file:///work/project/chapter%3A%CE%B1%23part%3Fx%2520.tex")
 
     def test_absolute_source_override_is_preserved(self):
@@ -295,8 +317,8 @@ class TestMigrationCommands(CommandCase):
         status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
                                             "--source-uri", f"blueprint-ch1={override}")
         self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text())
-        converted = companion.loads((output / report["documents"][0]).read_text())
+        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
+        converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
         self.assertEqual(converted["source"]["uri"], override)
 
     def test_absolute_source_references_are_not_parsed_or_rebased(self):
@@ -308,8 +330,8 @@ class TestMigrationCommands(CommandCase):
                                               "--source-base", "file:///ignored/")
             with self.subTest(uri=uri):
                 self.assertEqual((status, err), (0, ""))
-                report = companion.loads((output / "report.json").read_text())
-                converted = companion.loads((output / report["documents"][0]).read_text())
+                report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
+                converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
                 self.assertEqual(converted["source"]["uri"], uri)
 
     def test_unresolvable_source_base_reports_the_problem_without_publication(self):
@@ -344,15 +366,15 @@ class TestMigrationCommands(CommandCase):
         first = self.directory / "without-base"
         status, out, err = self.run_command("migrate-v1", str(path), "--output", str(first))
         self.assertEqual((status, err), (0, ""))
-        report = companion.loads((first / "report.json").read_text())
+        report = companion.loads((first / "report.json").read_text(encoding="utf-8"))
         self.assertEqual(report["documents"], [])
         self.assertTrue(any(item["code"] == "relative_target_without_base" for item in report["diagnostics"]))
         second = self.directory / "with-base"
         status, out, err = self.run_command("migrate-v1", str(path), "--output", str(second),
                                             "--target-base", "https://formal.example.org/docs/")
         self.assertEqual((status, err), (0, ""))
-        report = companion.loads((second / "report.json").read_text())
-        converted = companion.loads((second / report["documents"][0]).read_text())
+        report = companion.loads((second / "report.json").read_text(encoding="utf-8"))
+        converted = companion.loads((second / report["documents"][0]).read_text(encoding="utf-8"))
         self.assertEqual(converted["target"],
                          "https://formal.example.org/docs/Mathlib/Ideal.html#Ideal.IsPrime")
 
