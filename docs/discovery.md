@@ -136,7 +136,8 @@ of the input: see the [JSON and number limits](companion.md#validation-and-seria
 
 Text output reports counts and problems. `--format json` returns one reader
 report containing `valid`, `status`, `files`, `records` with `origin`, and
-`problems`. The report is operational data, not a new annotation schema or a
+`problems`. JSON output uses UTF-8 with LF line endings, including when redirected
+to a file or pipe. The report is operational data, not a new annotation schema or a
 portable resource bundle. Keep origins when retaining relative references.
 
 | Exit status | Meaning |

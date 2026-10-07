@@ -557,5 +557,67 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(path.read_bytes(), before)
 
 
+class TestJsonStdout(CommandCase):
+    def run_ansi(self, *arguments: str) -> subprocess.CompletedProcess:
+        package_root = str(Path(formal_companion_annotations.__file__).resolve().parent.parent)
+        environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1",
+                           PYTHONIOENCODING="cp1252")
+        return subprocess.run([sys.executable, *arguments], cwd=self.directory,
+                              env=environment, capture_output=True, check=False)
+
+    def decode_output(self, result: subprocess.CompletedProcess, status: int = 0):
+        self.assertEqual(result.returncode, status, result.stderr)
+        self.assertEqual(result.stderr, b"")
+        self.assertTrue(result.stdout.endswith(b"\n"))
+        self.assertNotIn(b"\r\n", result.stdout)
+        return companion.loads(result.stdout.decode("utf-8"))
+
+    def test_current_json_commands_write_utf8_even_when_stdout_uses_an_ansi_codepage(self):
+        # é is representable in cp1252 but has different bytes; α is not
+        # representable at all. Both must survive a redirected JSON protocol.
+        for text in ("é", "α"):
+            doc = current_annotation()
+            doc["extensions"] = {"example": text}
+            path = self.write(f"annotation-{text}.json", doc)
+            for command in (("format", str(path)), ("scan", str(path), "--format", "json"),
+                            ("validate", str(path), "--format", "json")):
+                with self.subTest(text=text, command=command[0]):
+                    result = self.run_ansi("-m", "formal_companion_annotations.cli", *command)
+                    output = self.decode_output(result)
+                    if command[0] == "format":
+                        self.assertEqual(output, doc)
+                    elif command[0] == "scan":
+                        self.assertEqual(output["records"][0]["annotation"], doc)
+                    else:
+                        self.assertTrue(output["valid"])
+                        self.assertEqual(output["document"], str(path))
+
+    def test_scan_machine_error_is_utf8_with_an_ansi_stdout(self):
+        path = self.write("annotation.json", current_annotation())
+        script = """from pathlib import Path
+import sys
+from formal_companion_annotations import cli, companion
+companion.SCHEMA_PATH = Path(sys.argv[1])
+raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
+"""
+        for text in ("é", "α"):
+            with self.subTest(text=text):
+                missing = self.directory / f"missing-schema-{text}.json"
+                result = self.run_ansi("-c", script, str(missing), str(path))
+                output = self.decode_output(result, status=2)
+                self.assertFalse(output["valid"])
+                self.assertIn(str(missing), output["problems"][0]["message"])
+
+    def test_legacy_canonical_stdout_is_exact_utf8_with_an_ansi_stdout(self):
+        for text in ("é", "α"):
+            with self.subTest(text=text):
+                doc = v1()
+                doc["companion"]["name"] = f"companion-{text}"
+                path = self.write("legacy.json", doc)
+                result = self.run_ansi("-m", "formal_companion_annotations.validate", str(path), "--print-canonical")
+                self.assertEqual(self.decode_output(result), validate.canonicalize(doc))
+                self.assertEqual(result.stdout, validate.canonical_dumps(validate.canonicalize(doc)).encode("utf-8"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -16,6 +16,9 @@
 - Support current subcommands through `python -m formal_companion_annotations`
   while retaining legacy bare-file invocation. Strengthen malformed-schema
   diagnostics, installed-package checks, and local documentation-link checks.
+- Write machine-readable command output as UTF-8 with LF line endings, including
+  Windows pipes and redirected files. Test parser errors independently of
+  interpreter nesting limits and use explicit encodings in cross-platform tests.
 - Make the schema describe exactly one informal–formal association: required
   `source` and `target`; optional location, ID, and extensions.
   This supersedes a1's unpublished source-plus-annotations wrapper.
