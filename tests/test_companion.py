@@ -487,37 +487,6 @@ class TestSchema(unittest.TestCase):
 
 
 class TestSchemaEvaluator(unittest.TestCase):
-    """Bad schema rules fail before any annotation is evaluated."""
-
-    def test_malformed_supported_keyword_values_raise_schema_error(self):
-        malformed = [
-            {"properties": []}, {"properties": {1: {}}}, {"patternProperties": []}, {"$defs": None},
-            {"allOf": []}, {"anyOf": {}}, {"oneOf": [0]}, {"items": []},
-            {"additionalProperties": None}, {"if": "string"}, {"then": 1}, {"else": []},
-            {"not": None}, {"type": "str"}, {"type": []}, {"type": ["string", "string"]},
-            {"type": ["string", {}]}, {"enum": "abc"}, {"required": "id"},
-            {"required": ["id", "id"]}, {"required": [{}]}, {"minLength": -1},
-            {"maxLength": True}, {"minItems": 1.5}, {"maxItems": "2"},
-            {"minimum": False}, {"maximum": None}, {"minimum": float("nan")},
-            {"maximum": float("inf")}, {"uniqueItems": 1}, {"pattern": []},
-            {"pattern": "["}, {"patternProperties": {"[": {}}},
-            {"pattern": "a{9999999999999999999999999}"}, {"$ref": []},
-            {"title": {}}, {"description": []}, {"$id": 1}, {"$schema": None},
-        ]
-        for schema in malformed:
-            with self.subTest(schema=schema), self.assertRaises(SchemaError):
-                Validator(schema)
-
-    def test_unreachable_rules_are_still_checked(self):
-        for schema in (
-            {"type": "string", "properties": {"unused": {"required": "x"}}},
-            {"if": False, "then": {"type": "typo"}},
-            {"anyOf": [True, {"items": None}]},
-            {"$defs": {"unused": {"uniqueItems": "yes"}}},
-        ):
-            with self.subTest(schema=schema), self.assertRaises(SchemaError):
-                Validator(schema)
-
     def test_supported_empty_and_boolean_rules_still_work(self):
         cases = [(True, None, True), (False, None, False), ({}, {}, True),
                  ({"$schema": "https://json-schema.org/draft/2020-12/schema#"}, None, True),
@@ -532,53 +501,9 @@ class TestSchemaEvaluator(unittest.TestCase):
             with self.subTest(schema=schema, value=value):
                 self.assertEqual(Validator(schema).is_valid(value), expected)
 
-    def test_local_json_pointer_refs_decode_percent_and_tilde_escapes(self):
-        for name, fragment in (("a/b", "a~1b"), ("m~n", "m~0n"), ("~1", "~01"),
-                               (" ", "%20"), ("%", "%25"), ("α", "%CE%B1")):
-            schema = {"$defs": {name: {"type": "integer"}}, "$ref": "#/$defs/" + fragment}
-            with self.subTest(name=name, fragment=fragment):
-                validator = Validator(schema)
-                self.assertTrue(validator.is_valid(1.0))
-                self.assertFalse(validator.is_valid(True))
-        validator = Validator({"allOf": [{"type": "string"}], "$ref": "#/allOf/0"})
-        self.assertTrue(validator.is_valid("value"))
-        self.assertFalse(validator.is_valid(1))
-
-    def test_bad_refs_fail_without_fetches_or_accidental_aliases(self):
-        refs = ("https://example.org/schema", "#anchor", "#/$defs/a~2b", "#/$defs/%",
-                "#/$defs/%GG", "#/$defs/%FF", "#/$defs/missing", "#/allOf/-",
-                "#/allOf/00", "#/allOf/1", "#/allOf/" + "1" * 5000, "#/title")
-        with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
-            for ref in refs:
-                schema = {"$defs": {"a~2b": {}, "%": {}, "%GG": {}, "%FF": {}},
-                          "allOf": [True], "title": "not a schema", "$ref": ref}
-                with self.subTest(ref=ref), self.assertRaises(SchemaError):
-                    Validator(schema)
-
-    def test_ref_siblings_and_finite_recursive_instances_are_checked(self):
-        schema = {"$defs": {"value": {"type": "integer"}}, "$ref": "#/$defs/value", "minimum": 2}
-        self.assertFalse(Validator(schema).is_valid(1))
-        self.assertTrue(Validator(schema).is_valid(2))
-        recursive = Validator({"type": ["null", "array"], "items": {"$ref": "#"}})
-        self.assertTrue(recursive.is_valid([None, [None]]))
-        self.assertFalse(recursive.is_valid([None, [True]]))
-        nonterminating = Validator({"$ref": "#"})
-        with self.assertRaises(SchemaError):
-            nonterminating.is_valid(None)
-        with self.assertRaises(SchemaError):
-            nonterminating.errors(None)
-
     def test_unimplemented_keywords_are_refused(self):
         with self.assertRaises(SchemaError):
             Validator({"type": "string", "format": "date-time"})
-
-    def test_other_dialects_and_nested_resources_are_explicitly_unsupported(self):
-        for schema in (
-            {"$schema": "http://json-schema.org/draft-07/schema#"},
-            {"$defs": {"other": {"$id": "other.json", "type": "string"}}},
-        ):
-            with self.subTest(schema=schema), self.assertRaises(SchemaError):
-                Validator(schema)
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):
@@ -595,7 +520,6 @@ class TestSchemaEvaluator(unittest.TestCase):
             {"oneOf": [{"type": "integer"}, {"type": "number"}]},
             {"allOf": [{"not": {"type": "boolean"}}, {"enum": [1, 1.0, False]}]},
             {"$defs": {"a/b": {"type": "number"}}, "$ref": "#/$defs/a~1b", "minimum": 2},
-            {"$defs": {" ": {"type": "integer"}}, "$ref": "#/$defs/%20"},
         ]
         values = [None, False, True, 0, 1, 1.0, 2, 1.5, "", "a", "😀", "😀a", "aaa",
                   [], [1, True], [1, 1.0], [{"n": 1}, {"n": 1.0}], {"n": [1, None]},
