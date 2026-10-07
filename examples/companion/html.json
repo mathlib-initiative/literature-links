@@ -1,0 +1,10 @@
+{
+  "source": {
+    "type": "html",
+    "uri": "https://example.org/notes/groups.html"
+  },
+  "location": {
+    "fragment": "lagrange"
+  },
+  "target": "https://example.org/formal/Groups.html#lagrange"
+}
