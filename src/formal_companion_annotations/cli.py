@@ -45,8 +45,6 @@ def _validate(args: argparse.Namespace) -> int:
             _write_json(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
                                    "problems": problems, "warnings": warnings}, ensure_ascii=True, allow_nan=False) + "\n")
         else:
-            for warning in warnings:
-                print(f"{path}: warning: {warning['path']}: {warning['message']} [{warning['code']}]")
             for problem in problems:
                 print(f"{path}: {problem['path']}: {problem['message']} [{problem['code']}]",
                       file=sys.stderr if item_status == 2 else sys.stdout)

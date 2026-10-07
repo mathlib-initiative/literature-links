@@ -4,7 +4,6 @@ from __future__ import annotations
 import copy
 from dataclasses import FrozenInstanceError
 import importlib.util
-import json
 import math
 import random
 import sys
@@ -96,7 +95,7 @@ class TestSmallContract(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertTrue(C.validate(doc))
 
-    def test_core_typos_and_legacy_inventories_are_rejected(self):
+    def test_core_typos_and_wrappers_are_rejected(self):
         for place, key in (("root", "sources"), ("root", "mode"), ("source", "format"),
                            ("root", "targets"), ("root", "locaton"), ("root", "annotations")):
             doc = document()

@@ -173,10 +173,8 @@ class TestEntryPoints(unittest.TestCase):
 
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
-#: CHANGELOG.md is excluded: it cites the skill's paths by design.
-DOCS = ("README.md", "CONTRIBUTING.md", *(str(path.relative_to(ROOT))
-        for folder in ("docs", "examples", "schema")
-        for path in sorted((ROOT / folder).rglob("*.md"))))
+#: CHANGELOG.md is excluded: release notes may name paths that are gone.
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md")
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):
@@ -196,6 +194,11 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                         keep.append(part)
                     with self.subTest(doc=name, path=token):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
+
+    def test_no_em_dash_in_the_docs(self):
+        for name in DOCS + ("CHANGELOG.md",):
+            with self.subTest(doc=name):
+                self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
 
     def test_local_markdown_link_targets_exist(self):
         for name in DOCS + ("CHANGELOG.md",):

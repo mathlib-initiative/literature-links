@@ -31,9 +31,8 @@ not a serialization of it.
 | `$schema` | No | A reference used as a tooling hint |
 
 Other fields are invalid at the top level, in `source` and in built-in
-locations. This includes `version` and `schema_version`. Two targets or two
-passages need two annotations, and annotations share nothing. An array is not
-an annotation.
+locations. Two targets or two passages need two annotations, and annotations
+share nothing. An array is not an annotation.
 
 ## Location
 
@@ -64,9 +63,7 @@ Use exactly one of `{ "label": "thm:lagrange" }` or `{ "lines": [12, 18] }`.
 `label` is a nonempty literal label in the file. The application handles macros,
 included files and generated labels. `lines` is an inclusive range of positive
 integers, with end at least start. Lines count from 1 in the decoded file, and
-CRLF, CR and LF each end a line. This differs from
-[RFC 5147](https://www.rfc-editor.org/rfc/rfc5147#section-2.1), which counts
-from 0 and excludes the end.
+CRLF, CR and LF each end a line.
 
 ### HTML
 
@@ -80,9 +77,9 @@ Use exactly one of these:
   after the match. The checker keeps all three as written.
 
 A quote matches this text layer. Take the `textContent` of the body, or of the
-document element, without `script`, `style` and `template` elements. Replace
-each run of `White_Space` with one space and trim both ends. Do not change case,
-normalize Unicode or add spaces between elements, so
+document element if there is no body, without `script`, `style` and `template`
+elements. Replace each run of `White_Space` with one space and trim both ends.
+Do not change case, normalize Unicode or add spaces between elements, so
 `<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text counts. Shadow
 DOM and iframes do not. `White_Space` means U+0009–000D, U+0020, U+0085,
 U+00A0, U+1680, U+2000–200A, U+2028–2029, U+202F, U+205F and U+3000. Other text
@@ -137,8 +134,8 @@ input may be rejected. Consumers that use doubles keep integers exact only up to
 `companion.check` returns `Problem(code, path, message)` items with the codes
 `JSON`, `SCHEMA`, `PDF_RECT` and `LATEX_LINES`. `companion.validate` returns the
 messages. `companion.loads` only parses. Nothing checks uniqueness across
-annotations. There is no canonical byte form. `companion.dumps` keeps key order
-and writes two-space indentation and a final newline.
+annotations. `companion.dumps` keeps key order and writes two-space indentation
+and a final newline.
 
 ## Discovery
 
@@ -152,6 +149,8 @@ from local files. This is a reader convention, not part of the schema.
 | JSONL or NDJSON | One per nonblank line | Line number, from 1 |
 
 - Files are UTF-8. A JSONL line holds an object, not an array.
+- In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
+  with only spaces and tabs is blank. Blank lines are skipped but still counted.
 - Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
   ignoring case. A file named explicitly may have any suffix.
 - `.jsonl` and `.ndjson` files are read by line. Other files are one JSON value.

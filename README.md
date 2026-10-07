@@ -52,5 +52,5 @@ collection = discovery.collect(["examples/companion"])  # check .problems before
 
 See the [specification](docs/companion.md), the
 [JSON Schema](schema/companion.schema.json) and the
-[examples](examples/companion/). [CONTRIBUTING.md](CONTRIBUTING.md) explains how
-to run the tests. Licensed under [Apache 2.0](LICENSE).
+[examples](examples/companion/). [CONTRIBUTING.md](CONTRIBUTING.md) has the rules
+for changes. Licensed under [Apache 2.0](LICENSE).
