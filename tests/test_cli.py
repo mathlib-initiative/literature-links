@@ -196,12 +196,16 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
 
-    def test_scan_broken_install_keeps_machine_error_output(self):
+    def test_scan_broken_install_exits_two_in_json_and_text(self):
         path = self.write("one.json", current_annotation())
         with patch.object(companion, "SCHEMA_PATH", self.directory / "missing-schema.json"):
             status, out, err = self.run_command("scan", str(path), "--format", "json")
+            text_status, text_out, text_err = self.run_command("scan", str(path))
         self.assertEqual((status, err), (2, ""))
         self.assertFalse(json.loads(out)["valid"])
+        self.assertEqual((text_status, text_out), (2, ""))
+        self.assertTrue(text_err.startswith("formal-companion-annotations: "), text_err)
+        self.assertIn("missing-schema.json", text_err)
 
 
 class TestJsonStdout(CommandCase):
