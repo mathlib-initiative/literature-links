@@ -1,63 +1,13 @@
 # Changelog
 
-## 2.0.0a2 (unpublished working draft)
+## 2.0.0a2 (unreleased)
 
-- Reorganize the documentation around a short overview, local worked example,
-  specification, Python API, and integration guide. Separate compatibility and
-  historical design notes from the introduction.
-- Clarify the W3C relationship, source-selection conventions, strict JSON
-  requirements, and the limits of structural and mathematical validation.
-- Add 30 language-neutral conformance cases separating structural validity from
-  full annotation validation. Reject nonzero JSON numbers that underflow to zero
-  in the Python decoder instead of silently changing their value.
-- Preserve discovered reference bases when the filesystem changes. Publish
-  migration output without replacing a destination created concurrently, and
-  diagnose source bases that cannot resolve relative references.
-- Support current subcommands through `python -m formal_companion_annotations`
-  while retaining legacy bare-file invocation. Strengthen malformed-schema
-  diagnostics, installed-package checks, and local documentation-link checks.
-- Write machine-readable command output as UTF-8 with LF line endings, including
-  Windows pipes and redirected files. Test parser errors independently of
-  interpreter nesting limits and use explicit encodings in cross-platform tests.
-- Make the schema describe exactly one informal–formal association: required
-  `source` and `target`; optional location, ID, and extensions.
-  This supersedes a1's unpublished source-plus-annotations wrapper.
-- Keep the unreleased annotation format unversioned; remove its `version` field
-  and use neutral schema, specification, and example paths. Software package
-  version `2.0.0a2` is unchanged.
-- Keep companion assembly outside the schema. Add recursive discovery of JSON
-  objects, array shards, and JSONL/NDJSON with configurable selection, precise
-  origins, preserved relative-reference bases, and explicit failures.
-- Adopt PR #2's structured-diagnostic and one-source-schema packaging ideas.
-  Add JSON validation reports and process all inputs with exit 2 precedence.
-  Keep opaque extensions and large-integer preservation; do not import the
-  PR's aggregate profiles, required provenance, or canonical ordering.
-- Emit independent records from released-v1 migration. Explicitly identify
-  PR #2 rc3 as an incompatible dialect requiring a separate adapter; preserve
-  unsupported legacy selectors as generic rather than invalid native anchors.
-- Document the PR comparison, version conflict, and existing Tao companion
-  boundaries. No PR update, publication, or external integration is implied.
-
-## 2.0.0a1 (unpublished working draft)
-
-- Add a small v2 document: version, one source, and annotations with formal
-  destinations. PDF, LaTeX, HTML, and generic are the only input modes.
-- Keep provenance, inventories, dependency graphs, and workflow records outside
-  the required core. Generic locators and optional extensions preserve custom
-  JSON without registration or mandatory profiles.
-- Add an offline v2 checker and strict JSON codec, packaged JSON Schema, eight
-  synthetic examples, a short specification, and design rationale.
-- Add `formal-companion-annotations validate`, `format`, and `migrate-v1`.
-  Migration requires explicit destinations, preserves complex anchors as
-  generic data, reports omissions, and archives the original v1 input.
-- Preserve v1 schema, vocabulary, ID helpers, and canonical examples. Existing
-  validation entry points also accept v2. V1 canonical APIs reject v2 to avoid
-  accidental extension rounding or sorting.
-- Report parser-limit and canonical serialization failures through CLI errors
-  instead of tracebacks. V1 plain validation still has its historical overflow
-  limitation; v2 validation and migration reject nonfinite values.
-- This is local draft development, not a public package, schema publication, or
-  deployment of WikiLean or Autoform integrations.
+- New format: one annotation links one informal `source`, optionally narrowed by
+  a `location`, to one formal `target`. Sources are PDF, LaTeX, HTML or generic.
+  The format has no version field.
+- Add the `formal-companion-annotations` command with `validate` and `scan`.
+- Remove v1 and the `formal-companion-annotations-validate` command. v1 remains
+  available at tag `v1.0.0`.
 
 ## 1.0.0 (2026-09-28)
 
