@@ -1,131 +1,94 @@
 # One annotation is the unit of interchange
 
-**Status:** Implemented locally; unreleased.
-**Date:** 2026-10-06.
-**Decision owner:** Project maintainers before a public release.
+**Status:** accepted for the local, unreleased draft.
 
-The [annotation specification](../companion.md) defines one informal–formal
-association. The [PR #2 comparison](pr-2-synthesis.md) records why both the PR's
-repository graph and the earlier local source-level collection are larger than
-the requested unit.
+**Date:** 2026-10-06.
+
+## Context
+
+A companion connects informal mathematics with formal resources. Different
+applications organize these connections differently: a PDF overlay groups them
+by page, a wiki groups them by article, and a formalization project relates them
+to a dependency graph. Requiring one application's organization would make the
+format harder for the others to use.
+
+The core must express a useful individual link by hand, support the common
+source formats, and leave applications room to add their own conventions.
+[The specification](../companion.md) defines the resulting contract.
 
 ## Decision
 
-```json
-{
-  "source": { "type": "latex", "uri": "../chapters/groups.tex" },
-  "location": { "label": "thm:lagrange" },
-  "target": "https://example.org/formal/Groups.html#lagrange"
-}
-```
+One complete annotation contains one informal `source` and one formal `target`.
+Only those fields are required. A `location` optionally selects part of the
+source. An annotation can also carry an optional label, schema hint, or extension
+data. There is no annotation version field in this unreleased draft.
 
-This is one complete annotation. Only `source` and `target` are required.
-The unreleased format has no annotation version field; software releases retain
-their own package versions. A companion is assembled by finding many such
-records. The core does not specify their directory layout, file grouping, or
-collection manifest. Discovery is a separate utility; applications can supply
-other carrier readers without changing the annotation schema.
+Use separate records for multiple targets or informal occurrences. A companion
+is assembled by collecting those records; the core requires no shared registry,
+manifest, directory layout, or particular file grouping. The included
+[discovery utility](../discovery.md) is one reader convention, not part of the
+annotation's shape.
 
-The link asserts association only. Resource existence, anchor resolution,
-proof completion, faithful mathematical correspondence, and review are separate
-claims. A viewer must not turn an unresolved anchor into a whole-resource link
-or present an unknown generic locator as a successfully anchored highlight.
+An association is a limited claim. Resource existence, selection resolution,
+faithful mathematical correspondence, proof completion, and human review are
+separate questions. A valid record does not answer them.
 
-## Options considered
+## Alternatives considered
 
-| Unit | Advantages | Costs | Decision |
+| Unit of interchange | Advantage | Cost | Decision |
 |---|---|---|---|
-| Entire companion graph, as in PR #2 | Shared inventories and repository-wide consistency | Mandatory registry/provenance/ID machinery; difficult to exchange one link alone | Keep graph data in its producer |
-| One source with an annotations array, as in local a1 | Avoids repeating source metadata | Couples a link to its wrapper and makes regrouping semantic | Superseded |
-| One independent annotation | Each link can validate, move, or be consumed independently | Repeats source references; collections need their own reader | Adopt for the core |
+| An entire companion graph | Shared inventories and global consistency rules | One link requires surrounding graph, identity, and workflow machinery | Keep this in applications |
+| One source with an array of links | Avoids repeating source metadata | Each link depends on its wrapper and inherited context | Do not use as the schema unit |
+| One independent annotation | A link can be written, checked, and exchanged on its own | Repeats references; readers handle collections | Use for the core |
 
-A source reference can still be relative, so moving a record requires retaining
-or deliberately changing its containing carrier's URI base. Independence from a
-registry does not make relative references independent of location.
+An array of complete annotations remains a useful storage choice. It adds no
+inheritance and does not turn the array into another annotation schema.
+Independence from a registry also does not remove reference context: a relative
+URI still depends on its containing carrier's address.
 
-## Tradeoffs and consequences
+## Consequences
 
 | Choice | Benefit | Responsibility left to applications |
 |---|---|---|
-| Exactly one informal source and formal destination | Clear association with no cross-reference tables | Multiple targets/occurrences use multiple records |
-| Four modes: PDF, LaTeX, HTML, generic | Small shared locator vocabulary with an escape hatch | Unknown locators need application-specific support |
-| Optional location | Whole-resource associations are simple | Absence differs from a failed/malformed locator |
-| Closed core fields | Typos fail early | New anchor conventions start in generic mode |
-| Opaque JSON extensions | Custom evidence and metadata survive exchange | Consumers agree on their meaning separately |
-| No required source lock or provenance | Handwritten and unpublished annotations work | Reproducibility requires explicit pinning/evidence where needed |
-| Optional opaque ID | No central identity service or generated IDs | Synchronization and ID conflicts need a consumer policy |
-| No canonical bytes or ordering | Writers preserve supplied data | Signing/deduplication policies are external |
-| No mandatory storage envelope | A directory can mix singles, arrays, and JSONL | A reader identifies carriers and retains origins |
+| PDF, LaTeX, HTML, and generic modes | A small shared selection vocabulary with room for custom formats | Interpret generic locations and report unsupported ones |
+| Optional location | Simple whole-source associations | Distinguish absence from failed or missing selection data |
+| Closed core fields | Catch misspelled keys | Put experimental conventions in generic locations or extensions |
+| Opaque extension values | Carry evidence and metadata without a registry | Agree on their meaning and preserve unfamiliar data |
+| No required source lock or provenance | Support handwritten and unpublished annotations | Pin resources and record evidence when reproducibility matters |
+| Optional opaque ID | Avoid a central identity service | Decide how synchronization and ID conflicts work |
+| No canonical bytes | Avoid imposing one signing or storage policy | Define hashing, signatures, and deduplication explicitly |
+| No required carrier | Permit files, streams, and database rows | Retain reference bases and origin information |
 
-Root annotation and source extensions have separate scopes. Neither inherits
-from the other. Namespaced extension keys are recommended, not mandatory.
-A generic location can be any JSON object; `profile` is optional caller data,
-not an instruction to fetch or execute something.
+Source extensions and annotation extensions have separate scopes, with no
+inheritance or merging. Namespaced extension keys are encouraged, not required.
+A generic location may be any JSON object. A `profile` key is optional application
+data, not an instruction to download a schema or execute a resolver.
 
-## Examples
-
-The [nine examples](../../examples/companion) use synthetic resources.
-Their references need not resolve for the data to validate.
-
-- [PDF page](../../examples/companion/pdf.json), [LaTeX label](../../examples/companion/latex.json),
-  [HTML fragment](../../examples/companion/html.json), and
-  [whole generic resource](../../examples/companion/generic.json).
-- Two links from the same PDF region are
-  [two independent records](../../examples/companion/pdf-region-first.json)
-  ([second record](../../examples/companion/pdf-region-second.json)).
-  Their optional grouping/review metadata imposes no collection schema.
-- [Image region](../../examples/companion/generic-image.json),
-  [database record](../../examples/companion/generic-database.json), and
-  [Markdown block](../../examples/companion/generic-markdown.json) demonstrate
-  custom locators, including one without a mandatory profile or namespace.
-
-## Discovery and existing systems
-
-The [included reader](../discovery.md) recursively selects files and validates
-complete records from JSON objects, arrays, and JSONL/NDJSON. It keeps origins
-rather than silently rebasing or deduplicating. A graph file or review ledger
-beside the shards is separate data, selected only deliberately.
-
-The local WikiLean integration stores and edits these records directly as its
-link authority. Review/coverage items, targetless occurrences, internal IDs and
-private moderation state remain application data. Existing databases require an
-explicit migration of a copied snapshot; new records need no exporter. Its
-application storage marker is not an annotation version. WikiLean's JavaScript
-storage rejects unsafe integers rather than silently rounding opaque extensions;
-the FCA reader and Python/SQLite interchange retain arbitrary JSON integers.
-
-The local Autoform integration keeps Markdown wiki articles as independent
-informal resources and attaches separate companion records to them. An article
-can have no links or many links. The roadmap/proof graph remains application
-state, and ordinary citations to an original paper do not automatically transfer
-an article's formal associations to that paper. Generic locations can select
-parts of Markdown without adding a new core mode. Explicit source-to-article
-bindings and an article digest are application configuration. Retained records
-and their original carrier bases feed the renderer directly; stale bindings show
-historical associations. These annotations never change proof or review state.
-
-The Tao companions can adopt records from their existing graph and overlays.
-Native application storage, migration and rendering remain application work;
-the [repository findings](../discovery.md#relation-to-existing-companions) identify
-actual inputs and coordinate/base conversions.
-
-## W3C relationship
+## Relationship to W3C Web Annotation
 
 The [W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/)
-motivates independent annotations and selection of parts of resources.
-This draft does not require JSON-LD or claim W3C serialization conformance.
+informs the choice of independent annotations and selections within resources.
+This draft uses a smaller application format and does not claim W3C JSON-LD
+serialization compatibility.
 
-Field orientation must be explicit: our `source` is informal and `target`
-is the formal destination. In a usual W3C mapping, the informal resource being
-annotated is the W3C target, and the formal resource is a body. Similar names do
-not imply an identity mapping. A future adapter must translate selector
-semantics and preserve or report unsupported data.
+The field orientation matters. Here `source` is informal and `target` is formal.
+A W3C representation can instead use the informal selection as its target and
+the formal resource as its body. An adapter must translate that orientation
+and the selector conventions explicitly; renaming fields is insufficient.
 
-## Follow-through
+## Boundaries and future review
 
-The local draft implements single-record validation, explicit v1 projection,
-independent discovery, origin-preserving reports, and synthetic tests.
-Before release, maintainers must coordinate the version/identifier with PR #2.
-PR rc3 migration requires its own actual schema/rule reader and mappings;
-native WikiLean and Autoform integrations remain local application branches, and
-Tao adoption remains separate application work.
+New modes should be justified by recurring use cases and shared selection
+semantics. Generic mode already accommodates Markdown, wikitext, images, and
+database records. A new application's needs alone do not require a new core mode.
+
+The core deliberately leaves publication, resource resolution, trust, and
+mathematical verification to consumers. The [integration guide](../integrations.md)
+describes how WikiLean and Autoform use that boundary. The
+[compatibility guide](../compatibility.md) separates the current format from
+legacy data, while the [PR comparison](pr-2-synthesis.md) preserves the historical
+reasoning at the reviewed commits.
+
+Before a public release, maintainers still need to agree on the public format
+and schema identifier and coordinate competing prerelease work. This design
+record documents the local decision; it does not imply community endorsement.

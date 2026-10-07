@@ -299,6 +299,30 @@ class TestMigrationCommands(CommandCase):
         converted = companion.loads((output / report["documents"][0]).read_text())
         self.assertEqual(converted["source"]["uri"], override)
 
+    def test_absolute_source_references_are_not_parsed_or_rebased(self):
+        path = self.write("legacy.json", v1("tex-lines"))
+        for index, uri in enumerate(("https://[opaque", "file:chapter.tex", "urn:example:chapter", "https://example.org/α%2Fβ#")):
+            output = self.directory / f"migration-{index}"
+            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
+                                              "--source-uri", f"blueprint-ch1={uri}",
+                                              "--source-base", "file:///ignored/")
+            with self.subTest(uri=uri):
+                self.assertEqual((status, err), (0, ""))
+                report = companion.loads((output / "report.json").read_text())
+                converted = companion.loads((output / report["documents"][0]).read_text())
+                self.assertEqual(converted["source"]["uri"], uri)
+
+    def test_unresolvable_source_base_reports_the_problem_without_publication(self):
+        path = self.write("legacy.json", v1("tex-lines"))
+        for index, base in enumerate(("https://[malformed", "urn:opaque:base")):
+            output = self.directory / f"migration-{index}"
+            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output), "--source-base", base)
+            with self.subTest(base=base):
+                self.assertEqual(status, 2)
+                self.assertIn("--source-base cannot resolve", err)
+                self.assertFalse(output.exists())
+                self.assertNotIn("Traceback", out + err)
+
     def test_invalid_relative_or_duplicate_source_overrides_do_not_write_output(self):
         path = self.write("legacy.json", v1("tex-lines"))
         invalid = [("--source-base", "relative/"), ("--source-uri", "blueprint-ch1=relative.tex"),
@@ -332,7 +356,7 @@ class TestMigrationCommands(CommandCase):
         self.assertEqual(converted["target"],
                          "https://formal.example.org/docs/Mathlib/Ideal.html#Ideal.IsPrime")
 
-    def test_existing_files_directories_symlinks_and_input_are_protected(self):
+    def test_existing_files_directories_and_input_are_protected(self):
         path = self.write("legacy.json", v1())
         existing_file = self.directory / "existing-file"
         existing_file.write_bytes(b"preserve me")
@@ -340,10 +364,8 @@ class TestMigrationCommands(CommandCase):
         existing_directory.mkdir()
         marker = existing_directory / "marker"
         marker.write_bytes(b"preserve marker")
-        symlink = self.directory / "dangling-link"
-        symlink.symlink_to(self.directory / "not-created")
         original = path.read_bytes()
-        for output in (path, existing_file, existing_directory, symlink):
+        for output in (path, existing_file, existing_directory):
             status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
             with self.subTest(output=output):
                 self.assertEqual(status, 2)
@@ -351,6 +373,21 @@ class TestMigrationCommands(CommandCase):
         self.assertEqual(path.read_bytes(), original)
         self.assertEqual(existing_file.read_bytes(), b"preserve me")
         self.assertEqual(marker.read_bytes(), b"preserve marker")
+
+    def test_existing_symlink_is_protected(self):
+        path = self.write("legacy.json", v1())
+        symlink = self.directory / "dangling-link"
+        try:
+            symlink.symlink_to(self.directory / "not-created")
+        except NotImplementedError:
+            self.skipTest("symbolic links are unavailable on this platform")
+        except OSError as exc:
+            if getattr(exc, "winerror", None) == 1314:
+                self.skipTest("this Windows user cannot create symbolic links")
+            raise
+        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(symlink))
+        self.assertEqual(status, 2)
+        self.assertIn("already exists", err)
         self.assertTrue(symlink.is_symlink())
 
     def test_malformed_v1_input_never_creates_a_partial_directory(self):
@@ -380,6 +417,38 @@ class TestMigrationCommands(CommandCase):
             status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
         self.assertEqual(status, 2)
         self.assertEqual(path.read_bytes(), original)
+        self.assertFalse(output.exists())
+        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
+
+    def test_migration_never_replaces_a_concurrently_created_empty_directory(self):
+        path = self.write("legacy.json", v1())
+        output = self.directory / "migration"
+        publish = cli._publish_directory
+        existing_inode = None
+
+        def race(source, destination):
+            nonlocal existing_inode
+            destination.mkdir()
+            existing_inode = destination.stat().st_ino
+            return publish(source, destination)
+
+        with patch.object(cli, "_publish_directory", side_effect=race):
+            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
+        self.assertEqual(status, 2)
+        self.assertEqual(list(output.iterdir()), [])
+        self.assertEqual(output.stat().st_ino, existing_inode)
+        self.assertNotIn("Traceback", out + err)
+        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
+
+    def test_unsupported_atomic_publication_fails_without_partial_output(self):
+        path = self.write("legacy.json", v1())
+        output = self.directory / "migration"
+        with patch.object(cli.sys, "platform", "unsupported"), \
+             patch.object(cli.ctypes, "CDLL", side_effect=AssertionError("must not load a native library")):
+            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
+        self.assertEqual(status, 2)
+        self.assertIn("atomic no-replace", err)
+        self.assertNotIn("Traceback", out + err)
         self.assertFalse(output.exists())
         self.assertFalse(list(self.directory.glob(".companion-migration-*")))
 

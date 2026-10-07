@@ -5,6 +5,7 @@ import copy
 from dataclasses import FrozenInstanceError
 import importlib.util
 import json
+import math
 import random
 import sys
 import unittest
@@ -16,7 +17,7 @@ if importlib.util.find_spec("formal_companion_annotations") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
 from formal_companion_annotations import companion as C
-from formal_companion_annotations.schemacheck import Validator
+from formal_companion_annotations.schemacheck import SchemaError, Validator
 
 
 def document(mode: str = "latex", location: dict | None = None) -> dict:
@@ -312,11 +313,29 @@ class TestLocatorBounds(unittest.TestCase):
             with self.subTest(location=value):
                 self.assertTrue(C.validate(doc))
 
+    def test_integer_valued_json_numbers_are_valid_page_and_line_indices(self):
+        # JSON Schema's integer type describes a numeric value, not its spelling.
+        for number in (1.0, 2**100, 1e100):
+            with self.subTest(number=number):
+                self.assertEqual(C.validate(document("pdf", {"page": number})), [])
+                self.assertEqual(C.validate(document("latex", {"lines": [number, number]})), [])
+
+    def test_schema_looking_generic_payloads_are_never_interpreted(self):
+        payload = {"$id": "../private.json", "$schema": "https://example.org/unknown",
+                   "$ref": "https://example.org/execute", "type": "future-mode",
+                   "properties": None, "\u0000": {"": [None, True, 2**100]}}
+        doc = document("generic", payload)
+        doc["extensions"] = {"tool": copy.deepcopy(payload)}
+        original = copy.deepcopy(doc)
+        self.assertEqual(C.validate(doc), [])
+        self.assertEqual(C.loads(C.dumps(doc)), original)
+
 
 class TestStrictJson(unittest.TestCase):
     def test_duplicate_keys_are_rejected_at_every_depth(self):
         for text in ('{"version":2,"version":2}', '{"extensions":{"tool":1,"tool":2}}',
-                     '{"location":{"nested":{"same":1,"same":2}}}'):
+                     '{"location":{"nested":{"same":1,"same":2}}}',
+                     '{"source":1,"\\u0073ource":2}', '{"😀":1,"\\ud83d\\ude00":2}'):
             with self.subTest(text=text), self.assertRaises(C.LoadError):
                 C.loads(text)
 
@@ -324,6 +343,22 @@ class TestStrictJson(unittest.TestCase):
         for text in ("NaN", "Infinity", "-Infinity", "1e999", '-1e999', '{"a":[1e999]}'):
             with self.subTest(text=text), self.assertRaises(C.LoadError):
                 C.loads(text)
+
+    def test_nonzero_float_underflow_is_a_codec_limit_not_silent_zero(self):
+        for text in ("1e-10000", "-1E-10000", "2e-324", '{"opaque":[1e-10000]}',
+                     "0." + "0" * 400 + "1"):
+            with self.subTest(text=text), self.assertRaisesRegex(C.LoadError, "floating-point range"):
+                C.loads(text)
+        for text in ("0e-10000", "0e10000", "0.000e999999999999999999999", "-0.0e-10000"):
+            with self.subTest(text=text):
+                self.assertEqual(C.loads(text), 0.0)
+        self.assertEqual(math.copysign(1.0, C.loads("-0.0e-10000")), -1.0)
+        self.assertEqual(C.loads("5e-324"), 5e-324)
+        self.assertEqual(C.loads("1.0000000000000001"), float("1.0000000000000001"))
+        # The schema still permits tiny finite in-memory JSON values and zero.
+        doc = document("generic", {"small": 5e-324, "zero": 0.0})
+        self.assertEqual(C.validate(doc), [])
+        self.assertEqual(C.loads(C.dumps(doc)), doc)
 
     def test_python_only_values_are_rejected_even_inside_extensions(self):
         for value in (float("nan"), float("inf"), float("-inf"), (1, 2), {1: "value"}, {1, 2}, b"value", object()):
@@ -442,6 +477,125 @@ class TestSchema(unittest.TestCase):
         for doc in cases:
             with self.subTest(document=doc):
                 self.assertEqual(ours.is_valid(doc), reference.is_valid(doc))
+
+
+class TestSchemaEvaluator(unittest.TestCase):
+    """Bad schema rules fail before any annotation is evaluated."""
+
+    def test_malformed_supported_keyword_values_raise_schema_error(self):
+        malformed = [
+            {"properties": []}, {"properties": {1: {}}}, {"patternProperties": []}, {"$defs": None},
+            {"allOf": []}, {"anyOf": {}}, {"oneOf": [0]}, {"items": []},
+            {"additionalProperties": None}, {"if": "string"}, {"then": 1}, {"else": []},
+            {"not": None}, {"type": "str"}, {"type": []}, {"type": ["string", "string"]},
+            {"type": ["string", {}]}, {"enum": "abc"}, {"required": "id"},
+            {"required": ["id", "id"]}, {"required": [{}]}, {"minLength": -1},
+            {"maxLength": True}, {"minItems": 1.5}, {"maxItems": "2"},
+            {"minimum": False}, {"maximum": None}, {"minimum": float("nan")},
+            {"maximum": float("inf")}, {"uniqueItems": 1}, {"pattern": []},
+            {"pattern": "["}, {"patternProperties": {"[": {}}},
+            {"pattern": "a{9999999999999999999999999}"}, {"$ref": []},
+            {"title": {}}, {"description": []}, {"$id": 1}, {"$schema": None},
+        ]
+        for schema in malformed:
+            with self.subTest(schema=schema), self.assertRaises(SchemaError):
+                Validator(schema)
+
+    def test_unreachable_rules_are_still_checked(self):
+        for schema in (
+            {"type": "string", "properties": {"unused": {"required": "x"}}},
+            {"if": False, "then": {"type": "typo"}},
+            {"anyOf": [True, {"items": None}]},
+            {"$defs": {"unused": {"uniqueItems": "yes"}}},
+        ):
+            with self.subTest(schema=schema), self.assertRaises(SchemaError):
+                Validator(schema)
+
+    def test_supported_empty_and_boolean_rules_still_work(self):
+        cases = [(True, None, True), (False, None, False), ({}, {}, True),
+                 ({"$schema": "https://json-schema.org/draft/2020-12/schema#"}, None, True),
+                 ({"required": []}, {}, True), ({"enum": []}, None, False),
+                 ({"enum": [True, 1, 1.0]}, 1, True),
+                 ({"uniqueItems": False}, [1, 1], True),
+                 ({"type": ["null", "number"]}, False, False),
+                 ({"minLength": 1.0}, "😀", True),
+                 ({"minItems": 0.0, "maxItems": 0.0}, [], True),
+                 ({"allOf": [True, {"not": False}]}, {}, True)]
+        for schema, value, expected in cases:
+            with self.subTest(schema=schema, value=value):
+                self.assertEqual(Validator(schema).is_valid(value), expected)
+
+    def test_local_json_pointer_refs_decode_percent_and_tilde_escapes(self):
+        for name, fragment in (("a/b", "a~1b"), ("m~n", "m~0n"), ("~1", "~01"),
+                               (" ", "%20"), ("%", "%25"), ("α", "%CE%B1")):
+            schema = {"$defs": {name: {"type": "integer"}}, "$ref": "#/$defs/" + fragment}
+            with self.subTest(name=name, fragment=fragment):
+                validator = Validator(schema)
+                self.assertTrue(validator.is_valid(1.0))
+                self.assertFalse(validator.is_valid(True))
+        validator = Validator({"allOf": [{"type": "string"}], "$ref": "#/allOf/0"})
+        self.assertTrue(validator.is_valid("value"))
+        self.assertFalse(validator.is_valid(1))
+
+    def test_bad_refs_fail_without_fetches_or_accidental_aliases(self):
+        refs = ("https://example.org/schema", "#anchor", "#/$defs/a~2b", "#/$defs/%",
+                "#/$defs/%GG", "#/$defs/%FF", "#/$defs/missing", "#/allOf/-",
+                "#/allOf/00", "#/allOf/1", "#/allOf/" + "1" * 5000, "#/title")
+        with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
+            for ref in refs:
+                schema = {"$defs": {"a~2b": {}, "%": {}, "%GG": {}, "%FF": {}},
+                          "allOf": [True], "title": "not a schema", "$ref": ref}
+                with self.subTest(ref=ref), self.assertRaises(SchemaError):
+                    Validator(schema)
+
+    def test_ref_siblings_and_finite_recursive_instances_are_checked(self):
+        schema = {"$defs": {"value": {"type": "integer"}}, "$ref": "#/$defs/value", "minimum": 2}
+        self.assertFalse(Validator(schema).is_valid(1))
+        self.assertTrue(Validator(schema).is_valid(2))
+        recursive = Validator({"type": ["null", "array"], "items": {"$ref": "#"}})
+        self.assertTrue(recursive.is_valid([None, [None]]))
+        self.assertFalse(recursive.is_valid([None, [True]]))
+        nonterminating = Validator({"$ref": "#"})
+        with self.assertRaises(SchemaError):
+            nonterminating.is_valid(None)
+        with self.assertRaises(SchemaError):
+            nonterminating.errors(None)
+
+    def test_other_dialects_and_nested_resources_are_explicitly_unsupported(self):
+        for schema in (
+            {"$schema": "http://json-schema.org/draft-07/schema#"},
+            {"$defs": {"other": {"$id": "other.json", "type": "string"}}},
+        ):
+            with self.subTest(schema=schema), self.assertRaises(SchemaError):
+                Validator(schema)
+
+    @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
+    def test_supported_applicators_agree_with_reference_on_json_values(self):
+        import jsonschema
+
+        schemas = [
+            {"enum": [True, {"n": [1, None]}, "😀"]}, {"const": {"n": [1, None]}},
+            {"type": "array", "items": {"type": "integer"}, "uniqueItems": True},
+            {"type": "string", "minLength": 1, "maxLength": 2, "pattern": "😀|a"},
+            {"type": "object", "properties": {"a": {"type": "number"}},
+             "patternProperties": {"a": {"minimum": 2}}, "additionalProperties": False},
+            {"if": {"type": "integer"}, "then": {"minimum": 2}, "else": {"const": None}},
+            {"anyOf": [{"type": "integer"}, {"type": "string"}]},
+            {"oneOf": [{"type": "integer"}, {"type": "number"}]},
+            {"allOf": [{"not": {"type": "boolean"}}, {"enum": [1, 1.0, False]}]},
+            {"$defs": {"a/b": {"type": "number"}}, "$ref": "#/$defs/a~1b", "minimum": 2},
+            {"$defs": {" ": {"type": "integer"}}, "$ref": "#/$defs/%20"},
+        ]
+        values = [None, False, True, 0, 1, 1.0, 2, 1.5, "", "a", "😀", "😀a", "aaa",
+                  [], [1, True], [1, 1.0], [{"n": 1}, {"n": 1.0}], {"n": [1, None]},
+                  {"n": [True, None]}, {}, {"a": 1}, {"a": 2}, {"a": "2"}, {"b": 2}]
+        for schema in schemas:
+            jsonschema.Draft202012Validator.check_schema(schema)
+            reference = jsonschema.Draft202012Validator(schema)
+            ours = Validator(schema)
+            for value in values:
+                with self.subTest(schema=schema, value=value):
+                    self.assertEqual(ours.is_valid(value), reference.is_valid(value))
 
 
 if __name__ == "__main__":

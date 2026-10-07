@@ -3,25 +3,29 @@
 Extracted from the formal-companion skill (scripts/annotations/
 schemacheck.py), where it was new code.  This package is standard library
 only, so the ``jsonschema`` package cannot be assumed; this module evaluates the subset of
-draft 2020-12 that schema/annotations-v1.schema.json is written in, and it
+draft 2020-12 used by the bundled current and legacy schemas, and it
 REFUSES a schema that uses any other keyword, so the schema cannot quietly rely
 on a rule nothing here enforces.  ``tests/test_annotations_schema.py`` checks
 that the real ``jsonschema`` package, when it is installed, agrees with this
 evaluator on every shipped example.
 
-Supported: ``$ref`` (local ``#/$defs/...`` only), ``type``, ``enum``, ``const``,
+Supported: ``$ref`` (local JSON Pointer fragments only), ``type``, ``enum``, ``const``,
 ``properties``, ``required``, ``additionalProperties``, ``patternProperties``,
 ``items``, ``minItems``, ``maxItems``, ``uniqueItems``, ``minLength``,
 ``maxLength``, ``pattern``, ``minimum``, ``maximum``, ``allOf``, ``anyOf``,
 ``oneOf``, ``not``, ``if``/``then``/``else``.  Annotation keywords
-(``$schema``, ``$id``, ``$defs``, ``title``, ``description``) are accepted and
-ignored.
+(``$schema``, ``$id``, ``$defs``, ``title``, ``description``) are accepted.
+This is not a general-purpose JSON Schema implementation: it uses Python's
+regular-expression engine, rejects nested ``$id`` resources, and never fetches
+references. Schema and instance arguments are decoded JSON values.
 """
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any, Iterator
+from urllib.parse import unquote
 
 #: The stable public API of this module (README.md, "Public API"): exactly these
 #: names.  Anything else, underscored or not, is internal and may change in any release.
@@ -39,10 +43,12 @@ ASSERTION_KEYWORDS = frozenset({
 _SUBSCHEMA_MAPS = ("properties", "patternProperties", "$defs")
 _SUBSCHEMA_LISTS = ("allOf", "anyOf", "oneOf")
 _SUBSCHEMA_ONE = ("additionalProperties", "items", "not", "if", "then", "else")
+_TYPES = frozenset({"object", "array", "string", "boolean", "null", "integer", "number"})
+_NONNEGATIVE_INTEGER = frozenset({"minItems", "maxItems", "minLength", "maxLength"})
 
 
 class SchemaError(ValueError):
-    """The schema itself uses something this evaluator does not implement."""
+    """The schema is malformed or uses something this evaluator does not implement."""
 
 
 def _type_ok(value: Any, name: str) -> bool:
@@ -87,12 +93,20 @@ def _child(path: str, key: Any) -> str:
 
 
 class Validator:
-    """Evaluate one schema.  ``errors(instance)`` yields ``(path, message)``."""
+    """Evaluate one supported schema; ``errors(instance)`` returns diagnostic pairs.
 
-    def __init__(self, schema: dict) -> None:
+    Malformed rules and unsupported features raise :class:`SchemaError` during
+    construction, including rules in branches that an instance does not reach.
+    """
+
+    def __init__(self, schema: dict[str, Any] | bool) -> None:
         self.root = schema
         self._patterns: dict[str, re.Pattern] = {}
-        self._check_schema(schema, "#")
+        self._checked: set[int] = set()
+        try:
+            self._check_schema(schema, "#")
+        except RecursionError as exc:
+            raise SchemaError("schema nesting exceeds this implementation's recursion limit") from exc
 
     # -- schema self-check -------------------------------------------------
     def _check_schema(self, node: Any, where: str) -> None:
@@ -100,49 +114,110 @@ class Validator:
             return
         if not isinstance(node, dict):
             raise SchemaError(f"{where}: a schema must be an object or a boolean")
+        if id(node) in self._checked:
+            return
+        self._checked.add(id(node))
         for key, value in node.items():
             if key in ANNOTATION_KEYWORDS - {"$defs"}:
+                if not isinstance(value, str):
+                    raise SchemaError(f"{where}/{key}: must be a string")
+                if key == "$id" and node is not self.root:
+                    raise SchemaError(f"{where}/$id: nested schema resources are not supported")
+                if key == "$schema" and value.removesuffix("#") != "https://json-schema.org/draft/2020-12/schema":
+                    raise SchemaError(f"{where}/$schema: only draft 2020-12 is supported")
                 continue
             if key not in ASSERTION_KEYWORDS and key not in _SUBSCHEMA_MAPS:
                 raise SchemaError(f"{where}: keyword {key!r} is not implemented by schemacheck")
             if key in _SUBSCHEMA_MAPS:
+                if not isinstance(value, dict) or any(not isinstance(name, str) for name in value):
+                    raise SchemaError(f"{where}/{key}: must be an object with string keys")
                 for name, sub in value.items():
                     if key == "patternProperties":
                         self._regex(name)
                     self._check_schema(sub, f"{where}/{key}/{name}")
             elif key in _SUBSCHEMA_LISTS:
+                if not isinstance(value, list) or not value:
+                    raise SchemaError(f"{where}/{key}: must be a nonempty array of schemas")
                 for i, sub in enumerate(value):
                     self._check_schema(sub, f"{where}/{key}/{i}")
             elif key in _SUBSCHEMA_ONE:
                 self._check_schema(value, f"{where}/{key}")
             elif key == "$ref":
-                self._resolve(value)
+                self._check_schema(self._resolve(value), f"{where}/$ref ({value})")
             elif key == "pattern":
                 self._regex(value)
+            elif key == "type":
+                names = value if isinstance(value, list) else [value]
+                if (not names or any(not isinstance(name, str) or name not in _TYPES for name in names)
+                        or len(names) != len(set(names))):
+                    raise SchemaError(f"{where}/type: must name a supported type or a nonempty unique array of types")
+            elif key == "required":
+                if (not isinstance(value, list) or any(not isinstance(name, str) for name in value)
+                        or len(value) != len(set(value))):
+                    raise SchemaError(f"{where}/required: must be an array of unique strings")
+            elif key == "enum" and not isinstance(value, list):
+                raise SchemaError(f"{where}/enum: must be an array")
+            elif key in _NONNEGATIVE_INTEGER:
+                if not _type_ok(value, "integer") or value < 0:
+                    raise SchemaError(f"{where}/{key}: must be a nonnegative integer")
+            elif key in ("minimum", "maximum"):
+                if (not _type_ok(value, "number")
+                        or isinstance(value, float) and not math.isfinite(value)):
+                    raise SchemaError(f"{where}/{key}: must be a finite number")
+            elif key == "uniqueItems" and not isinstance(value, bool):
+                raise SchemaError(f"{where}/uniqueItems: must be a boolean")
 
     def _regex(self, pattern: str) -> re.Pattern:
+        if not isinstance(pattern, str):
+            raise SchemaError("a regular expression must be a string")
         compiled = self._patterns.get(pattern)
         if compiled is None:
-            compiled = self._patterns[pattern] = re.compile(pattern)
+            try:
+                compiled = self._patterns[pattern] = re.compile(pattern)
+            except (re.error, OverflowError) as exc:
+                raise SchemaError(f"unsupported or malformed regular expression {pattern!r}: {exc}") from exc
         return compiled
 
     def _resolve(self, ref: str) -> Any:
-        if not ref.startswith("#/"):
+        if not isinstance(ref, str) or not ref.startswith("#"):
             raise SchemaError(f"only local $ref is supported, got {ref!r}")
+        if re.search(r"%(?![0-9A-Fa-f]{2})", ref):
+            raise SchemaError(f"$ref {ref!r} contains malformed percent encoding")
+        try:
+            pointer = unquote(ref[1:], encoding="utf-8", errors="strict")
+        except UnicodeDecodeError as exc:
+            raise SchemaError(f"$ref {ref!r} contains invalid UTF-8") from exc
+        if pointer == "":
+            return self.root
+        if not pointer.startswith("/") or re.search(r"~(?![01])", pointer):
+            raise SchemaError(f"$ref {ref!r} is not a supported JSON Pointer fragment")
         node: Any = self.root
-        for part in ref[2:].split("/"):
+        for part in pointer[1:].split("/"):
             part = part.replace("~1", "/").replace("~0", "~")
-            if not isinstance(node, dict) or part not in node:
+            if isinstance(node, dict) and part in node:
+                node = node[part]
+            elif isinstance(node, list) and re.fullmatch(r"0|[1-9][0-9]*", part):
+                # Avoid converting an attacker-sized integer token before checking
+                # its range; list indices have a bounded, ordinary decimal length.
+                if len(part) > len(str(len(node))) or int(part) >= len(node):
+                    raise SchemaError(f"$ref {ref!r} resolves nowhere")
+                node = node[int(part)]
+            else:
                 raise SchemaError(f"$ref {ref!r} resolves nowhere")
-            node = node[part]
         return node
 
     # -- evaluation --------------------------------------------------------
     def is_valid(self, instance: Any, schema: Any = None) -> bool:
-        return next(self._eval(instance, self.root if schema is None else schema, "$"), None) is None
+        try:
+            return next(self._eval(instance, self.root if schema is None else schema, "$"), None) is None
+        except RecursionError as exc:
+            raise SchemaError("schema evaluation exceeds this implementation's recursion limit") from exc
 
     def errors(self, instance: Any) -> list[tuple[str, str]]:
-        return list(self._eval(instance, self.root, "$"))
+        try:
+            return list(self._eval(instance, self.root, "$"))
+        except RecursionError as exc:
+            raise SchemaError("schema evaluation exceeds this implementation's recursion limit") from exc
 
     def _eval(self, inst: Any, schema: Any, path: str) -> Iterator[tuple[str, str]]:
         if schema is True:

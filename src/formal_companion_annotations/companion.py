@@ -110,14 +110,26 @@ def _constant(name: str) -> Any:
     raise LoadError(f"{name} is not JSON")
 
 
+def _float(text: str) -> float:
+    value = float(text)
+    # Ordinary fractional rounding is part of this codec's float precision, but
+    # losing every nonzero digit is an implementation range failure. Inspect the
+    # mantissa directly so even extreme exponents need no bounded integer parse.
+    if value == 0.0 and any(char in "123456789" for char in text.lower().partition("e")[0]):
+        raise LoadError("nonzero JSON number is below this implementation's floating-point range")
+    return value
+
+
 def loads(text: str) -> Any:
-    """Read JSON without duplicate keys, nonfinite numbers, or silent coercion.
+    """Read JSON with duplicate-key, Unicode, and numeric-range checks.
 
     This is a JSON codec, not schema validation; call :func:`check` or
     :func:`validate` on the returned value to validate a companion document.
+    Integers remain integers; fractional/exponent forms use Python float
+    precision. Overflow and nonzero numbers that underflow to zero are errors.
     """
     try:
-        value = json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant)
+        value = json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant, parse_float=_float)
     except (json.JSONDecodeError, RecursionError, ValueError) as exc:
         if isinstance(exc, LoadError):
             raise

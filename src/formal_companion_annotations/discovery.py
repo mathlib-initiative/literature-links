@@ -44,7 +44,9 @@ class Record:
     @property
     def base_uri(self) -> str:
         """The carrier URI against which relative resource references resolve."""
-        return self.path.resolve().as_uri()
+        # collect() already captured a resolved absolute path. Resolving it
+        # again could follow a new symlink and change retained URI semantics.
+        return self.path.absolute().as_uri()
 
 
 @dataclass

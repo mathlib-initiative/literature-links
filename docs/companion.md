@@ -1,68 +1,79 @@
-# Companion annotation working draft
+# Annotation reference
 
-This experimental, unpublished format describes **one informal–formal link**.
-The annotation has no version field. `2.0.0a2` identifies the software package
-prerelease, not an annotation field. Its
-[JSON Schema](../schema/companion.schema.json) ships with the checker.
+One Formal Companion Annotation (FCA) associates **one informal source, or a
+location in it, with one formal destination**. Only `source` and `target` are
+required. The format is an unversioned working draft.
 
-## Core document
+Start with the [local tutorial](../examples/tutorial/README.md), which includes
+both endpoints, or browse the [examples](../examples/README.md). The
+[JSON Schema](../schema/companion.schema.json) describes the record's structure;
+the additional checks below complete its validation rules.
+
+## One association
 
 ```json
 {
-  "source": { "type": "pdf", "uri": "notes.pdf" },
-  "location": { "page": 4 },
-  "target": "https://example.org/formal/Result.html#result"
+  "source": { "type": "html", "uri": "informal.html" },
+  "location": { "fragment": "reflexivity" },
+  "target": "formal.html#reflexivity"
 }
 ```
 
-| Object | Required fields | Optional fields |
+Here `source` is the informal endpoint and `target` the formal endpoint. The
+names establish a consistent direction for storage; an application can browse
+the association in either direction. The informal article remains its own
+document. The annotation neither contains nor replaces it.
+
+An association does not by itself assert equivalence, implication, proof
+completion, correctness, or human review. It does not establish that the formal
+destination exists or expresses the intended statement. Applications may record
+such claims separately in extensions and decide how to verify them.
+
+FCA is **inspired by, but is not a serialization of, the W3C Web Annotation Data
+Model**. W3C annotations use a body/target model and a JSON-LD context; FCA's
+`source` and `target` are its own field names, not a renaming of those roles.
+Interchange needs an explicit adapter, including a choice of roles and selector
+mapping. See the [W3C model](https://www.w3.org/TR/annotation-model/#annotations)
+and the repository's [compatibility notes](compatibility.md).
+
+## Fields
+
+| Field | Required? | Meaning |
 |---|---|---|
-| Annotation | `source`, `target` (string) | `location` (object), `id` (nonempty string), `$schema`, `extensions` |
-| Source | `type` (`pdf`, `latex`, `html`, `generic`), `uri` (string) | `extensions` |
+| `source` | Yes | An object identifying the informal resource. |
+| `source.type` | Yes | `pdf`, `latex`, `html`, or `generic`; chooses the location convention. |
+| `source.uri` | Yes | A nonempty resource reference; see [references and bases](#references-and-bases). |
+| `target` | Yes | One nonempty reference to the formal destination, optionally with its own fragment. |
+| `location` | No | An object selecting part of the informal source. Omission selects the whole source. |
+| `id` | No | A nonempty, application-defined string label. It need not be a URI or globally unique. |
+| `extensions` | No | An object of application metadata for this association. |
+| `source.extensions` | No | An independent object of metadata for the source. |
+| `$schema` | No | A nonempty reference used as a tooling hint; it does not override this validator. |
 
-Every record contains one source and one formal target. Two formal destinations
-or two informal occurrences require two independent records. Root arrays and an
-`annotations` wrapper are invalid against this schema, even for zero or one link.
-Optional `id` is an opaque application label; this schema imposes no collection
-uniqueness, global identity, ordering, or deduplication rules. Unknown core fields
-are invalid. `source` denotes the informal endpoint; `target` the formal endpoint.
+Unknown fields at the annotation or source level are invalid. Built-in locations
+also reject unknown fields. Put application metadata in `extensions`, or use
+`generic` for an application-defined location.
 
-A companion is assembled from discovered records. [Directory traversal and
-shard carriers](discovery.md) are separate from the annotation schema; the schema
-does not require a folder layout, file naming convention, manifest, or one file
-per record. Each member of an array/JSONL carrier still validates independently.
+Two formal destinations or two informal occurrences require two records. Repeat
+the source fields as needed; no shared defaults are inferred. An array or an
+`annotations` wrapper is not an annotation. [Discovery](discovery.md) can read
+arrays and JSONL as carriers of independently valid records, without requiring
+a manifest, folder layout, or one file per record.
 
-An annotation asserts **an association only**. Neither validation nor a link
-asserts equivalence, proof completion, correctness, human review, or that the
-formal resource contains the intended statement.
+### Whole resource or location
 
-An absent location selects the **entire source**. A missing or unsupported
-anchor must not be silently replaced with absence. Built-in locations cannot
-be empty. `null` is invalid. Generic locations may be empty objects, whose
-meaning still belongs to the application.
+| Value of `location` | Meaning |
+|---|---|
+| Absent | The whole informal resource, in every mode. |
+| A valid built-in location | The selected PDF page/region, LaTeX label/lines, or HTML element/text. |
+| An object in `generic` mode, including `{}` | An application-defined selection; the core assigns no further meaning. |
+| `{}` in `pdf`, `latex`, or `html` mode | Invalid. |
+| `null` | Invalid in every mode. |
 
-## References and bases
-
-`source.uri`, `target`, and optional `$schema` are nonempty URI/IRI-reference
-strings without literal whitespace or control characters. Relative references,
-Unicode, absolute URLs, and opaque URIs such as `urn:example:result:1` are
-allowed. The checker enforces this lexical rule, not full URI grammar or scheme
-support. It preserves these strings and fetches nothing.
-
-Relative source and target references resolve against the **containing shard's
-location** using ordinary URI resolution, including records in arrays/JSONL.
-They do not implicitly resolve against
-the source or a repository root. An in-memory caller supplies the base. Moving a
-document requires preserving its base or deliberately rewriting its references.
-A bare Lean name is merely a relative reference, not an implicit library lookup.
-Use URI escaping for literal filename spaces, `#`, `?`, and other delimiters.
-For built-in modes, identify the complete source file/page and use `location`
-to select a portion; avoid combining a source fragment with another locator.
-
-A viewer handles scheme support and navigation under its own rules. Accepting
-data is not permission to execute it. `$schema` is a tooling hint, not a remote
-override of the built-in validator. The schema's `$id` is an identifier, not a
-promise of a hosted public endpoint.
+A consumer must not silently turn an unresolved, ambiguous, or unsupported
+location into a whole-resource association. Preserve it and show its resolution
+status separately. An empty generic location is not interchangeable with an
+absent location.
 
 ## PDF
 
@@ -70,22 +81,22 @@ promise of a hosted public endpoint.
 { "page": 3, "rect": [0.1, 0.2, 0.6, 0.15] }
 ```
 
-`page` is a positive integer counting physical pages from 1, independent of
-printed numbers and PDF page labels. Without `rect`, it selects the page.
-Optional `rect` is exactly `[x, y, width, height]`, normalized to the **displayed
-CropBox after intrinsic page rotation**. Use the effective default page box if
-no CropBox is specified. The origin is top-left; x increases rightward, y
-downward. All values lie in [0, 1]; width and height are positive, and x + width
-and y + height must not exceed 1.
+`page` counts physical pages from 1, independently of printed numbers or PDF
+page labels. Without `rect`, the location selects the page. Optional `rect` is
+exactly `[x, y, width, height]`, normalized to the **displayed CropBox after
+intrinsic page rotation**. Use the effective default page box if no CropBox is
+specified. The origin is top-left; x increases rightward and y downward.
 
-This works for scanned PDFs without a text layer. It is this draft's convention,
-not raw PDF user-space coordinates or a W3C percentage fragment. Viewers
-transform it into their display coordinates. The offline checker cannot verify
-page existence or that a rectangle covers the intended passage.
+All four values are in [0, 1]. Width and height must be positive; x + width and
+y + height must not exceed 1. These are FCA display coordinates, not raw PDF
+user-space coordinates or rectangle endpoints. A viewer converts them to its
+own display coordinates. The convention also works for scanned pages without
+a text layer. Validation cannot confirm that the page exists or that a rectangle
+covers the intended passage.
 
 ## LaTeX
 
-Exactly one location form is permitted:
+Use exactly one of these location forms:
 
 ```json
 { "label": "thm:lagrange" }
@@ -95,53 +106,65 @@ Exactly one location form is permitted:
 { "lines": [12, 18] }
 ```
 
-`label` is a nonempty literal label name in the identified source file. A
-consumer may use compiled structure to locate it; macro expansion, included
-files, and generated labels are application responsibilities. Missing and
-duplicate matches must be reported. The core does not prescribe which
-surrounding environment a viewer highlights.
+`label` is a nonempty literal label name in the identified source file. Macro
+expansion, included files, and generated labels are application responsibilities.
+A consumer may use compiled structure to find it; the core does not prescribe
+which surrounding environment to highlight. Report missing or duplicate matches.
 
-`lines` contains two positive integers, inclusive start and end, with end at
-least start. Count lines from 1 in the decoded source file. CRLF, CR, and LF
-each count as a single line break. `[12, 12]` selects one line. These are not
-RFC 5147's zero-based, half-open boundaries.
+`lines` contains positive integers `[start, end]`, inclusive, with end at least
+start. Count from 1 in the decoded source file. CRLF, CR, and LF each count as
+one line break; `[12, 12]` selects one line. This convention differs from
+[RFC 5147's line boundaries](https://www.rfc-editor.org/rfc/rfc5147#section-2.1),
+which count from zero and exclude the ending boundary.
 
 ## HTML
 
-Exactly one of `fragment`, `css`, or `quote` is permitted:
+Use exactly one of `fragment`, `css`, or `quote`:
 
 ```json
-{ "fragment": "theorem-2" }
+{ "fragment": "reflexivity" }
 ```
 
 ```json
-{ "css": "article #theorem-2" }
+{ "css": "article #reflexivity" }
 ```
 
 ```json
-{ "quote": { "exact": "Every sample group is finite.", "prefix": "Claim. ", "suffix": " Proof." } }
+{ "quote": { "exact": "Every natural number equals itself.", "prefix": "Claim. " } }
 ```
 
-`fragment` is the literal decoded element ID, with no leading `#`, whitespace,
-or controls. Do not percent-decode it again. `css` is a nonempty selector string
-evaluated against the identified HTML document. The checker does not parse CSS.
+`fragment` is the literal decoded element ID, without a leading `#`, whitespace,
+or controls. Do not percent-decode it again: `"a%20b"` names an ID containing
+those literal characters. `css` is a nonempty selector evaluated against the
+identified document; the checker does not parse or execute CSS.
 
-This draft's quote convention takes the body's textContent after removing
-`script`, `style`, and `template` subtrees, or the document element if there is
-no body. Collapse runs of Unicode White_Space characters to one ASCII space
-and trim leading/trailing whitespace. Do not case-fold, normalize Unicode, or
-insert spaces at element boundaries. Include hidden text outside the excluded
-subtrees; exclude shadow DOM and iframe content. Different text extraction
-conventions belong in generic mode.
+For `quote`, construct this draft's text layer:
+
+1. Take the body's `textContent` after removing `script`, `style`, and `template`
+   subtrees. Use the document element if there is no body.
+2. Collapse each run of Unicode `White_Space` to one ASCII space, then trim
+   leading and trailing whitespace.
+3. Do not case-fold, normalize Unicode, or insert spaces at element boundaries.
+   Include hidden text outside the excluded subtrees. Exclude shadow DOM and
+   iframe content.
+
+Here `White_Space` means U+0009–000D, U+0020, U+0085, U+00A0, U+1680,
+U+2000–200A, U+2028–2029, U+202F, U+205F, and U+3000, as listed in the
+[Unicode property data](https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt).
+For example, `<b>natural</b><i>number</i>` contributes `naturalnumber`, without
+an inserted space.
 
 `exact` is nonempty. Optional `prefix` and `suffix` are literal context
-immediately preceding and following a match in that text layer; they are not
-part of the selection. These supplied strings already use that convention and
-are not rewritten. Prefix/suffix may contain a single boundary space. A checker
-pass does not prove a quote can match. A consumer reports absent or ambiguous
-matches, including CSS matching multiple elements or duplicate IDs, rather than
-quietly choosing the first. Dynamic page state is not pinned by the core.
-This convention does not claim W3C TextQuoteSelector interchange.
+immediately before and after the match, outside the selection. Choose these
+strings from the text layer above; prefix/suffix may include a boundary space.
+The checker preserves them without normalization and does not check whether
+they match. Other text-extraction conventions belong in generic mode.
+
+Report missing or ambiguous matches, including selectors matching multiple
+elements and duplicate element IDs, rather than choosing the first. The core
+does not pin a dynamic page's state. This quote convention does not claim
+interchangeability with the
+[W3C Text Quote Selector](https://www.w3.org/TR/annotation-model/#text-quote-selector).
 
 ## Generic and extensions
 
@@ -153,50 +176,91 @@ This convention does not claim W3C TextQuoteSelector interchange.
 }
 ```
 
-A generic location is an arbitrary JSON object. Its producer and consumer own
-its semantics. No profile, namespace, registry, MIME type, or hosted schema is
-required. A tool may add a `profile` identifier, but it has no core behavior.
-Viewers preserve unknown locations and report them as unsupported rather than
-pretending to resolve them. This accommodates Markdown, wikitext, images,
-databases, and future formats without adding built-in modes now.
+A generic location is an arbitrary JSON object. Its producer and consumer define
+its meaning; no profile, namespace, registry, MIME type, or hosted schema is
+required. A `profile` field is an application convention with no core behavior.
+Preserve unknown locations and report them as unsupported. Markdown, wikitext,
+images, and databases can use this mode without adding built-in formats.
+An application defining text offsets should specify its own unit, such as
+Unicode code points or UTF-16 code units; FCA supplies no default offset unit.
 
-An `extensions` object maps nonempty keys without whitespace/control characters
-to arbitrary JSON values. Namespaced keys such as `org.example.catalog` are
-recommended for exchange; ordinary keys are allowed. Root annotation extensions
-and source extensions are independent, with no implied inheritance or merging.
-Consumers preserve unfamiliar keys and values and do not fetch or execute them.
-Extensions may hold confidence, evidence, grouping, source locks, accessible
-descriptions, or review state without making these mandatory core fields.
+Each `extensions` object maps nonempty keys without whitespace or controls to
+arbitrary JSON values. Namespaced keys such as `org.example.catalog` are
+recommended for exchange; ordinary keys are valid. Annotation extensions and
+source extensions do not inherit from or merge with each other. Preserve unknown
+keys and values without fetching, executing, or reinterpreting them. Extensions
+can carry grouping, source revision locks, descriptions, evidence, or review
+state. Their presence does not make those claims trusted or mandatory.
+
+## References and bases
+
+`source.uri`, `target`, and `$schema` accept nonempty URI/IRI-reference strings
+without Unicode `White_Space` or C0/C1 controls (U+0000–001F and U+007F–009F).
+Relative references, Unicode, absolute URLs, and opaque identifiers such as
+`urn:example:result:1` are allowed. This is a lexical check, **not full URI syntax
+validation** or a list of supported schemes. The checker preserves reference
+strings and fetches nothing. See the standards for
+[URI references](https://www.rfc-editor.org/rfc/rfc3986#section-4.1) and
+[internationalized references](https://www.rfc-editor.org/rfc/rfc3987).
+
+Relative references use the **containing carrier's URI** as their base, following
+[URI reference resolution](https://www.rfc-editor.org/rfc/rfc3986#section-5).
+This also applies to records inside an array or JSONL file. They do not implicitly
+use the informal source, annotation ID, repository root, or working directory
+as a base. An in-memory caller must retain or supply that carrier context. See
+[worked examples](discovery.md#origins-and-relative-references).
+
+Moving a record requires preserving its original base or deliberately rebasing
+its relative references. Formatting alone does neither. Do not treat arbitrary
+extension strings as references to rewrite. A bare Lean name is only a relative
+reference, not an implicit library lookup. Percent-encode literal filename
+spaces and reserved delimiters such as `#` or `?`. In built-in modes, prefer a
+complete source resource URI plus `location`, avoiding competing selectors in
+both a source fragment and a location.
+
+A viewer chooses which schemes it can navigate. Data acceptance grants no
+permission to execute a URI or extension. `$schema` is a tooling hint, never a
+remote override of the bundled validator; the schema's own `$id` is an identifier,
+not a promise that this unpublished draft is available at that web address.
 
 ## Validation and serialization
 
-JSON has unique object keys, finite numbers, and valid Unicode strings. Full
-validation checks the schema plus positive PDF extents
-contained in the page, and ordered LaTeX ranges. These cross-field rules are not
-all expressible in the supplied schema; schema validation alone is insufficient.
+Full validation combines the supplied
+[JSON Schema draft 2020-12](https://json-schema.org/draft/2020-12/json-schema-core)
+schema with semantic checks for positive, in-bounds PDF rectangles and ordered
+LaTeX line ranges. A generic JSON Schema validator alone does not check all
+these cross-field rules. Neither kind of validation resolves selectors, checks
+resources, runs Lean, or judges a mathematical relationship.
 
-The standard-library Python implementation rejects duplicate keys, nonfinite
-numbers including overflowing exponents, unsupported Python values, cycles,
-and unpaired surrogates. It preserves decoded values, integer precision within
-the interpreter's supported limits, and object/array order. Fractions use normal
-Python float decoding; decimal lexemes and original whitespace are not preserved.
-Use strings for exact decimal application values. Resource and interpreter
-limits can reject otherwise representable input with a diagnostic.
+FCA's JSON reader requires unique object keys, finite numbers, and strings
+without unpaired Unicode surrogates, including inside opaque data. These strict
+interchange rules avoid cases for which general JSON implementations can disagree;
+they are not all universal JSON grammar restrictions. See
+[RFC 8259 on objects](https://www.rfc-editor.org/rfc/rfc8259#section-4) and
+[Unicode](https://www.rfc-editor.org/rfc/rfc8259#section-8.2).
 
-`check` returns structured `Problem(code, path, message)` findings: `JSON` for
-values outside the JSON data model, `SCHEMA` for structural failures, `PDF_RECT`
-for rectangle bounds/extents, and `LATEX_LINES` for reversed line intervals.
-`validate` returns readable strings for convenience. No directory-wide checks
-belong to this atomic validator.
+The Python implementation preserves integers within its interpreter's supported
+limits, but fractional numbers use Python floats: decimal spellings and arbitrary
+decimal precision are not preserved. Overflow and nonzero values that underflow
+to zero are rejected as implementation range errors; true signed zero remains
+valid, and ordinary nonzero rounding still occurs. Other consumers may have
+narrower numeric limits. Ordinary IEEE 754 binary64 consumers guarantee exact
+integer interchange within ±(2⁵³ − 1); see
+[RFC 8259 on numbers](https://www.rfc-editor.org/rfc/rfc8259#section-6). This is
+an interoperability consideration, not an FCA integer bound. Use application
+strings when exact decimal values or identifiers must survive such consumers.
+Resource limits may reject large or deeply nested inputs with a diagnostic.
 
-There is **no canonical byte representation** or required ordering. Formatting
-uses two-space indentation and a trailing newline without sorting. The current
-annotation is unversioned: `version` and `schema_version` are unknown core
-fields and are rejected. V1 remains a separate legacy format using
-`schema_version`; mixed legacy/atomic shapes fail. This a2 draft replaces the
-unpublished a1
-source-plus-annotations wrapper; old wrappers are rejected rather than silently
-split or merged. PR #2's rc3 graph format is also a distinct dialect.
-See [migration](migration.md), [PR synthesis](design/pr-2-synthesis.md), and the
-[design rationale](design/minimal-core.md), including the relationship to the
-[W3C Web Annotation model](https://www.w3.org/TR/annotation-model/).
+`companion.check` returns structured `Problem(code, path, message)` findings:
+`JSON` for unsupported values, `SCHEMA` for structural failures, `PDF_RECT` for
+rectangle bounds/extents, and `LATEX_LINES` for reversed intervals.
+`companion.validate` returns readable messages. `companion.loads` only parses
+strict JSON; call `check` or `validate` afterward. No directory-wide identity or
+uniqueness check belongs to this atomic validator.
+
+There is no canonical byte representation or required property order. The
+formatter preserves object/array order, uses two-space indentation and a trailing
+newline, and does not preserve original whitespace or numeric spellings.
+`version` and `schema_version` are unknown core fields and are rejected. Software
+release numbers are separate; see [compatibility](compatibility.md) for earlier
+formats and [design rationale](design/minimal-core.md) for the choices here.

@@ -15,6 +15,7 @@ import tomllib
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -25,6 +26,7 @@ if importlib.util.find_spec("formal_companion_annotations") is None:
 
 import formal_companion_annotations                                  # noqa: E402
 from formal_companion_annotations import validate as V               # noqa: E402
+from formal_companion_annotations import companion as C              # noqa: E402
 
 PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
 IMPORT_ROOT = PACKAGE.parent
@@ -68,7 +70,7 @@ class TestStandalone(unittest.TestCase):
     def test_no_runtime_dependency_is_declared(self):
         self.assertEqual(pyproject()["project"]["dependencies"], [])
 
-    def test_the_version_is_stated_once(self):
+    def test_package_metadata_and_changelog_agree_on_the_version(self):
         self.assertEqual(pyproject()["project"]["version"], formal_companion_annotations.__version__)
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         headings = re.findall(r"^## (\S+)", changelog, re.M)
@@ -84,13 +86,16 @@ class TestStandalone(unittest.TestCase):
         data = setuptools["package-data"]["formal_companion_annotations.schema"]
         self.assertIn("*.json", data)
         self.assertEqual(setuptools["package-dir"]["formal_companion_annotations.schema"], "schema")
-        self.assertTrue(V.SCHEMA_PATH.is_file())
-        self.assertEqual(Path(V.__file__).resolve().parent, PACKAGE)
-        if PACKAGE.is_relative_to(SRC.resolve()):
-            self.assertEqual(V.SCHEMA_PATH.parent, ROOT / "schema")
-        else:
-            self.assertEqual(V.SCHEMA_PATH.parent, PACKAGE / "schema")
-            self.assertNotEqual(V.SCHEMA_PATH.resolve().parent, (ROOT / "schema").resolve())
+        for module in (C, V):
+            with self.subTest(schema=module.SCHEMA_PATH.name):
+                self.assertTrue(module.SCHEMA_PATH.is_file())
+                self.assertEqual(Path(module.__file__).resolve().parent, PACKAGE)
+                self.assertEqual(module.SCHEMA_PATH.read_bytes(), (ROOT / "schema" / module.SCHEMA_PATH.name).read_bytes())
+                if PACKAGE.is_relative_to(SRC.resolve()):
+                    self.assertEqual(module.SCHEMA_PATH.parent, ROOT / "schema")
+                else:
+                    self.assertEqual(module.SCHEMA_PATH.parent, PACKAGE / "schema")
+                    self.assertNotEqual(module.SCHEMA_PATH.resolve().parent, (ROOT / "schema").resolve())
 
     def test_the_copy_under_test_is_the_installed_one_when_ci_says_so(self):
         if not EXPECT_INSTALLED:
@@ -130,6 +135,17 @@ class TestEntryPoints(unittest.TestCase):
                 self.assertEqual(failed.stdout, f"{bad}: {want}\n")
                 self.assertEqual(failed.stderr, "")
 
+    def test_python_dash_m_supports_the_current_commands(self):
+        example = ROOT / "examples" / "companion" / "pdf.json"
+        for argv in (("validate", str(example)), ("scan", str(example)), ("format", str(example))):
+            with self.subTest(arguments=argv):
+                child = self.run_module("formal_companion_annotations", *argv)
+                self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
+        help_result = self.run_module("formal_companion_annotations", "--help")
+        self.assertEqual(help_result.returncode, 0)
+        self.assertIn("scan", help_result.stdout)
+        self.assertIn("Legacy", help_result.stdout)
+
     def run_cli(self, *argv: str) -> tuple[int, str, str]:
         out, err = io.StringIO(), io.StringIO()
         with redirect_stdout(out), redirect_stderr(err):
@@ -163,7 +179,9 @@ class TestEntryPoints(unittest.TestCase):
         for module in ("formal_companion_annotations", "formal_companion_annotations.validate"):
             with self.subTest(module=module):
                 child = self.run_module(module, "--version")
-                self.assertEqual((child.returncode, child.stdout, child.stderr), (0, out, ""))
+                program = "formal-companion-annotations" if module == "formal_companion_annotations" else "formal-companion-annotations-validate"
+                self.assertEqual((child.returncode, child.stdout, child.stderr),
+                                 (0, f"{program} {formal_companion_annotations.__version__}\n", ""))
 
     def test_a_missing_packaged_schema_is_a_broken_install_exit_2(self):
         good = EXAMPLES / "mixed.json"
@@ -188,13 +206,25 @@ class TestEntryPoints(unittest.TestCase):
                     self.assertEqual(printed.returncode, 0, printed.stderr)
                     self.assertEqual(printed.stdout, good.read_text(encoding="utf-8"))
 
+    def test_a_missing_current_schema_is_reported_without_a_traceback(self):
+        good = ROOT / "examples" / "companion" / "pdf.json"
+        with tempfile.TemporaryDirectory() as tmp:
+            broken = Path(tmp).resolve() / "formal_companion_annotations"
+            shutil.copytree(PACKAGE, broken, ignore=shutil.ignore_patterns("__pycache__"))
+            shutil.rmtree(broken / "schema", ignore_errors=True)
+            env = dict(os.environ, PYTHONPATH=str(broken.parent), PYTHONDONTWRITEBYTECODE="1")
+            child = self.run_module("formal_companion_annotations", "validate", str(good), env=env)
+            self.assertEqual(child.returncode, 2, child.stdout + child.stderr)
+            self.assertIn("companion.schema.json", child.stderr)
+            self.assertNotIn("Traceback", child.stdout + child.stderr)
 
-REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
+
+REPO_ROOTS = ("src/", "schema/", "examples/", "conformance/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: it cites the skill's paths by design.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/annotations.md", "docs/vocabulary.md",
-        "docs/companion.md", "docs/migration.md", "docs/discovery.md",
-        "docs/design/minimal-core.md", "docs/design/pr-2-synthesis.md")
+DOCS = ("README.md", "CONTRIBUTING.md", *(str(path.relative_to(ROOT))
+        for folder in ("docs", "examples", "conformance", "schema")
+        for path in sorted((ROOT / folder).rglob("*.md"))))
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):
@@ -215,10 +245,24 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                     with self.subTest(doc=name, path=token):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
 
-    def test_no_em_dash_in_the_docs(self):
+    def test_local_markdown_link_targets_exist(self):
         for name in DOCS + ("CHANGELOG.md",):
-            with self.subTest(doc=name):
-                self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
+            document = ROOT / name
+            text = document.read_text(encoding="utf-8")
+            text = re.sub(r"(?ms)^```.*?^```[ \t]*$", "", text)
+            # Check inline/image links and reference definitions without a
+            # Markdown dependency or network access. Fragments stay local to
+            # their target document; remote URI schemes are outside this test.
+            links = re.findall(r"\]\(<?([^\s)>]+)>?(?:\s+[^)]*)?\)", text)
+            links += re.findall(r"(?m)^\s*\[[^]]+\]:\s*<?([^\s>]+)>?", text)
+            for link in links:
+                uri = urlsplit(link)
+                if uri.scheme or uri.netloc or not uri.path:
+                    continue
+                path = unquote(uri.path)
+                target = ROOT / path.lstrip("/") if path.startswith("/") else document.parent / path
+                with self.subTest(doc=name, link=link):
+                    self.assertTrue(target.exists(), f"{name} links to missing {link}")
 
 
 if __name__ == "__main__":
