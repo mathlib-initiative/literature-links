@@ -7,12 +7,12 @@ name = "formal-companion-annotations"
 version = "2.0.0a2"  # Kept in step with the package's __version__.
 description = "Single formal/informal annotations for PDF, LaTeX, HTML and generic input, with offline shard discovery."
 readme = "README.md"
-# Legacy timestamps and the test suite require Python 3.11 or newer.
+# The test suite requires Python 3.11 or newer (tomllib).
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [{ name = "Formal Companion Annotations contributors" }]
-keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema", "web-annotation"]
+keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -40,10 +40,9 @@ jsonschema = ["jsonschema>=4.18"]
 
 [project.scripts]
 formal-companion-annotations = "formal_companion_annotations.cli:main"
-formal-companion-annotations-validate = "formal_companion_annotations.validate:main"
 
 [tool.setuptools]
-# One source copy of each schema; installed wheels carry it inside the package.
+# One source copy of the schema; installed wheels carry it inside the package.
 packages = ["formal_companion_annotations", "formal_companion_annotations.schema"]
 package-dir = { "" = "src", "formal_companion_annotations.schema" = "schema" }
 

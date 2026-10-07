@@ -7,10 +7,19 @@ import json
 from pathlib import Path
 import sys
 
-from . import __version__, companion, discovery, validate as legacy
-from ._output import write_json
+from . import __version__, companion, discovery
 
 __all__ = ["main"]
+
+
+def _write_json(text: str) -> None:
+    """Write UTF-8 JSON with LF line ends, whatever the terminal's encoding."""
+    binary = getattr(sys.stdout, "buffer", None)
+    if binary is None:
+        # Embedders and tests may supply a text-only stream such as StringIO.
+        sys.stdout.write(text)
+    else:
+        binary.write(text.encode("utf-8"))
 
 
 def _validate(args: argparse.Namespace) -> int:
@@ -20,31 +29,12 @@ def _validate(args: argparse.Namespace) -> int:
         item_status = 0
         warnings: list[dict[str, str]] = []
         problems: list[dict[str, str]] = []
-        description = "annotation"
         try:
             text = path.read_bytes().decode("utf-8")
             document = companion.loads(text)
-            if not (isinstance(document, dict)
-                    and any(key in document for key in ("schema", "schema_version"))):
-                report = companion.check(document)
-                problems = [asdict(problem) for problem in report.problems]
-                warnings = [asdict(warning) for warning in report.warnings]
-                if args.canonical:
-                    problems.append({"code": "UNSUPPORTED_OPERATION", "path": "$",
-                                     "message": "canonical validation is v1-only"})
-                if not problems:
-                    description = f"1 annotation, {document['source']['type']}"
-            elif isinstance(document, dict) and document.get("schema") == "formal-companion/annotations":
-                problems = [{"code": "UNSUPPORTED_FORMAT", "path": "$.schema",
-                             "message": "PR #2 rc3 is a distinct companion format; use its checker. "
-                                        "It is not legacy v1 or the single-annotation draft."}]
-            else:
-                legacy_report = legacy.check(document, text=text, canonical=args.canonical)
-                problems = [{"code": "LEGACY_V1", "path": "$", "message": message}
-                            for message in legacy_report.problems]
-                warnings = [{"code": "LEGACY_V1", "path": "$", "message": message}
-                            for message in legacy_report.warnings]
-                description = "legacy v1"
+            report = companion.check(document)
+            problems = [asdict(problem) for problem in report.problems]
+            warnings = [asdict(warning) for warning in report.warnings]
             item_status = 1 if problems else 0
         except (OSError, UnicodeError, ValueError, RecursionError) as exc:
             item_status = 2
@@ -52,7 +42,7 @@ def _validate(args: argparse.Namespace) -> int:
             problems = [{"code": code, "path": "$", "message": str(exc)}]
         status = max(status, item_status)
         if args.format == "json":
-            write_json(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
+            _write_json(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
                                    "problems": problems, "warnings": warnings}, ensure_ascii=True, allow_nan=False) + "\n")
         else:
             for warning in warnings:
@@ -61,7 +51,7 @@ def _validate(args: argparse.Namespace) -> int:
                 print(f"{path}: {problem['path']}: {problem['message']} [{problem['code']}]",
                       file=sys.stderr if item_status == 2 else sys.stdout)
             if not problems:
-                print(f"{path}: ok ({description})")
+                print(f"{path}: ok (1 annotation, {document['source']['type']})")
     return status
 
 
@@ -80,7 +70,7 @@ def _scan(args: argparse.Namespace) -> int:
                                           "line": record.line, "base_uri": record.base_uri}}
                               for record in collection.records],
                   "problems": [asdict(problem) for problem in collection.problems]}
-        write_json(companion.dumps(result))
+        _write_json(companion.dumps(result))
     else:
         for problem in collection.problems:
             print(f"{problem.path}: {problem.message} [{problem.code}]")
@@ -92,13 +82,11 @@ def _scan(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     parser = argparse.ArgumentParser(prog="formal-companion-annotations",
-                                     description="Single formal/informal annotations and companion discovery (unversioned draft).",
-                                     epilog="Legacy bare-file commands remain available through python -m formal_companion_annotations.validate.")
+                                     description="Single formal/informal annotations and companion discovery (unversioned draft).")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    validation = subparsers.add_parser("validate", help="validate single annotations or legacy v1 JSON")
+    validation = subparsers.add_parser("validate", help="validate single annotations")
     validation.add_argument("documents", nargs="+", type=Path)
-    validation.add_argument("--canonical", action="store_true", help="legacy v1 only")
     validation.add_argument("--format", choices=("text", "json"), default="text", help="JSON emits one report per input")
     scanning = subparsers.add_parser("scan", help="recursively discover annotations in JSON/JSONL shards")
     scanning.add_argument("paths", nargs="+", type=Path)
@@ -112,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         return _scan(args)
     except (OSError, UnicodeError, ValueError, RecursionError) as exc:
         if args.command == "scan" and args.format == "json":
-            write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
+            _write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
                                         "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}))
             return 2
         print(f"{parser.prog}: {exc}", file=sys.stderr)
