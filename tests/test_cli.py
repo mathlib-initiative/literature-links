@@ -606,7 +606,7 @@ raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
                 result = self.run_ansi("-c", script, str(missing), str(path))
                 output = self.decode_output(result, status=2)
                 self.assertFalse(output["valid"])
-                self.assertIn(str(missing), output["problems"][0]["message"])
+                self.assertIn(repr(str(missing)), output["problems"][0]["message"])
 
     def test_legacy_canonical_stdout_is_exact_utf8_with_an_ansi_stdout(self):
         for text in ("é", "α"):
