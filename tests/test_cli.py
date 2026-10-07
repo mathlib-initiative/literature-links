@@ -1,4 +1,4 @@
-"""End-to-end command behavior, migration relocation, and file preservation."""
+"""End-to-end behavior of the validate and scan commands."""
 from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
@@ -144,13 +144,12 @@ class TestValidationCommands(CommandCase):
         for index, content in enumerate((b"{", b'{"version":2,"version":2}', b"\xff", b"1e999")):
             path = self.directory / f"malformed-{index}.json"
             path.write_bytes(content)
-            for command in (("validate", str(path)), ("format", str(path))):
-                status, out, err = self.run_command(*command)
-                with self.subTest(command=command, content=content):
-                    # The legacy parser reads 1e999 as inf; schema validation
-                    # still rejects it. The single-annotation codec rejects it on loading.
-                    self.assertIn(status, (1, 2))
-                    self.assertNotIn("Traceback", out + err)
+            status, out, err = self.run_command("validate", str(path))
+            with self.subTest(content=content):
+                # The legacy parser reads 1e999 as inf; schema validation
+                # still rejects it. The single-annotation codec rejects it on loading.
+                self.assertIn(status, (1, 2))
+                self.assertNotIn("Traceback", out + err)
         status, out, err = self.run_command("validate", str(self.directory / "missing.json"))
         self.assertEqual(status, 2)
         self.assertNotIn("Traceback", out + err)
@@ -185,294 +184,10 @@ class TestValidationCommands(CommandCase):
         doc = current_annotation()
         doc["extensions"] = {"tool": "\ud800"}
         path.write_text(json.dumps(doc, ensure_ascii=True), encoding="utf-8")
-        for command in (("validate", str(path)), ("format", str(path))):
-            status, out, err = self.run_command(*command)
-            self.assertIn(status, (1, 2))
-            self.assertIn("surrogate", out + err)
-            self.assertNotIn("Traceback", out + err)
-
-
-class TestFormattingCommands(CommandCase):
-    def test_stdout_format_preserves_large_integer_order_and_unknown_payloads(self):
-        doc = current_annotation()
-        path = self.write("small.json", doc)
-        before = path.read_bytes()
-        status, out, err = self.run_command("format", str(path))
-        self.assertEqual((status, err), (0, ""))
-        self.assertEqual(companion.loads(out), doc)
-        self.assertEqual(path.read_bytes(), before)
-        self.assertEqual(list(companion.loads(out)["extensions"]["tool"]), ["z", "a"])
-        self.assertEqual(companion.loads(out)["location"]["custom"]["a"], [3, 2, 1])
-
-    def test_explicit_output_writes_valid_json_without_changing_input(self):
-        path = self.write("small.json", current_annotation())
-        before = path.read_bytes()
-        output = self.directory / "formatted.json"
-        status, out, err = self.run_command("format", str(path), "--output", str(output))
-        self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(output.read_text(encoding="utf-8")), current_annotation())
-        self.assertEqual(path.read_bytes(), before)
-        self.assertEqual(sorted(p.name for p in self.directory.iterdir()), ["formatted.json", "small.json"])
-
-    def test_invalid_input_does_not_change_existing_output_or_input(self):
-        path = self.write("invalid.json", {"version": 3})
-        output = self.directory / "precious.json"
-        output.write_bytes(b"original output")
-        original = path.read_bytes()
-        for destination in (output, path):
-            status, out, err = self.run_command("format", str(path), "--output", str(destination))
-            self.assertEqual(status, 1)
-            self.assertEqual(output.read_bytes(), b"original output")
-            self.assertEqual(path.read_bytes(), original)
-        self.assertFalse(list(self.directory.glob(".companion-*")))
-
-    def test_legacy_documents_are_not_rewritten_as_single_annotations_by_format(self):
-        path = self.write("legacy.json", v1())
-        before = path.read_bytes()
-        status, out, err = self.run_command("format", str(path), "--output", str(path))
-        self.assertEqual(status, 1)
-        self.assertEqual(path.read_bytes(), before)
-
-    def test_failed_output_creation_does_not_change_source(self):
-        path = self.write("small.json", current_annotation())
-        before = path.read_bytes()
-        status, out, err = self.run_command("format", str(path), "--output", str(self.directory / "missing" / "out.json"))
-        self.assertEqual(status, 2)
-        self.assertEqual(path.read_bytes(), before)
+        status, out, err = self.run_command("validate", str(path))
+        self.assertIn(status, (1, 2))
+        self.assertIn("surrogate", out + err)
         self.assertNotIn("Traceback", out + err)
-
-    def test_failed_atomic_replace_preserves_existing_output_and_cleans_staging(self):
-        path = self.write("small.json", current_annotation())
-        output = self.directory / "existing.json"
-        output.write_bytes(b"keep this output")
-        with patch.object(cli.os, "replace", side_effect=OSError("simulated write failure")):
-            status, out, err = self.run_command("format", str(path), "--output", str(output))
-        self.assertEqual(status, 2)
-        self.assertEqual(output.read_bytes(), b"keep this output")
-        self.assertFalse(list(self.directory.glob(".companion-*")))
-
-    def test_explicit_in_place_formatting_preserves_companion_data(self):
-        path = self.directory / "small.json"
-        path.write_text(json.dumps(current_annotation(), ensure_ascii=False), encoding="utf-8")
-        status, out, err = self.run_command("format", str(path), "--output", str(path))
-        self.assertEqual((status, out, err), (0, "", ""))
-        self.assertEqual(companion.loads(path.read_text(encoding="utf-8")), current_annotation())
-
-
-class TestMigrationCommands(CommandCase):
-    def test_success_preserves_exact_original_bytes_and_reports_omissions(self):
-        original = self.directory / "legacy.json"
-        content = (json.dumps(v1(), ensure_ascii=False, indent="\t").replace("\n", "\r\n") + "\r\n").encode("utf-8")
-        original.write_bytes(content)
-        output = self.directory / "migration"
-        status, out, err = self.run_command("migrate-v1", str(original), "--output", str(output))
-        self.assertEqual((status, err), (0, ""))
-        self.assertEqual(original.read_bytes(), content)
-        self.assertEqual((output / "original-v1.json").read_bytes(), content)
-        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
-        self.assertTrue(report["documents"])
-        self.assertTrue(any(item["code"] == "unresolved_target" for item in report["diagnostics"]))
-        for name in report["documents"]:
-            self.assertEqual(companion.validate(companion.loads((output / name).read_text(encoding="utf-8"))), [])
-        self.assertIn("review report.json", out)
-
-    def test_relative_sources_require_explicit_context(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        output = self.directory / "migration"
-        original = path.read_bytes()
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-        self.assertEqual(status, 2)
-        self.assertIn("--source-base", err)
-        self.assertFalse(output.exists())
-        self.assertEqual(path.read_bytes(), original)
-        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
-
-    def test_source_base_resolves_paths_without_guessing_input_directory(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        output = self.directory / "migration"
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
-                                            "--source-base", "https://sources.example.org/revision/")
-        self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
-        documents = [companion.loads((output / name).read_text(encoding="utf-8")) for name in report["documents"]]
-        self.assertEqual({doc["source"]["uri"] for doc in documents},
-                         {"https://sources.example.org/revision/blueprint/src/chapter1.tex"})
-
-    def test_source_path_punctuation_is_uri_escaped_before_joining(self):
-        doc = v1("tex-lines")
-        doc["sources"][0]["path"] = "chapter:α#part?x%20.tex"
-        path = self.write("legacy.json", doc)
-        output = self.directory / "migration"
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
-                                            "--source-base", "file:///work/project/")
-        self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
-        converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
-        self.assertEqual(converted["source"]["uri"], "file:///work/project/chapter%3A%CE%B1%23part%3Fx%2520.tex")
-
-    def test_absolute_source_override_is_preserved(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        output = self.directory / "migration"
-        override = "file:///custom/chapter%20one.tex"
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
-                                            "--source-uri", f"blueprint-ch1={override}")
-        self.assertEqual((status, err), (0, ""))
-        report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
-        converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
-        self.assertEqual(converted["source"]["uri"], override)
-
-    def test_absolute_source_references_are_not_parsed_or_rebased(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        for index, uri in enumerate(("https://[opaque", "file:chapter.tex", "urn:example:chapter", "https://example.org/α%2Fβ#")):
-            output = self.directory / f"migration-{index}"
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output),
-                                              "--source-uri", f"blueprint-ch1={uri}",
-                                              "--source-base", "file:///ignored/")
-            with self.subTest(uri=uri):
-                self.assertEqual((status, err), (0, ""))
-                report = companion.loads((output / "report.json").read_text(encoding="utf-8"))
-                converted = companion.loads((output / report["documents"][0]).read_text(encoding="utf-8"))
-                self.assertEqual(converted["source"]["uri"], uri)
-
-    def test_unresolvable_source_base_reports_the_problem_without_publication(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        for index, base in enumerate(("https://[malformed", "urn:opaque:base")):
-            output = self.directory / f"migration-{index}"
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output), "--source-base", base)
-            with self.subTest(base=base):
-                self.assertEqual(status, 2)
-                self.assertIn("--source-base cannot resolve", err)
-                self.assertFalse(output.exists())
-                self.assertNotIn("Traceback", out + err)
-
-    def test_invalid_relative_or_duplicate_source_overrides_do_not_write_output(self):
-        path = self.write("legacy.json", v1("tex-lines"))
-        invalid = [("--source-base", "relative/"), ("--source-uri", "blueprint-ch1=relative.tex"),
-                   ("--source-base", "https://example.org/revision/\n"),
-                   ("--source-uri", "bad assignment"), ("--source-uri", "unknown=https://example.org/a"),
-                   ("--source-uri", "blueprint-ch1=https://example.org/a", "--source-uri", "blueprint-ch1=https://example.org/b")]
-        for index, options in enumerate(invalid):
-            output = self.directory / f"migration-{index}"
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output), *options)
-            with self.subTest(options=options):
-                self.assertEqual(status, 2)
-                self.assertFalse(output.exists())
-                self.assertNotIn("Traceback", out + err)
-
-    def test_relative_formal_targets_require_explicit_target_base(self):
-        doc = v1()
-        doc["destinations"][0]["href"] = "Mathlib/Ideal.html"
-        path = self.write("legacy.json", doc)
-        first = self.directory / "without-base"
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(first))
-        self.assertEqual((status, err), (0, ""))
-        report = companion.loads((first / "report.json").read_text(encoding="utf-8"))
-        self.assertEqual(report["documents"], [])
-        self.assertTrue(any(item["code"] == "relative_target_without_base" for item in report["diagnostics"]))
-        second = self.directory / "with-base"
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(second),
-                                            "--target-base", "https://formal.example.org/docs/")
-        self.assertEqual((status, err), (0, ""))
-        report = companion.loads((second / "report.json").read_text(encoding="utf-8"))
-        converted = companion.loads((second / report["documents"][0]).read_text(encoding="utf-8"))
-        self.assertEqual(converted["target"],
-                         "https://formal.example.org/docs/Mathlib/Ideal.html#Ideal.IsPrime")
-
-    def test_existing_files_directories_and_input_are_protected(self):
-        path = self.write("legacy.json", v1())
-        existing_file = self.directory / "existing-file"
-        existing_file.write_bytes(b"preserve me")
-        existing_directory = self.directory / "existing-directory"
-        existing_directory.mkdir()
-        marker = existing_directory / "marker"
-        marker.write_bytes(b"preserve marker")
-        original = path.read_bytes()
-        for output in (path, existing_file, existing_directory):
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-            with self.subTest(output=output):
-                self.assertEqual(status, 2)
-                self.assertIn("already exists", err)
-        self.assertEqual(path.read_bytes(), original)
-        self.assertEqual(existing_file.read_bytes(), b"preserve me")
-        self.assertEqual(marker.read_bytes(), b"preserve marker")
-
-    def test_existing_symlink_is_protected(self):
-        path = self.write("legacy.json", v1())
-        symlink = self.directory / "dangling-link"
-        try:
-            symlink.symlink_to(self.directory / "not-created")
-        except NotImplementedError:
-            self.skipTest("symbolic links are unavailable on this platform")
-        except OSError as exc:
-            if getattr(exc, "winerror", None) == 1314:
-                self.skipTest("this Windows user cannot create symbolic links")
-            raise
-        status, out, err = self.run_command("migrate-v1", str(path), "--output", str(symlink))
-        self.assertEqual(status, 2)
-        self.assertIn("already exists", err)
-        self.assertTrue(symlink.is_symlink())
-
-    def test_malformed_v1_input_never_creates_a_partial_directory(self):
-        for index, content in enumerate((b"{", b'{"schema":"unknown"}', b'{"a":NaN}', b"\xff")):
-            path = self.directory / f"malformed-{index}.json"
-            path.write_bytes(content)
-            output = self.directory / f"migration-{index}"
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-            self.assertEqual(status, 2)
-            self.assertFalse(output.exists())
-            self.assertEqual(path.read_bytes(), content)
-            self.assertNotIn("Traceback", out + err)
-        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
-
-    def test_failure_after_archiving_still_leaves_no_partial_output(self):
-        path = self.write("legacy.json", v1())
-        original = path.read_bytes()
-        output = self.directory / "migration"
-        real_dumps = companion.dumps
-
-        def fail_on_projection(value):
-            if isinstance(value, dict) and "source" in value and "target" in value:
-                raise companion.LoadError("simulated projection serialization failure")
-            return real_dumps(value)
-
-        with patch.object(companion, "dumps", side_effect=fail_on_projection):
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-        self.assertEqual(status, 2)
-        self.assertEqual(path.read_bytes(), original)
-        self.assertFalse(output.exists())
-        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
-
-    def test_migration_never_replaces_a_concurrently_created_empty_directory(self):
-        path = self.write("legacy.json", v1())
-        output = self.directory / "migration"
-        publish = cli._publish_directory
-        existing_inode = None
-
-        def race(source, destination):
-            nonlocal existing_inode
-            destination.mkdir()
-            existing_inode = destination.stat().st_ino
-            return publish(source, destination)
-
-        with patch.object(cli, "_publish_directory", side_effect=race):
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-        self.assertEqual(status, 2)
-        self.assertEqual(list(output.iterdir()), [])
-        self.assertEqual(output.stat().st_ino, existing_inode)
-        self.assertNotIn("Traceback", out + err)
-        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
-
-    def test_unsupported_atomic_publication_fails_without_partial_output(self):
-        path = self.write("legacy.json", v1())
-        output = self.directory / "migration"
-        with patch.object(cli.sys, "platform", "unsupported"), \
-             patch.object(cli.ctypes, "CDLL", side_effect=AssertionError("must not load a native library")):
-            status, out, err = self.run_command("migrate-v1", str(path), "--output", str(output))
-        self.assertEqual(status, 2)
-        self.assertIn("atomic no-replace", err)
-        self.assertNotIn("Traceback", out + err)
-        self.assertFalse(output.exists())
-        self.assertFalse(list(self.directory.glob(".companion-migration-*")))
 
 
 class TestSingleAnnotationDiscovery(CommandCase):
@@ -548,14 +263,6 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertFalse(json.loads(out)["valid"])
 
-    def test_source_collection_draft_is_not_silently_unwrapped(self):
-        old = {"source": current_annotation()["source"], "annotations": [{"target": "urn:formal:one"}]}
-        path = self.write("old-draft.json", old)
-        before = path.read_bytes()
-        status, _, _ = self.run_command("format", str(path), "--output", str(path))
-        self.assertEqual(status, 1)
-        self.assertEqual(path.read_bytes(), before)
-
 
 class TestJsonStdout(CommandCase):
     def run_ansi(self, *arguments: str) -> subprocess.CompletedProcess:
@@ -579,14 +286,12 @@ class TestJsonStdout(CommandCase):
             doc = current_annotation()
             doc["extensions"] = {"example": text}
             path = self.write(f"annotation-{text}.json", doc)
-            for command in (("format", str(path)), ("scan", str(path), "--format", "json"),
+            for command in (("scan", str(path), "--format", "json"),
                             ("validate", str(path), "--format", "json")):
                 with self.subTest(text=text, command=command[0]):
                     result = self.run_ansi("-m", "formal_companion_annotations.cli", *command)
                     output = self.decode_output(result)
-                    if command[0] == "format":
-                        self.assertEqual(output, doc)
-                    elif command[0] == "scan":
+                    if command[0] == "scan":
                         self.assertEqual(output["records"][0]["annotation"], doc)
                     else:
                         self.assertTrue(output["valid"])

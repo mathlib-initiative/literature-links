@@ -1,7 +1,7 @@
 # Annotation documents: `lean-companion/annotations`, schema v1
 
 This is the retained **legacy v1** specification. New small companions use the
-[unversioned working draft](companion.md); [migration](migration.md) is explicit.
+[unversioned working draft](companion.md).
 
 One JSON document per companion says which Lean declarations formalise which
 items of which sources, and where those items sit in the sources. It is the

@@ -33,7 +33,7 @@ VALID_LOCATIONS = {
             {"page": 2, "rect": [0, 0, 1, 1]}, {"page": 2, "rect": [0.9, 0.9, 0.1, 0.1]}],
     "latex": [{"label": "thm:α_2.1"}, {"lines": [1, 1]}, {"lines": [12, 18]}],
     "html": [{"fragment": "thm-lagrange"}, {"fragment": "thm:α%20"},
-             {"css": "article > h2[data-kind='theorem']"},
+             {"css": "article > h2[data-kind='theorem']"}, {"css": "["},
              {"quote": {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}}],
     "generic": [{}, {"profile": "https://example.org/image-v1", "rect": [0, 1, 20, 30]},
                 {"database": {"row": 4, "cell": "A", "values": [None, True, 2.5, "text"]}}],
@@ -128,7 +128,7 @@ class TestSmallContract(unittest.TestCase):
     def test_annotation_id_is_an_optional_nonempty_application_label(self):
         doc = document()
         self.assertEqual(C.validate(doc), [])
-        for identity in ("a", "a label", "α", "https://example.org/annotation/1"):
+        for identity in ("a", "a label", " ", "α", "https://example.org/annotation/1"):
             doc["id"] = identity
             duplicate = copy.deepcopy(doc)
             duplicate["target"] = "urn:another"
@@ -266,6 +266,13 @@ class TestLocatorBounds(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertTrue(C.validate(document(mode, {})))
         self.assertEqual(C.validate(document("generic", {})), [])
+
+    def test_null_location_is_invalid_in_every_mode(self):
+        for mode in VALID_LOCATIONS:
+            doc = document(mode)
+            doc["location"] = None
+            with self.subTest(mode=mode):
+                self.assertTrue(C.validate(doc))
 
     def test_pdf_physical_pages_are_positive_integers(self):
         for page in (0, -1, 1.5, True, False, "1", None):

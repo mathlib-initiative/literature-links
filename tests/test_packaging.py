@@ -137,7 +137,7 @@ class TestEntryPoints(unittest.TestCase):
 
     def test_python_dash_m_supports_the_current_commands(self):
         example = ROOT / "examples" / "companion" / "pdf.json"
-        for argv in (("validate", str(example)), ("scan", str(example)), ("format", str(example))):
+        for argv in (("validate", str(example)), ("scan", str(example))):
             with self.subTest(arguments=argv):
                 child = self.run_module("formal_companion_annotations", *argv)
                 self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
@@ -219,11 +219,11 @@ class TestEntryPoints(unittest.TestCase):
             self.assertNotIn("Traceback", child.stdout + child.stderr)
 
 
-REPO_ROOTS = ("src/", "schema/", "examples/", "conformance/", "docs/", "tests/", ".github/")
+REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: it cites the skill's paths by design.
 DOCS = ("README.md", "CONTRIBUTING.md", *(str(path.relative_to(ROOT))
-        for folder in ("docs", "examples", "conformance", "schema")
+        for folder in ("docs", "examples", "schema")
         for path in sorted((ROOT / folder).rglob("*.md"))))
 
 
