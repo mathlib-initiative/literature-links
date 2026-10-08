@@ -2,7 +2,14 @@
   "id": "21b2af87df95",
   "kind": "proposition",
   "label": "Sequential approximate identity",
-  "status": "not_formalized",
+  "status": {
+    "value": "not_formalized",
+    "pin": {
+      "type": "repository",
+      "url": "https://github.com/leanprover-community/mathlib4",
+      "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8"
+    }
+  },
   "source": {
     "type": "html",
     "uri": "sources/C-algebra.html",
