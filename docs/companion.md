@@ -14,6 +14,10 @@ destination. The format is an unversioned working draft. The
 ```
 
 A link does not claim equivalence, proof or review, or that the target exists.
+The format is inspired by the
+[W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/) but is
+not a serialization of it. Here `target` is the formal side; in the W3C model
+the target is the thing being annotated.
 
 ## Fields
 
@@ -33,8 +37,8 @@ A link does not claim equivalence, proof or review, or that the target exists.
 Only `source` is required. Without `target`, the annotation records an informal
 passage with no formal counterpart. Other fields are invalid at the top level,
 in `source`, in `target` and `status` objects, in built-in pins and in built-in
-locations. Two targets or two passages need two annotations, and annotations
-share nothing. An array is not an annotation.
+locations. Two targets or two passages need two annotations. No field is
+inherited from another record. An array is not an annotation.
 
 ## Location
 
@@ -53,30 +57,35 @@ the first one.
 `{ "page": 3, "rect": [0.1, 0.2, 0.6, 0.15] }`
 
 `page` counts physical pages from 1, ignoring page labels. Without `rect` it
-selects the whole page. `rect` is `[x, y, width, height]` on the displayed
-CropBox, or the default page box, after the page's own rotation. The origin is
-the top-left corner and y grows down. The values are in [0, 1], width and height
+selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
+displayed page box: the CropBox, or the MediaBox when there is none, after the
+page's `Rotate` entry is applied. The origin is the top-left corner and y grows
+down. The values are in [0, 1], width and height
 are positive, and x + width and y + height are at most 1.
 
 ### LaTeX
 
 Use exactly one of `{ "label": "thm:lagrange" }` or `{ "lines": [12, 18] }`.
 
-`label` is a nonempty literal label in the file. The application handles macros,
-included files and generated labels. `lines` is an inclusive range of positive
-integers, with end at least start. Lines count from 1 in the decoded file, and
-CRLF, CR and LF each end a line.
+`label` is the literal argument of a `\label` command. It is looked up in the
+document rooted at `source.uri`, including the files that document inputs;
+macro expansion and generated labels are the application's concern. `lines` is
+an inclusive range of positive integers, with end at least start. Lines count
+from 1 in the file decoded as UTF-8, and CRLF, CR and LF each end a line.
 
 ### HTML
 
 Use exactly one of these:
 
-- `fragment` is a decoded element ID with no leading `#`, whitespace or
-  controls. It is not percent-decoded again, so `"a%20b"` is a literal ID.
+- `fragment` is the decoded value of an element's `id` attribute, with no
+  leading `#`, whitespace or controls; `name` attributes do not count. It is
+  not percent-decoded again, so `"a%20b"` is a literal ID.
 - `css` is a nonempty CSS selector. The checker does not parse it.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
-  after the match. The checker keeps all three as written.
+  after the match. When given, a match must be immediately preceded and
+  followed by them; they narrow the match and are not part of the selection.
+  The checker keeps all three as written.
 
 A quote matches this text layer. Take the `textContent` of the body, or of the
 document element if there is no body, without `script`, `style` and `template`
@@ -172,16 +181,18 @@ URI or IRI references without `White_Space` or C0/C1 controls (U+0000–001F,
 U+007F–009F). Relative, absolute and opaque references are allowed. The check
 is lexical.
 
-A relative reference resolves against the URI of the file that holds the
-annotation, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
+A relative reference resolves against the URI of the document that carries
+the annotation: the file, or the retrieval URI of the response that delivered
+the record, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
 This holds inside arrays and JSONL files too. It never resolves against the
 source, the `id`, the repository or the working directory. Code that holds an
 annotation in memory must keep that base. Moving an annotation means keeping
 the base or rewriting the references.
 
 Extension strings are not references. A bare Lean name is a relative reference.
-Percent-encode spaces, `#` and `?` in file names. In built-in modes, select with
-`location`, not with a fragment of `source.uri`.
+Percent-encode spaces, `#` and `?` in file names. A fragment in `source.uri` is
+kept as part of the reference but selects nothing; in built-in modes `location`
+is the selection.
 
 A valid annotation grants no permission to open or run anything. `$schema` never
 replaces the bundled schema. The schema's `$id` is a name, not a download.
@@ -190,7 +201,9 @@ replaces the bundled schema. The schema's `$id` is a name, not a download.
 
 Validation is the JSON Schema plus two checks: a PDF `rect` has positive size
 and fits the page, and LaTeX `lines` are in order. It never resolves locations,
-fetches resources or judges mathematics.
+fetches resources or judges mathematics. Where the schema asks for an integer, a
+JSON number with no fractional part counts, so `2.0` is a valid `page`, as in
+JSON Schema.
 
 JSON input must have unique keys, finite numbers and no unpaired surrogates,
 even inside opaque data. The Python reader keeps integers exact and reads other
@@ -232,6 +245,11 @@ from local files. This is a reader convention, not part of the schema.
 - Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
   annotations from other files are still returned.
 - Repeated `id` values and identical annotations are kept.
+
+Scanning a repository root reads every JSON file under it, vendored and
+generated ones included, and reports each one that is not an annotation as a
+problem. Keep annotations in a directory of their own, or name them
+`*.annotations.json` and select them with `--include '*.annotations.json'`.
 
 `scan` exits 0 when it finds annotations and no problems. It exits 1 for an
 invalid annotation or file shape. It exits 2 for a read, JSON, path or symlink
