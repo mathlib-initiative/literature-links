@@ -1,4 +1,4 @@
-"""The single-annotation companion contract: small associations, opaque data, offline checks."""
+"""Validation and JSON reading and writing of one annotation."""
 from __future__ import annotations
 
 import copy

@@ -109,13 +109,13 @@ class TestStableApi(unittest.TestCase):
     def test_the_record_types_keep_their_fields(self):
         companion, discovery = module("companion"), module("discovery")
         expected = {companion.Problem: ["code", "path", "message"], companion.Report: ["problems", "warnings"],
-                    discovery.Problem: ["code", "path", "message"],
                     discovery.Record: ["annotation", "path", "pointer", "line"],
                     discovery.Collection: ["records", "problems", "files"]}
         for record, names in expected.items():
             with self.subTest(record=f"{record.__module__}.{record.__name__}"):
                 self.assertEqual([f.name for f in dataclasses.fields(record)], names)
         self.assertTrue(issubclass(companion.LoadError, ValueError))
+        self.assertIs(discovery.Problem, companion.Problem)
 
 
 if __name__ == "__main__":

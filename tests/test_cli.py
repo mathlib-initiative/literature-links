@@ -150,6 +150,10 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(reports[0]["problems"][0]["code"], "SCHEMA")
         self.assertEqual(reports[1]["problems"][0]["code"], "IO")
         self.assertTrue(reports[2]["valid"])
+        undecodable = self.directory / "undecodable.json"
+        undecodable.write_bytes(b"\xff")
+        status, out, _ = self.run_command("validate", str(undecodable), "--format", "json")
+        self.assertEqual((status, json.loads(out)["problems"][0]["code"]), (2, "IO"))
 
     def test_collection_carriers_are_separate_from_single_annotation_validation(self):
         first = self.write("chapter.json", [current_annotation(), current_annotation()])

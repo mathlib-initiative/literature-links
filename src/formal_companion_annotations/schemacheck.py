@@ -166,7 +166,7 @@ class Validator:
                 yield path, f"must be at most {schema['maxLength']} characters long"
             if "pattern" in schema and not self._regex(schema["pattern"]).search(inst):
                 yield path, f"{json.dumps(inst, ensure_ascii=False)} does not match {schema['pattern']}"
-        if _type_ok(inst, "number") and not isinstance(inst, bool):
+        if _type_ok(inst, "number"):
             if "minimum" in schema and inst < schema["minimum"]:
                 yield path, f"must be >= {schema['minimum']}"
             if "maximum" in schema and inst > schema["maximum"]:

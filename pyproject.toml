@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "formal-companion-annotations"
 version = "2.0.0a2"  # Kept in step with the package's __version__.
-description = "Single formal/informal annotations for PDF, LaTeX, HTML and generic input, with offline shard discovery."
+description = "A small JSON format that links informal mathematics to formal mathematics."
 readme = "README.md"
 # The test suite requires Python 3.11 or newer (tomllib).
 requires-python = ">=3.11"
