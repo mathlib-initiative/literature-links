@@ -157,6 +157,14 @@ class TestDiscovery(unittest.TestCase):
         self.assertTrue(any(p.code == "JSON" and "line 3" in p.path for p in result.problems))
         self.assertTrue(any(p.code == "SHARD_SHAPE" and "line 4" in p.path for p in result.problems))
 
+    def test_jsonl_crlf_and_cr_end_lines(self):
+        path = self.root / "links.jsonl"
+        path.write_bytes(b"\r\n".join(json.dumps(annotation(page)).encode() for page in (1, 2)) + b"\r"
+                         + json.dumps(annotation(3)).encode())
+        result = discovery.collect([path])
+        self.assertEqual(result.problems, [])
+        self.assertEqual([r.line for r in result.records], [1, 2, 3])
+
     def test_jsonl_unicode_line_separator_is_not_a_carrier_delimiter(self):
         value = annotation()
         value["extensions"] = {"example": {"text": "first\u2028second\u2029third"}}
@@ -253,6 +261,7 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual([p.code for p in result.problems], ["PATH"])
         self.assertEqual(result.files, [])
+        self.assertEqual([p.code for p in discovery.collect([fifo]).problems], ["PATH"])
 
     def test_discovery_performs_no_network_access(self):
         value = annotation()

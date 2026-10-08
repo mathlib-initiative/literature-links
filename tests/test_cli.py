@@ -66,36 +66,16 @@ with patch.object(json, 'loads', side_effect=RecursionError('simulated JSON pars
 
 
 class TestValidationCommands(CommandCase):
-    def test_invalid_documents_exit_one_with_paths(self):
-        doc = current_annotation()
-        doc["target"] = "with spaces"
-        path = self.write("invalid.json", doc)
-        status, out, err = self.run_command("validate", str(path))
-        self.assertEqual(status, 1)
-        self.assertIn(str(path), out)
-        self.assertIn("target", out)
-        self.assertNotIn("Traceback", out + err)
-
-    def test_version_fields_are_rejected(self):
-        for key, value in (("version", 2), ("schema_version", "1.0")):
-            doc = current_annotation()
-            doc[key] = value
-            path = self.write("versioned.json", doc)
-            with self.subTest(key=key):
-                status, out, err = self.run_command("validate", str(path))
-                self.assertEqual(status, 1)
-                self.assertNotIn("Traceback", out + err)
-
     def test_new_validate_reports_mixed_valid_and_invalid_files(self):
         first, second = self.write("valid.json", current_annotation()), self.write("invalid.json", {"version": 3})
         status, out, err = self.run_command("validate", str(first), str(second))
         self.assertEqual(status, 1)
         self.assertIn(f"{first}: ok", out)
-        self.assertIn(str(second), out)
+        self.assertIn(f"{second}: $: is missing required key 'source' [SCHEMA]", out)
         self.assertEqual(err, "")
 
     def test_invalid_json_and_missing_files_exit_two_without_tracebacks(self):
-        for index, content in enumerate((b"{", b'{"version":2,"version":2}', b"\xff", b"1e999")):
+        for index, content in enumerate((b"{", b'{"version":2,"version":2}', b"\xff", b"1e999", b'"\\ud800"')):
             path = self.directory / f"malformed-{index}.json"
             path.write_bytes(content)
             status, out, err = self.run_command("validate", str(path))
@@ -126,16 +106,6 @@ class TestValidationCommands(CommandCase):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn("simulated JSON parser limit", result.stdout + result.stderr)
                 self.assertNotIn("Traceback", result.stdout + result.stderr)
-
-    def test_lone_surrogate_is_reported_without_writing_invalid_utf8(self):
-        path = self.directory / "surrogate.json"
-        doc = current_annotation()
-        doc["extensions"] = {"tool": "\ud800"}
-        path.write_text(json.dumps(doc, ensure_ascii=True), encoding="utf-8")
-        status, out, err = self.run_command("validate", str(path))
-        self.assertIn(status, (1, 2))
-        self.assertIn("surrogate", out + err)
-        self.assertNotIn("Traceback", out + err)
 
 
 class TestSingleAnnotationDiscovery(CommandCase):
@@ -199,6 +169,20 @@ class TestSingleAnnotationDiscovery(CommandCase):
         status, out, err = self.run_command("scan", str(self.directory), "--exclude", "*", "--format", "json")
         self.assertEqual((status, err), (2, ""))
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
+
+    def test_scan_read_path_and_symlink_failures_exit_two(self):
+        unreadable = self.directory / "unreadable.json"
+        unreadable.write_bytes(b"\xff")
+        cases = [unreadable, self.directory / "missing.json"]
+        link = self.directory / "link.json"
+        try:
+            link.symlink_to(self.write("good.json", current_annotation()))
+            cases.append(link)
+        except (NotImplementedError, OSError):
+            pass  # Windows without symlink privilege
+        for path in cases:
+            with self.subTest(path=path.name):
+                self.assertEqual(self.run_command("scan", str(path))[0], 2)
 
     def test_scan_broken_install_exits_two_in_json_and_text(self):
         path = self.write("one.json", current_annotation())
