@@ -11,12 +11,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
-if importlib.util.find_spec("formal_companion_annotations") is None:
+if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(SRC))
 
-import formal_companion_annotations                                  # noqa: E402
+import literature_links                                  # noqa: E402
 
-PACKAGE = "formal_companion_annotations"
+PACKAGE = "literature_links"
 MODULES = ("schemacheck", "companion", "cli", "discovery")
 
 # Names other tools import. Removing or renaming one breaks them.
@@ -35,10 +35,10 @@ def module(name: str):
 class TestAll(unittest.TestCase):
 
     def test_the_package_exports_its_version_and_modules(self):
-        self.assertEqual(formal_companion_annotations.__all__, ["__version__", *MODULES])
+        self.assertEqual(literature_links.__all__, ["__version__", *MODULES])
         namespace: dict = {}
         exec(f"from {PACKAGE} import *", namespace)
-        for attr in formal_companion_annotations.__all__:
+        for attr in literature_links.__all__:
             with self.subTest(name=attr):
                 self.assertIn(attr, namespace)
         self.assertIs(namespace["companion"], module("companion"))
@@ -58,7 +58,7 @@ class TestAll(unittest.TestCase):
 class TestTyped(unittest.TestCase):
 
     def test_py_typed_ships_with_the_package(self):
-        marker = Path(formal_companion_annotations.__file__).resolve().parent / "py.typed"
+        marker = Path(literature_links.__file__).resolve().parent / "py.typed"
         self.assertTrue(marker.is_file(), marker)
 
     def test_every_public_callable_is_annotated(self):

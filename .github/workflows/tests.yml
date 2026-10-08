@@ -29,9 +29,9 @@ jobs:
         run: python -m pip install jsonschema
       - run: python -m pytest -q -rs
         env:
-          FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED: '1'
+          LITERATURE_LINKS_TEST_INSTALLED: '1'
       - name: Run the installed command on the examples
-        run: formal-companion-annotations scan examples/companion
+        run: literature-links scan examples/companion
 
   platform-smoke:
     name: CLI and discovery / ${{ matrix.os }}
@@ -65,7 +65,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
-          package = 'formal_companion_annotations'
+          package = 'literature_links'
           expected = {f'{package}/{p.name}' for p in Path('src', package).glob('*.py')}
           expected.add(f'{package}/py.typed')
           expected.update(f'{package}/schema/{p.name}' for p in Path('schema').glob('*.json'))
@@ -80,6 +80,6 @@ jobs:
         run: |
           mkdir "$RUNNER_TEMP/sdist"
           tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/sdist"
-          cd "$RUNNER_TEMP"/sdist/formal_companion_annotations-*/
-          python -c "import importlib.util; assert importlib.util.find_spec('formal_companion_annotations') is None"
+          cd "$RUNNER_TEMP"/sdist/literature_links-*/
+          python -c "import importlib.util; assert importlib.util.find_spec('literature_links') is None"
           python -m unittest discover -s tests

@@ -13,7 +13,7 @@ First public release.
   `paper`, `repository` and `generic`.
 - Optional facts `status`, `kind`, `label` and `note`. `status` may be an object
   with `value`, `pin` and `extensions`.
-- The `formal-companion-annotations` command with `validate` and `scan`, and the
+- The `literature-links` command with `validate` and `scan`, and the
   `companion` and `discovery` modules.
 - Records valid under 1.x stay valid in later 1.x; a breaking change bumps the
   major version.

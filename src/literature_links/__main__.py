@@ -1,4 +1,4 @@
-"""``python -m formal_companion_annotations``: the command, as the console script runs it."""
+"""``python -m literature_links``: the command, as the console script runs it."""
 from __future__ import annotations
 
 import sys
