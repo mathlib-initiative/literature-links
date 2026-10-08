@@ -33,7 +33,7 @@
     "target"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mathlib-initiative.github.io/formal-companion-annotations/schema/companion.schema.json",
+  "$id": "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/companion.schema.json",
   "title": "Formal Companion single-annotation working draft",
   "description": "Exactly one association between an informal source and a formal destination. Collections, directories and shard containers are outside this schema. This is an experimental application format, not a W3C Web Annotation serialization. Omitted location selects the whole source. Generic locations and extensions are opaque JSON. Semantic checks also enforce PDF rectangle bounds and ordered LaTeX lines. Schema identifiers are not fetched.",
   "allOf": [
