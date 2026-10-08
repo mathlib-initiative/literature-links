@@ -116,7 +116,7 @@ def _float(text: str) -> float:
 
 
 def loads(text: str) -> Any:
-    """Parse JSON. Reject duplicate keys, unpaired surrogates, overflow and nonzero underflow.
+    """Parse JSON. Reject NaN, Infinity, duplicate keys, unpaired surrogates, overflow and nonzero underflow.
 
     Integers stay exact and other numbers become floats. This does not validate;
     use :func:`check`.

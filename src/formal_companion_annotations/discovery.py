@@ -30,7 +30,7 @@ class Record:
     @property
     def base_uri(self) -> str:
         """The file URI that relative references resolve against."""
-        # ``path`` is already resolved. Resolving again could follow a newer symlink.
+        # ``path`` is already resolved. Resolving again could follow a symlink made since.
         return self.path.absolute().as_uri()
 
 
@@ -113,13 +113,14 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
             exclude: Iterable[str] = ()) -> Collection:
     """Read annotations from files and directories.
 
-    Directories are walked for ``.json``, ``.jsonl`` and ``.ndjson`` files, in
-    any case. A file named explicitly may have any suffix. ``include`` replaces
-    the suffix filter and ``exclude`` always wins. Patterns are case-sensitive
-    shell wildcards on the root-relative path, or on the file name for a file
-    named explicitly. ``*`` also matches ``/``, and a leading ``**/`` also
-    matches root files. Symlinks are skipped while walking and reported when
-    named explicitly. Each resolved path is read once, in sorted path order.
+    Directories are walked for ``.json``, ``.jsonl`` and ``.ndjson`` files,
+    ignoring case. A file named explicitly may have any suffix. ``include``
+    replaces the suffix filter and ``exclude`` always wins. Patterns are
+    case-sensitive shell wildcards on the root-relative path, or on the file
+    name for a file named explicitly. ``*`` also matches ``/``, and a leading
+    ``**/`` also matches root files. Symlinks are skipped while walking and
+    reported when named explicitly. Each resolved path is read once, in sorted
+    path order.
     """
     if any(isinstance(value, str) for value in (paths, include, exclude)):
         raise TypeError("paths, include and exclude take lists, not one string")

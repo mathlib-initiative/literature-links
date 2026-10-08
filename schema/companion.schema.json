@@ -6,8 +6,7 @@
       "description": "A tooling hint. It never replaces this schema."
     },
     "source": {
-      "$ref": "#/$defs/source",
-      "description": "The informal resource."
+      "$ref": "#/$defs/source"
     },
     "extensions": {
       "$ref": "#/$defs/extensions",
