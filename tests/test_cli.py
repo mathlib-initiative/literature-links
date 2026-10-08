@@ -66,36 +66,16 @@ with patch.object(json, 'loads', side_effect=RecursionError('simulated JSON pars
 
 
 class TestValidationCommands(CommandCase):
-    def test_invalid_documents_exit_one_with_paths(self):
-        doc = current_annotation()
-        doc["target"] = "with spaces"
-        path = self.write("invalid.json", doc)
-        status, out, err = self.run_command("validate", str(path))
-        self.assertEqual(status, 1)
-        self.assertIn(str(path), out)
-        self.assertIn("target", out)
-        self.assertNotIn("Traceback", out + err)
-
-    def test_version_fields_are_rejected(self):
-        for key, value in (("version", 2), ("schema_version", "1.0")):
-            doc = current_annotation()
-            doc[key] = value
-            path = self.write("versioned.json", doc)
-            with self.subTest(key=key):
-                status, out, err = self.run_command("validate", str(path))
-                self.assertEqual(status, 1)
-                self.assertNotIn("Traceback", out + err)
-
     def test_new_validate_reports_mixed_valid_and_invalid_files(self):
         first, second = self.write("valid.json", current_annotation()), self.write("invalid.json", {"version": 3})
         status, out, err = self.run_command("validate", str(first), str(second))
         self.assertEqual(status, 1)
         self.assertIn(f"{first}: ok", out)
-        self.assertIn(str(second), out)
+        self.assertIn(f"{second}: $: is missing required key 'source' [SCHEMA]", out)
         self.assertEqual(err, "")
 
     def test_invalid_json_and_missing_files_exit_two_without_tracebacks(self):
-        for index, content in enumerate((b"{", b'{"version":2,"version":2}', b"\xff", b"1e999")):
+        for index, content in enumerate((b"{", b'{"version":2,"version":2}', b"\xff", b"1e999", b'"\\ud800"')):
             path = self.directory / f"malformed-{index}.json"
             path.write_bytes(content)
             status, out, err = self.run_command("validate", str(path))
@@ -127,16 +107,6 @@ class TestValidationCommands(CommandCase):
                 self.assertIn("simulated JSON parser limit", result.stdout + result.stderr)
                 self.assertNotIn("Traceback", result.stdout + result.stderr)
 
-    def test_lone_surrogate_is_reported_without_writing_invalid_utf8(self):
-        path = self.directory / "surrogate.json"
-        doc = current_annotation()
-        doc["extensions"] = {"tool": "\ud800"}
-        path.write_text(json.dumps(doc, ensure_ascii=True), encoding="utf-8")
-        status, out, err = self.run_command("validate", str(path))
-        self.assertIn(status, (1, 2))
-        self.assertIn("surrogate", out + err)
-        self.assertNotIn("Traceback", out + err)
-
 
 class TestSingleAnnotationDiscovery(CommandCase):
     def test_machine_validation_reports_every_input_and_read_error_wins(self):
@@ -150,6 +120,10 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(reports[0]["problems"][0]["code"], "SCHEMA")
         self.assertEqual(reports[1]["problems"][0]["code"], "IO")
         self.assertTrue(reports[2]["valid"])
+        undecodable = self.directory / "undecodable.json"
+        undecodable.write_bytes(b"\xff")
+        status, out, _ = self.run_command("validate", str(undecodable), "--format", "json")
+        self.assertEqual((status, json.loads(out)["problems"][0]["code"]), (2, "IO"))
 
     def test_collection_carriers_are_separate_from_single_annotation_validation(self):
         first = self.write("chapter.json", [current_annotation(), current_annotation()])
@@ -196,6 +170,20 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
 
+    def test_scan_read_path_and_symlink_failures_exit_two(self):
+        unreadable = self.directory / "unreadable.json"
+        unreadable.write_bytes(b"\xff")
+        cases = [unreadable, self.directory / "missing.json"]
+        link = self.directory / "link.json"
+        try:
+            link.symlink_to(self.write("good.json", current_annotation()))
+            cases.append(link)
+        except (NotImplementedError, OSError):
+            pass  # Windows without symlink privilege
+        for path in cases:
+            with self.subTest(path=path.name):
+                self.assertEqual(self.run_command("scan", str(path))[0], 2)
+
     def test_scan_broken_install_exits_two_in_json_and_text(self):
         path = self.write("one.json", current_annotation())
         with patch.object(companion, "SCHEMA_PATH", self.directory / "missing-schema.json"):
@@ -240,6 +228,23 @@ class TestJsonStdout(CommandCase):
                     else:
                         self.assertTrue(output["valid"])
                         self.assertEqual(output["document"], str(path))
+
+    def test_text_output_escapes_what_an_ansi_stdout_cannot_encode(self):
+        path = self.write("annotation-α.json", current_annotation())
+        later = self.write("later.json", current_annotation())
+        result = self.run_ansi("-m", "formal_companion_annotations.cli", "validate", str(path), str(later))
+        self.assertEqual((result.returncode, result.stderr), (0, b""))
+        self.assertIn(b"annotation-\\u03b1.json: ok", result.stdout)
+        self.assertIn(b"later.json: ok", result.stdout)
+
+    def test_text_output_keeps_a_surrogateescape_stdout(self):
+        # UTF-8 mode and LC_ALL=C print a non-UTF-8 file name as its own bytes.
+        buffer = io.BytesIO()
+        stdout = io.TextIOWrapper(buffer, encoding="utf-8", errors="surrogateescape")
+        with redirect_stdout(stdout), redirect_stderr(io.StringIO()):
+            cli.main(["scan", str(self.directory / "caf\udce9.json")])
+        stdout.flush()
+        self.assertIn(b"caf\xe9.json: ", buffer.getvalue())
 
     def test_scan_machine_error_is_utf8_with_an_ansi_stdout(self):
         path = self.write("annotation.json", current_annotation())

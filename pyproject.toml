@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "formal-companion-annotations"
-version = "2.0.0a2"  # Kept in step with the package's __version__.
-description = "Single formal/informal annotations for PDF, LaTeX, HTML and generic input, with offline shard discovery."
+dynamic = ["version"]
+description = "A small JSON format that links informal mathematics to formal mathematics."
 readme = "README.md"
 # The test suite requires Python 3.11 or newer (tomllib).
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Formal Companion Annotations contributors" }]
+authors = [{ name = "the formal-companion contributors" }]
 keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -33,11 +33,6 @@ Source = "https://github.com/mathlib-initiative/formal-companion-annotations"
 Issues = "https://github.com/mathlib-initiative/formal-companion-annotations/issues"
 Changelog = "https://github.com/mathlib-initiative/formal-companion-annotations/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
-test = ["pytest>=7"]
-# Independent schema-agreement checks; never a runtime requirement.
-jsonschema = ["jsonschema>=4.18"]
-
 [project.scripts]
 formal-companion-annotations = "formal_companion_annotations.cli:main"
 
@@ -45,6 +40,9 @@ formal-companion-annotations = "formal_companion_annotations.cli:main"
 # One source copy of the schema; installed wheels carry it inside the package.
 packages = ["formal_companion_annotations", "formal_companion_annotations.schema"]
 package-dir = { "" = "src", "formal_companion_annotations.schema" = "schema" }
+
+[tool.setuptools.dynamic]
+version = { attr = "formal_companion_annotations.__version__" }
 
 [tool.setuptools.package-data]
 # py.typed: the public API is fully annotated (tests/test_public_api.py checks it).

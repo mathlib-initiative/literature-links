@@ -1,8 +1,7 @@
 # Everything the test suite reads, so an unpacked sdist runs its tests.
-include CHANGELOG.md CONTRIBUTING.md MANIFEST.in
+include CHANGELOG.md CONTRIBUTING.md
 graft docs
 graft examples
 graft schema
 graft tests
-graft .github
 global-exclude __pycache__ *.py[cod] .DS_Store
