@@ -20,17 +20,17 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 SRC = ROOT / "src"
 # Test the installed copy when there is one, else src/.
-if importlib.util.find_spec("formal_companion_annotations") is None:
+if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(SRC))
 
-import formal_companion_annotations                                  # noqa: E402
-from formal_companion_annotations import cli                         # noqa: E402
-from formal_companion_annotations import companion as C              # noqa: E402
+import literature_links                                  # noqa: E402
+from literature_links import cli                         # noqa: E402
+from literature_links import companion as C              # noqa: E402
 
-PACKAGE = Path(formal_companion_annotations.__file__).resolve().parent
+PACKAGE = Path(literature_links.__file__).resolve().parent
 IMPORT_ROOT = PACKAGE.parent
 EXAMPLES = ROOT / "examples" / "companion"
-EXPECT_INSTALLED = os.environ.get("FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED") == "1"
+EXPECT_INSTALLED = os.environ.get("LITERATURE_LINKS_TEST_INSTALLED") == "1"
 
 
 def subprocess_env() -> dict:
@@ -46,7 +46,7 @@ def pyproject() -> dict:
 class TestStandalone(unittest.TestCase):
 
     def test_the_package_imports_only_the_standard_library_and_itself(self):
-        copies = {PACKAGE, (SRC / "formal_companion_annotations").resolve()}
+        copies = {PACKAGE, (SRC / "literature_links").resolve()}
         modules = sorted(m for copy in copies for m in copy.glob("*.py"))
         self.assertGreaterEqual(len(modules), 6)
         for module in modules:
@@ -74,16 +74,16 @@ class TestStandalone(unittest.TestCase):
         headings = re.findall(r"^## (\S+)", changelog, re.M)
         released = [h for h in headings if h != "Unreleased"]
         self.assertTrue(released)
-        self.assertEqual(released[0], formal_companion_annotations.__version__)
+        self.assertEqual(released[0], literature_links.__version__)
         self.assertLessEqual(headings.count("Unreleased"), 1)
         if "Unreleased" in headings:
             self.assertEqual(headings[0], "Unreleased")
 
     def test_the_schema_ships_as_package_data(self):
         setuptools = pyproject()["tool"]["setuptools"]
-        data = setuptools["package-data"]["formal_companion_annotations.schema"]
+        data = setuptools["package-data"]["literature_links.schema"]
         self.assertIn("*.json", data)
-        self.assertEqual(setuptools["package-dir"]["formal_companion_annotations.schema"], "schema")
+        self.assertEqual(setuptools["package-dir"]["literature_links.schema"], "schema")
         self.assertTrue(C.SCHEMA_PATH.is_file())
         self.assertEqual(Path(C.__file__).resolve().parent, PACKAGE)
         self.assertEqual(C.SCHEMA_PATH.read_bytes(), (ROOT / "schema" / C.SCHEMA_PATH.name).read_bytes())
@@ -95,7 +95,7 @@ class TestStandalone(unittest.TestCase):
 
     def test_the_copy_under_test_is_the_installed_one_when_ci_says_so(self):
         if not EXPECT_INSTALLED:
-            self.skipTest("FORMAL_COMPANION_ANNOTATIONS_TEST_INSTALLED is not set")
+            self.skipTest("LITERATURE_LINKS_TEST_INSTALLED is not set")
         self.assertFalse(PACKAGE.is_relative_to(SRC.resolve()), f"imported from the source tree: {PACKAGE}")
         self.assertNotIn(str(SRC), sys.path)
         self.assertIn("site-packages", PACKAGE.parts, PACKAGE)
@@ -120,21 +120,21 @@ class TestEntryPoints(unittest.TestCase):
         status, out, err = self.run_cli()
         self.assertEqual(status, 2)
         self.assertEqual(out, "")
-        self.assertTrue(err.startswith("usage: formal-companion-annotations "), err)
+        self.assertTrue(err.startswith("usage: literature-links "), err)
         self.assertNotIn("cli.py", err)
         status, out, err = self.run_cli("validate")
         self.assertEqual(status, 2)
-        self.assertIn("formal-companion-annotations validate: error: the following arguments are required: "
+        self.assertIn("literature-links validate: error: the following arguments are required: "
                       "documents", err)
         status, out, _ = self.run_cli("--help")
         self.assertEqual(status, 0)
-        self.assertTrue(out.startswith("usage: formal-companion-annotations "), out)
+        self.assertTrue(out.startswith("usage: literature-links "), out)
         self.assertIn("--version", out)
 
     def test_version_prints_the_package_version(self):
-        expected = f"formal-companion-annotations {formal_companion_annotations.__version__}\n"
+        expected = f"literature-links {literature_links.__version__}\n"
         self.assertEqual(self.run_cli("--version"), (0, expected, ""))
-        child = self.run_module("formal_companion_annotations", "--version")
+        child = self.run_module("literature_links", "--version")
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
 
     def test_every_example_is_valid(self):
@@ -145,11 +145,11 @@ class TestEntryPoints(unittest.TestCase):
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
         with tempfile.TemporaryDirectory() as tmp:
-            broken = Path(tmp).resolve() / "formal_companion_annotations"
+            broken = Path(tmp).resolve() / "literature_links"
             shutil.copytree(PACKAGE, broken, ignore=shutil.ignore_patterns("__pycache__"))
             shutil.rmtree(broken / "schema", ignore_errors=True)
             env = dict(os.environ, PYTHONPATH=str(broken.parent), PYTHONDONTWRITEBYTECODE="1")
-            child = self.run_module("formal_companion_annotations", "validate", str(good), env=env)
+            child = self.run_module("literature_links", "validate", str(good), env=env)
             self.assertEqual(child.returncode, 2, child.stdout + child.stderr)
             self.assertIn("companion.schema.json", child.stderr)
             self.assertNotIn("Traceback", child.stdout + child.stderr)
