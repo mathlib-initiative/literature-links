@@ -466,7 +466,7 @@ class TestSchemaEvaluator(unittest.TestCase):
                  ({"$schema": "https://json-schema.org/draft/2020-12/schema#"}, None, True),
                  ({"required": []}, {}, True), ({"enum": []}, None, False),
                  ({"enum": [True, 1, 1.0]}, 1, True),
-                 # Older jsonschema (4.19) wrongly accepts this nested True.
+                 # jsonschema before 4.21 wrongly accepts this nested True.
                  ({"enum": [{"n": [1, None]}]}, {"n": [True, None]}, False),
                  ({"uniqueItems": False}, [1, 1], True),
                  ({"type": ["null", "number"]}, False, False),

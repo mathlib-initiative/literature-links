@@ -128,6 +128,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_explicit_files_support_arbitrary_suffixes_and_patterns(self):
         selected = self.write("link.data", annotation())
+        self.assertEqual(discovery.collect([selected]).files, [selected])
         result = discovery.collect([selected], include=["link.*"])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [selected])
@@ -158,7 +159,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertTrue(any(p.code == "SHARD_SHAPE" and "line 4" in p.path for p in result.problems))
 
     def test_jsonl_crlf_and_cr_end_lines(self):
-        path = self.root / "links.jsonl"
+        path = self.root / "links.JSONL"
         path.write_bytes(b"\r\n".join(json.dumps(annotation(page)).encode() for page in (1, 2)) + b"\r"
                          + json.dumps(annotation(3)).encode())
         result = discovery.collect([path])

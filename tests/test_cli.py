@@ -237,6 +237,15 @@ class TestJsonStdout(CommandCase):
         self.assertIn(b"annotation-\\u03b1.json: ok", result.stdout)
         self.assertIn(b"later.json: ok", result.stdout)
 
+    def test_text_output_keeps_a_surrogateescape_stdout(self):
+        # UTF-8 mode and LC_ALL=C print a non-UTF-8 file name as its own bytes.
+        buffer = io.BytesIO()
+        stdout = io.TextIOWrapper(buffer, encoding="utf-8", errors="surrogateescape")
+        with redirect_stdout(stdout), redirect_stderr(io.StringIO()):
+            cli.main(["scan", str(self.directory / "caf\udce9.json")])
+        stdout.flush()
+        self.assertIn(b"caf\xe9.json: ", buffer.getvalue())
+
     def test_scan_machine_error_is_utf8_with_an_ansi_stdout(self):
         path = self.write("annotation.json", current_annotation())
         script = """from pathlib import Path
