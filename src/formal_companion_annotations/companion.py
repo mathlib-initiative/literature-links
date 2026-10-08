@@ -1,9 +1,4 @@
-"""Small, offline validator and JSON codec for one unversioned companion annotation.
-
-Validation checks the document's shape and local invariants. It does not fetch
-resources, resolve anchors, execute selectors, or verify a mathematical claim.
-Generic locations and extension values are opaque JSON and retain their order.
-"""
+"""Validate one annotation, and read and write strict JSON."""
 from __future__ import annotations
 
 import functools
@@ -43,7 +38,7 @@ class Problem:
 
 @dataclass
 class Report:
-    """Validation findings; any problem makes the companion invalid."""
+    """Validation result. Any problem makes the annotation invalid. ``warnings`` is always empty."""
 
     problems: list[Problem] = field(default_factory=list)
     warnings: list[Problem] = field(default_factory=list)
@@ -113,21 +108,18 @@ def _constant(name: str) -> Any:
 
 def _float(text: str) -> float:
     value = float(text)
-    # Ordinary fractional rounding is part of this codec's float precision, but
-    # losing every nonzero digit is an implementation range failure. Inspect the
-    # mantissa directly so even extreme exponents need no bounded integer parse.
+    # float() turns a tiny nonzero number such as 1e-400 into 0.0. Reject it.
+    # Check only the digits before the exponent, so a huge exponent is never parsed.
     if value == 0.0 and any(char in "123456789" for char in text.lower().partition("e")[0]):
         raise LoadError("nonzero JSON number is below this implementation's floating-point range")
     return value
 
 
 def loads(text: str) -> Any:
-    """Read JSON with duplicate-key, Unicode, and numeric-range checks.
+    """Parse JSON. Reject duplicate keys, unpaired surrogates, overflow and nonzero underflow.
 
-    This is a JSON codec, not schema validation; call :func:`check` or
-    :func:`validate` on the returned value to validate a companion document.
-    Integers remain integers; fractional/exponent forms use Python float
-    precision. Overflow and nonzero numbers that underflow to zero are errors.
+    Integers stay exact and other numbers become floats. This does not validate;
+    use :func:`check`.
     """
     try:
         value = json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant, parse_float=_float)
@@ -142,11 +134,9 @@ def loads(text: str) -> Any:
 
 
 def dumps(value: Any) -> str:
-    """Write readable JSON, preserving values and all object/array ordering.
+    """Write JSON, keeping key order, with two-space indentation and a final newline.
 
-    No key sorting, identifier rewriting, or float conversion of
-    integers is performed. Invalid JSON values raise :class:`LoadError`.
-    The result uses two-space indentation and ends with a newline.
+    Raise :class:`LoadError` for values JSON cannot hold.
     """
     problems = _json_problems(value)
     if problems:
@@ -158,7 +148,7 @@ def dumps(value: Any) -> str:
 
 
 def load_schema() -> dict[str, Any]:
-    """Read the bundled schema, without accessing any network resource."""
+    """Read the bundled schema."""
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
@@ -169,12 +159,10 @@ def _validator(path: Path) -> Validator:
 
 
 def check(document: Any) -> Report:
-    """Check one annotation's structure and local invariants without mutation.
+    """Check one annotation without changing it.
 
-    Diagnostic codes are ``JSON`` for values outside the JSON data model,
-    ``SCHEMA`` for structural failures, ``PDF_RECT`` for rectangle semantics,
-    and ``LATEX_LINES`` for reversed inclusive line ranges. Warnings are
-    currently empty. No collection-wide identity or resource checks occur.
+    Problem codes are ``JSON`` (not a JSON value), ``SCHEMA``, ``PDF_RECT`` and
+    ``LATEX_LINES``.
     """
     report = Report(problems=_json_problems(document))
     if report.problems:
@@ -213,5 +201,5 @@ def check(document: Any) -> Report:
 
 
 def validate(document: Any) -> list[str]:
-    """Return readable validation problems, or an empty list for one valid link."""
+    """Return each problem as a ``path: message`` string. An empty list means valid."""
     return [str(problem) for problem in check(document).problems]

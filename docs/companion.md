@@ -1,9 +1,9 @@
 # Annotation reference
 
 An annotation links one informal source, or a location in it, to one formal
-destination. Only `source` and `target` are required. The format is an
-unversioned working draft. The [JSON Schema](../schema/companion.schema.json)
-gives its structure, and [validation](#validation) adds two checks.
+destination. The format is an unversioned working draft. The
+[JSON Schema](../schema/companion.schema.json) gives its structure, and
+[validation](#validation) adds two checks.
 
 ```json
 {
@@ -14,9 +14,6 @@ gives its structure, and [validation](#validation) adds two checks.
 ```
 
 A link does not claim equivalence, proof or review, or that the target exists.
-The format is inspired by the
-[W3C Web Annotation Data Model](https://www.w3.org/TR/annotation-model/) but is
-not a serialization of it.
 
 ## Fields
 
@@ -88,9 +85,8 @@ conventions belong in `generic` mode.
 ### Generic
 
 A generic location is any JSON object, such as `{ "table": "results", "row": "42" }`.
-Its producer and consumer define it. A `profile` field is only a convention. A
-consumer keeps unknown locations and reports them as unsupported. Text offsets
-need a unit defined by the application.
+Its producer and consumer define it. A `profile` key has no defined meaning.
+Text offsets need a unit defined by the application.
 
 ## Extensions
 
@@ -103,7 +99,7 @@ never fetch or run them. An extension is not a trusted claim.
 
 `source.uri`, `target` and `$schema` are nonempty URI or IRI references without
 `White_Space` or C0/C1 controls (U+0000–001F, U+007F–009F). Relative, absolute
-and opaque references are allowed. The check is lexical, and nothing is fetched.
+and opaque references are allowed. The check is lexical.
 
 A relative reference resolves against the URI of the file that holds the
 annotation, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
@@ -156,11 +152,12 @@ from local files. This is a reader convention, not part of the schema.
   ignoring case. A file named explicitly may have any suffix.
 - `.jsonl` and `.ndjson` files are read by line. Other files are one JSON value.
 - `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
-  are case-sensitive shell wildcards on the path relative to the root. `*` also
-  matches `/`, and a leading `**/` also matches files in the root.
+  are case-sensitive shell wildcards on the path relative to the root, or on
+  the file name for a file named explicitly. `*` also matches `/`, and a
+  leading `**/` also matches files in the root.
 - Hidden directories are read. Symlinks are skipped while walking and are an
   error when named explicitly.
-- Files are read in sorted path order, each file once.
+- Files are read in sorted path order, each resolved path once.
 - Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
   annotations from other files are still returned.
 - Repeated `id` values and identical annotations are kept.

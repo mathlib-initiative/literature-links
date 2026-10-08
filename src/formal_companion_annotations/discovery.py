@@ -1,10 +1,4 @@
-"""Read independent annotations from local shards without imposing a layout.
-
-Discovery is a transport utility, not a collection schema. It accepts JSON
-objects, JSON arrays, and JSONL/NDJSON files, retaining the containing file as
-the base of each annotation's relative references. Nothing is fetched, merged,
-deduplicated by content, or inferred from a repository's layout.
-"""
+"""Read annotations from local JSON and JSONL files (docs/companion.md, "Discovery")."""
 from __future__ import annotations
 
 import fnmatch
@@ -35,19 +29,16 @@ class Record:
 
     @property
     def base_uri(self) -> str:
-        """The carrier URI against which relative resource references resolve."""
-        # collect() already captured a resolved absolute path. Resolving it
-        # again could follow a new symlink and change retained URI semantics.
+        """The file URI that relative references resolve against."""
+        # ``path`` is already resolved. Resolving again could follow a newer symlink.
         return self.path.absolute().as_uri()
 
 
 @dataclass
 class Collection:
-    """Discovered records, all findings, and selected files in traversal order.
+    """Records and files in sorted path order, plus all problems.
 
-    Valid records are retained even when other inputs fail. Consumers must
-    inspect ``problems`` before treating a collection as successfully loaded.
-    Repeated annotation IDs and equal records remain unchanged.
+    Valid records are kept when other files fail, so check ``problems`` first.
     """
 
     records: list[Record] = field(default_factory=list)
@@ -120,22 +111,15 @@ def _read(path: Path, result: Collection) -> None:
 
 def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None,
             exclude: Iterable[str] = ()) -> Collection:
-    """Recursively collect local annotation shards, retaining every origin.
+    """Read annotations from files and directories.
 
-    Directory inputs select ``.json``, ``.jsonl`` and ``.ndjson`` files by
-    default (case-insensitively). Explicit files may have any suffix and are
-    interpreted as ordinary JSON unless their suffix selects JSONL. ``include``
-    replaces the directory suffix filter; ``exclude`` always wins. Patterns
-    are case-sensitive shell wildcards against root-relative POSIX paths;
-    for explicit files the relative path is the filename. ``*`` can match
-    slashes, and a leading ``**/`` also matches files directly in the root.
-
-    Files are read in sorted absolute-path order, preserving carrier order.
-    Overlapping selections of the same resolved file are read once. Directory
-    symlinks and file symlinks are skipped; explicitly selected symlinks,
-    missing paths, unreadable paths and nonregular inputs are reported.
-    There are no hidden-directory exclusions, required manifests, identifier
-    uniqueness rules, or automatic searches inside arbitrary JSON objects.
+    Directories are walked for ``.json``, ``.jsonl`` and ``.ndjson`` files, in
+    any case. A file named explicitly may have any suffix. ``include`` replaces
+    the suffix filter and ``exclude`` always wins. Patterns are case-sensitive
+    shell wildcards on the root-relative path, or on the file name for a file
+    named explicitly. ``*`` also matches ``/``, and a leading ``**/`` also
+    matches root files. Symlinks are skipped while walking and reported when
+    named explicitly. Each resolved path is read once, in sorted path order.
     """
     if any(isinstance(value, str) for value in (paths, include, exclude)):
         raise TypeError("paths, include and exclude take lists, not one string")

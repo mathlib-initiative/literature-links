@@ -11,7 +11,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-authors = [{ name = "Formal Companion Annotations contributors" }]
+authors = [{ name = "the formal-companion contributors" }]
 keywords = ["lean4", "mathlib", "formalization", "annotation", "json-schema"]
 classifiers = [
   "Development Status :: 3 - Alpha",
