@@ -9,6 +9,8 @@
 - Remove v1: its `ids`, `validate` and `vocab` modules and the
   `formal-companion-annotations-validate` command. v1 remains available at tag
   `v1.0.0`.
+- The schema's `$id` is the raw URL of `schema/companion.schema.json` on `main`.
+  It is a name; nothing fetches it.
 
 ## 1.0.0 (2026-09-28)
 
