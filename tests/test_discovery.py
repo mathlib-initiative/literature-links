@@ -1,4 +1,4 @@
-"""Independent annotation shards retain their origins and failure evidence."""
+"""Reading annotations from files and directories, with their origins and problems."""
 from __future__ import annotations
 
 import copy
@@ -128,6 +128,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_explicit_files_support_arbitrary_suffixes_and_patterns(self):
         selected = self.write("link.data", annotation())
+        self.assertEqual(discovery.collect([selected]).files, [selected])
         result = discovery.collect([selected], include=["link.*"])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [selected])
@@ -156,6 +157,14 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual([r.line for r in result.records], [2, 5])
         self.assertTrue(any(p.code == "JSON" and "line 3" in p.path for p in result.problems))
         self.assertTrue(any(p.code == "SHARD_SHAPE" and "line 4" in p.path for p in result.problems))
+
+    def test_jsonl_crlf_and_cr_end_lines(self):
+        path = self.root / "links.JSONL"
+        path.write_bytes(b"\r\n".join(json.dumps(annotation(page)).encode() for page in (1, 2)) + b"\r"
+                         + json.dumps(annotation(3)).encode())
+        result = discovery.collect([path])
+        self.assertEqual(result.problems, [])
+        self.assertEqual([r.line for r in result.records], [1, 2, 3])
 
     def test_jsonl_unicode_line_separator_is_not_a_carrier_delimiter(self):
         value = annotation()
@@ -211,6 +220,12 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(len(result.records), 1)
         self.assertEqual([problem.code for problem in result.problems], ["PATH"])
 
+    def test_a_bare_string_is_refused(self):
+        for arguments in ({"paths": "links"}, {"paths": [self.root], "include": "*.json"},
+                          {"paths": [self.root], "exclude": "*.json"}):
+            with self.subTest(arguments=arguments), self.assertRaises(TypeError):
+                discovery.collect(**arguments)
+
     def test_unreadable_directory_is_not_silently_empty(self):
         with patch.object(Path, "iterdir", side_effect=PermissionError("test access denied")):
             result = discovery.collect([self.root])
@@ -247,6 +262,7 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual([p.code for p in result.problems], ["PATH"])
         self.assertEqual(result.files, [])
+        self.assertEqual([p.code for p in discovery.collect([fifo]).problems], ["PATH"])
 
     def test_discovery_performs_no_network_access(self):
         value = annotation()

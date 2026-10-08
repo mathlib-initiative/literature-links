@@ -36,9 +36,9 @@ def _validate(args: argparse.Namespace) -> int:
             problems = [asdict(problem) for problem in report.problems]
             warnings = [asdict(warning) for warning in report.warnings]
             item_status = 1 if problems else 0
-        except (OSError, UnicodeError, ValueError, RecursionError) as exc:
+        except (OSError, ValueError, RecursionError) as exc:
             item_status = 2
-            code = "IO" if isinstance(exc, OSError) else "JSON"
+            code = "IO" if isinstance(exc, (OSError, UnicodeError)) else "JSON"
             problems = [{"code": code, "path": "$", "message": str(exc)}]
         status = max(status, item_status)
         if args.format == "json":
@@ -55,8 +55,6 @@ def _validate(args: argparse.Namespace) -> int:
 
 def _scan(args: argparse.Namespace) -> int:
     collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude)
-    # File, parsing, and selection failures are operational errors. An annotation
-    # with the wrong schema is invalid data, even when found inside a shard.
     operational = {"IO", "JSON", "NO_ANNOTATIONS", "SYMLINK", "PATH"}
     status = (2 if any(problem.code in operational for problem in collection.problems)
               else 1 if collection.problems else 0)
@@ -72,7 +70,7 @@ def _scan(args: argparse.Namespace) -> int:
     else:
         for problem in collection.problems:
             print(f"{problem.path}: {problem.message} [{problem.code}]")
-        print(f"{len(collection.records)} annotations from {len(collection.files)} shards; "
+        print(f"{len(collection.records)} annotations from {len(collection.files)} files; "
               f"{len(collection.problems)} problems")
     return status
 
@@ -80,23 +78,25 @@ def _scan(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     parser = argparse.ArgumentParser(prog="formal-companion-annotations",
-                                     description="Single formal/informal annotations and companion discovery (unversioned draft).")
+                                     description="Validate and scan formal companion annotations.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     validation = subparsers.add_parser("validate", help="validate single annotations")
     validation.add_argument("documents", nargs="+", type=Path)
     validation.add_argument("--format", choices=("text", "json"), default="text", help="JSON emits one report per input")
-    scanning = subparsers.add_parser("scan", help="recursively discover annotations in JSON/JSONL shards")
+    scanning = subparsers.add_parser("scan", help="read annotations from JSON and JSONL files")
     scanning.add_argument("paths", nargs="+", type=Path)
     scanning.add_argument("--include", action="append", help="select root-relative file patterns (repeatable)")
     scanning.add_argument("--exclude", action="append", default=[], help="exclude root-relative file patterns (repeatable)")
     scanning.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
+    if args.format == "text" and getattr(sys.stdout, "errors", None) == "strict" and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
     try:
         if args.command == "validate":
             return _validate(args)
         return _scan(args)
-    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:
         if args.command == "scan" and args.format == "json":
             _write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
                                         "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}))
