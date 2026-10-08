@@ -390,7 +390,7 @@
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
-      "description": "SHA-256 of the bytes that uri points at, as 64 lowercase hex digits."
+      "description": "SHA-256 as 64 lowercase hex digits: of the bytes that the uri next to the pin points at, or, in a status pin, of the file the pin names."
     },
     "identifiers": {
       "type": "object",
