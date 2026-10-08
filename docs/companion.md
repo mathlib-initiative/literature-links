@@ -236,7 +236,7 @@ two-space indentation and a final newline.
 
 ## Discovery
 
-`formal-companion-annotations scan` and `discovery.collect` read annotations
+`literature-links scan` and `discovery.collect` read annotations
 from local files. This is a reader convention, not part of the schema.
 
 | File | Annotations | Origin |

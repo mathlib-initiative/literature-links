@@ -12,10 +12,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
-if importlib.util.find_spec("formal_companion_annotations") is None:
+if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
-from formal_companion_annotations import companion, discovery
+from literature_links import companion, discovery
 
 
 def annotation(page: int = 1) -> dict:

@@ -1,4 +1,4 @@
-# Formal Companion Annotations
+# Literature Links
 
 A small JSON format that links informal mathematics to formal mathematics. One
 annotation is one link. A set of annotations makes a companion to a book,
@@ -41,8 +41,8 @@ The tools need Python 3.11 or newer and nothing else.
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install .
-formal-companion-annotations validate examples/companion/latex.json
-formal-companion-annotations scan examples/companion
+literature-links validate examples/companion/latex.json
+literature-links scan examples/companion
 ```
 
 `validate` checks files that each hold one annotation. `scan` walks directories
@@ -51,7 +51,7 @@ machine-readable output. Both exit 0 when everything is valid, 1 for invalid
 annotations and 2 for errors such as unreadable files.
 
 ```python
-from formal_companion_annotations import companion, discovery
+from literature_links import companion, discovery
 problems = companion.validate({"source": {"type": "generic", "uri": "a"}, "target": "b"})
 collection = discovery.collect(["examples/companion"])  # check .problems before .records
 ```

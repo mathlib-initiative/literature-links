@@ -12,11 +12,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
-if importlib.util.find_spec("formal_companion_annotations") is None:
+if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
-from formal_companion_annotations import companion as C
-from formal_companion_annotations.schemacheck import SchemaError, Validator
+from literature_links import companion as C
+from literature_links.schemacheck import SchemaError, Validator
 
 
 def document(mode: str = "latex", location: dict | None = None) -> dict:
@@ -557,7 +557,7 @@ class TestStrictJson(unittest.TestCase):
 class TestSchema(unittest.TestCase):
     def test_schema_has_one_source_and_matches_installed_bytes(self):
         repo = ROOT / "schema" / "companion.schema.json"
-        source = ROOT / "src" / "formal_companion_annotations" / "schema" / "companion.schema.json"
+        source = ROOT / "src" / "literature_links" / "schema" / "companion.schema.json"
         self.assertFalse(source.exists())
         self.assertEqual(repo.read_bytes(), C.SCHEMA_PATH.read_bytes())
         self.assertEqual(C.load_schema()["$schema"], "https://json-schema.org/draft/2020-12/schema")
