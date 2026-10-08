@@ -15,8 +15,11 @@ overlays and the companions built from annotations live in their own repositorie
 }
 ```
 
-Only `source` and `target` are required. Without `location`, the annotation
-links the whole source. Optional `id` and `extensions` hold application data.
+Only `source` is required. Without `location`, the annotation links the whole
+source; without `target`, it records a passage with no formal counterpart. A
+typed `pin` on either end cites the resource outside the companion, like a
+bibliography entry. Optional `status`, `kind`, `label` and `note` describe the
+link, and `id` and `extensions` hold application data.
 The format is an unreleased draft with no version field.
 
 | `source.type` | `location` selects |
