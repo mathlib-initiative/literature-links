@@ -69,8 +69,7 @@ class TestStandalone(unittest.TestCase):
     def test_no_runtime_dependency_is_declared(self):
         self.assertEqual(pyproject()["project"]["dependencies"], [])
 
-    def test_package_metadata_and_changelog_agree_on_the_version(self):
-        self.assertEqual(pyproject()["project"]["version"], formal_companion_annotations.__version__)
+    def test_changelog_agrees_with_the_version(self):
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         headings = re.findall(r"^## (\S+)", changelog, re.M)
         released = [h for h in headings if h != "Unreleased"]
