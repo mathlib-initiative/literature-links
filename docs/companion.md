@@ -24,16 +24,17 @@ A link does not claim equivalence, proof or review, or that the target exists.
 | `source.pin` | No | A [pin](#pins) citing the informal resource outside the companion |
 | `target` | No | A reference to the formal destination, or an object with `uri`, `pin` and `extensions` |
 | `location` | No | An object selecting part of the source |
-| `status`, `kind`, `label`, `note` | No | Nonempty strings: [facts](#facts) about the link |
+| `status` | No | A [fact](#facts): a nonempty string, or an object with `value`, `pin` and `extensions` |
+| `kind`, `label`, `note` | No | Nonempty strings: [facts](#facts) about the link |
 | `id` | No | A nonempty string label, not necessarily unique |
-| `extensions`, `source.extensions`, `target.extensions` | No | Objects of [application data](#extensions) |
+| `extensions`, `source.extensions`, `target.extensions`, `status.extensions` | No | Objects of [application data](#extensions) |
 | `$schema` | No | A reference used as a tooling hint |
 
 Only `source` is required. Without `target`, the annotation records an informal
 passage with no formal counterpart. Other fields are invalid at the top level,
-in `source`, in a `target` object, in built-in pins and in built-in locations.
-Two targets or two passages need two annotations, and annotations share
-nothing. An array is not an annotation.
+in `source`, in `target` and `status` objects, in built-in pins and in built-in
+locations. Two targets or two passages need two annotations, and annotations
+share nothing. An array is not an annotation.
 
 ## Location
 
@@ -134,21 +135,34 @@ bytes, and whether the pinned revision still exists, is for tools to check.
 
 ## Facts
 
-`status`, `kind`, `label` and `note` are optional nonempty strings about the
-link. `status` says how far the informal item is formalised; `formalized`,
-`partial` and `not_formalized` are the recommended values. `kind` names the
-informal item; `definition`, `theorem`, `lemma`, `proposition`, `example`,
-`remark` and `exercise` are recommended. `label` is a short title and `note` is
-free text. Any nonempty string is valid, and applications agree on values among
-themselves. A record with no `target` and `status: not_formalized` records a
-checked absence; one with neither is merely unlinked. The format verifies none
-of these claims.
+`status`, `kind`, `label` and `note` are optional facts about the link, given as
+nonempty strings. `status` says how far the informal item is formalised;
+`formalized`, `partial` and `not_formalized` are the recommended values. `kind`
+names the informal item; `definition`, `theorem`, `lemma`, `proposition`,
+`example`, `remark` and `exercise` are recommended. `label` is a short title and
+`note` is free text. Any nonempty string is valid, and applications agree on
+values among themselves.
+
+`status` may also be an object with `value`, `pin` and `extensions`. `value` is
+the string above, so `"partial"` and `{ "value": "partial" }` say the same thing.
+`pin` cites what the status was judged against, such as the formal library at a
+commit. Every key is optional, so `{}` is valid and says nothing.
+
+```json
+"status": { "value": "not_formalized",
+            "pin": { "type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
+                     "commit": "<40 hex digits>" } }
+```
+
+A record with no `target` and a `not_formalized` status records a checked
+absence, and the status `pin` says where it was checked. A record with neither
+is merely unlinked. The format verifies none of these claims.
 
 ## Extensions
 
 `extensions` maps nonempty keys without whitespace or controls to any JSON
 values. Namespaced keys such as `org.example.tool` are recommended. Annotation,
-source and target extensions never merge. Consumers keep unknown values
+source, target and status extensions never merge. Consumers keep unknown values
 unchanged and never fetch or run them. An extension is not a trusted claim.
 
 ## References

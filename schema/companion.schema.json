@@ -47,8 +47,29 @@
       "description": "Part of the source. Its form depends on source.type. Absent means the whole source."
     },
     "status": {
-      "$ref": "#/$defs/text",
-      "description": "How far the informal item is formalised. formalized, partial and not_formalized are recommended values."
+      "type": [
+        "string",
+        "object"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "type": "string"
+          },
+          "then": {
+            "$ref": "#/$defs/text"
+          }
+        },
+        {
+          "if": {
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/status"
+          }
+        }
+      ],
+      "description": "How far the informal item is formalised: a value, or an object with value, pin and extensions. formalized, partial and not_formalized are recommended values."
     },
     "kind": {
       "$ref": "#/$defs/text",
@@ -335,6 +356,25 @@
         "uri"
       ],
       "description": "The formal destination with a pin or extensions."
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/text",
+          "description": "The status, as in the string form."
+        },
+        "pin": {
+          "$ref": "#/$defs/pin",
+          "description": "What the status was judged against, such as a formal library at a commit."
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions",
+          "description": "Application data for the status."
+        }
+      },
+      "additionalProperties": false,
+      "description": "A status with details. Every key is optional."
     },
     "authors": {
       "type": [
