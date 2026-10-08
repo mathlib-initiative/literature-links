@@ -2,11 +2,17 @@
   "source": {
     "type": "pdf",
     "uri": "https://example.org/finite-groups.pdf",
-    "extensions": {
-      "org.example.catalog": {
-        "title": "Finite groups: synthetic notes",
-        "edition": "example-only"
-      }
+    "pin": {
+      "type": "book",
+      "title": "Finite groups: synthetic notes",
+      "author": [
+        "A. Author",
+        "B. Coauthor"
+      ],
+      "publisher": "Example Press",
+      "edition": "example-only",
+      "date": "2026",
+      "sha256": "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f"
     }
   },
   "id": "lagrange-theorem",

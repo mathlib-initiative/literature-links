@@ -18,23 +18,59 @@
       "description": "A label. It need not be unique."
     },
     "target": {
-      "$ref": "#/$defs/reference",
-      "description": "A reference to the formal destination. This name does not mean the W3C annotation target."
+      "type": [
+        "string",
+        "object"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "type": "string"
+          },
+          "then": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        {
+          "if": {
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/endpoint"
+          }
+        }
+      ],
+      "description": "The formal destination: a reference, or an object with uri, pin and extensions. Absent means no formal counterpart. This name does not mean the W3C annotation target."
     },
     "location": {
       "type": "object",
       "description": "Part of the source. Its form depends on source.type. Absent means the whole source."
+    },
+    "status": {
+      "$ref": "#/$defs/text",
+      "description": "How far the informal item is formalised. formalized, partial and not_formalized are recommended values."
+    },
+    "kind": {
+      "$ref": "#/$defs/text",
+      "description": "What the informal item is, such as definition or theorem."
+    },
+    "label": {
+      "$ref": "#/$defs/text",
+      "description": "A short title for the link."
+    },
+    "note": {
+      "$ref": "#/$defs/text",
+      "description": "Free text about the link."
     }
   },
   "additionalProperties": false,
   "required": [
-    "source",
-    "target"
+    "source"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/companion.schema.json",
   "title": "Formal companion annotation",
-  "description": "One link from an informal source, or a location in it, to a formal target. Validation also checks that a PDF rect has positive size and fits its page, and that LaTeX lines are in order.",
+  "description": "One link from an informal source, or a location in it, to a formal target, or an informal source alone. Validation also checks that a PDF rect has positive size and fits its page, and that LaTeX lines are in order.",
   "allOf": [
     {
       "if": {
@@ -127,6 +163,10 @@
         "uri": {
           "$ref": "#/$defs/reference",
           "description": "A reference to the informal resource."
+        },
+        "pin": {
+          "$ref": "#/$defs/pin",
+          "description": "A citation of the informal resource outside the companion."
         },
         "extensions": {
           "$ref": "#/$defs/extensions",
@@ -268,6 +308,311 @@
         "exact"
       ],
       "description": "A text selection with optional context."
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A nonempty string."
+    },
+    "endpoint": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "$ref": "#/$defs/reference",
+          "description": "A reference to the formal destination."
+        },
+        "pin": {
+          "$ref": "#/$defs/pin",
+          "description": "A citation of the formal resource outside the companion."
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions",
+          "description": "Application data for the target."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "uri"
+      ],
+      "description": "The formal destination with a pin or extensions."
+    },
+    "authors": {
+      "type": [
+        "string",
+        "array"
+      ],
+      "minLength": 1,
+      "items": {
+        "$ref": "#/$defs/text"
+      },
+      "description": "One author, or an array of authors."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}(?![\\s\\S])",
+      "description": "SHA-256 of the bytes that uri points at, as 64 lowercase hex digits."
+    },
+    "identifiers": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/text"
+      },
+      "description": "Other identifiers by name, such as wikidata, zbl or oldid."
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "A line number from 1."
+    },
+    "website_pin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "website"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "owner": {
+          "$ref": "#/$defs/text"
+        },
+        "url": {
+          "$ref": "#/$defs/reference"
+        },
+        "revision": {
+          "$ref": "#/$defs/text"
+        },
+        "date": {
+          "$ref": "#/$defs/text"
+        },
+        "retrieved": {
+          "$ref": "#/$defs/text"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "identifiers": {
+          "$ref": "#/$defs/identifiers"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "description": "A page or site. revision is the site's own revision identifier."
+    },
+    "book_pin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "book"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "author": {
+          "$ref": "#/$defs/authors"
+        },
+        "publisher": {
+          "$ref": "#/$defs/text"
+        },
+        "edition": {
+          "$ref": "#/$defs/text"
+        },
+        "date": {
+          "$ref": "#/$defs/text"
+        },
+        "isbn": {
+          "$ref": "#/$defs/text"
+        },
+        "url": {
+          "$ref": "#/$defs/reference"
+        },
+        "retrieved": {
+          "$ref": "#/$defs/text"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "identifiers": {
+          "$ref": "#/$defs/identifiers"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "description": "A book or an edition of one."
+    },
+    "paper_pin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "paper"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "author": {
+          "$ref": "#/$defs/authors"
+        },
+        "venue": {
+          "$ref": "#/$defs/text"
+        },
+        "volume": {
+          "$ref": "#/$defs/text"
+        },
+        "number": {
+          "$ref": "#/$defs/text"
+        },
+        "pages": {
+          "$ref": "#/$defs/text"
+        },
+        "date": {
+          "$ref": "#/$defs/text"
+        },
+        "doi": {
+          "$ref": "#/$defs/text"
+        },
+        "arxiv": {
+          "$ref": "#/$defs/text"
+        },
+        "url": {
+          "$ref": "#/$defs/reference"
+        },
+        "retrieved": {
+          "$ref": "#/$defs/text"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "identifiers": {
+          "$ref": "#/$defs/identifiers"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "description": "An article or preprint."
+    },
+    "repository_pin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "repository"
+        },
+        "url": {
+          "$ref": "#/$defs/reference"
+        },
+        "commit": {
+          "$ref": "#/$defs/text"
+        },
+        "path": {
+          "$ref": "#/$defs/text"
+        },
+        "line": {
+          "$ref": "#/$defs/line"
+        },
+        "module": {
+          "$ref": "#/$defs/text"
+        },
+        "declaration": {
+          "$ref": "#/$defs/text"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "identifiers": {
+          "$ref": "#/$defs/identifiers"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "description": "A file or declaration in a version-controlled repository at one commit."
+    },
+    "pin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "website",
+            "book",
+            "paper",
+            "repository",
+            "generic"
+          ],
+          "description": "The kind of pin. It decides which other keys are valid; generic allows any."
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "website"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/website_pin"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "book"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/book_pin"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "paper"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/paper_pin"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "repository"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "$ref": "#/$defs/repository_pin"
+          }
+        }
+      ],
+      "description": "A citation that identifies a resource outside the companion. Only type is required."
     }
   }
 }
