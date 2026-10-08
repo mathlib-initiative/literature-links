@@ -78,7 +78,7 @@ def _scan(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     parser = argparse.ArgumentParser(prog="formal-companion-annotations",
-                                     description="Single formal/informal annotations and companion discovery (unversioned draft).")
+                                     description="Validate and scan formal companion annotations.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     validation = subparsers.add_parser("validate", help="validate single annotations")
