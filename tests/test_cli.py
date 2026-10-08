@@ -14,11 +14,11 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
-if importlib.util.find_spec("formal_companion_annotations") is None:
+if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
-import formal_companion_annotations
-from formal_companion_annotations import cli, companion
+import literature_links
+from literature_links import cli, companion
 
 
 def current_annotation() -> dict:
@@ -49,7 +49,7 @@ class CommandCase(unittest.TestCase):
         return status, stdout.getvalue(), stderr.getvalue()
 
     def run_module(self, module: str, *arguments: str, parser_failure: bool = False) -> subprocess.CompletedProcess:
-        package_root = str(Path(formal_companion_annotations.__file__).resolve().parent.parent)
+        package_root = str(Path(literature_links.__file__).resolve().parent.parent)
         environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1")
         if parser_failure:
             script = """import json, runpy, sys
@@ -91,7 +91,7 @@ class TestValidationCommands(CommandCase):
         # Parser nesting limits vary between Python releases. A parser may
         # reject this input, or accept it and let validation reject its shape.
         path.write_text("[" * 100_000 + "0" + "]" * 100_000, encoding="utf-8")
-        for module in ("formal_companion_annotations.cli", "formal_companion_annotations"):
+        for module in ("literature_links.cli", "literature_links"):
             result = self.run_module(module, "validate", str(path))
             with self.subTest(module=module):
                 self.assertIn(result.returncode, (1, 2), result.stdout + result.stderr)
@@ -100,7 +100,7 @@ class TestValidationCommands(CommandCase):
 
     def test_parser_failures_exit_two_in_supported_module_entry_points(self):
         path = self.write("annotation.json", current_annotation())
-        for module in ("formal_companion_annotations.cli", "formal_companion_annotations"):
+        for module in ("literature_links.cli", "literature_links"):
             result = self.run_module(module, "validate", str(path), parser_failure=True)
             with self.subTest(module=module):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
@@ -192,13 +192,13 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertFalse(json.loads(out)["valid"])
         self.assertEqual((text_status, text_out), (2, ""))
-        self.assertTrue(text_err.startswith("formal-companion-annotations: "), text_err)
+        self.assertTrue(text_err.startswith("literature-links: "), text_err)
         self.assertIn("missing-schema.json", text_err)
 
 
 class TestJsonStdout(CommandCase):
     def run_ansi(self, *arguments: str) -> subprocess.CompletedProcess:
-        package_root = str(Path(formal_companion_annotations.__file__).resolve().parent.parent)
+        package_root = str(Path(literature_links.__file__).resolve().parent.parent)
         environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1",
                            PYTHONIOENCODING="cp1252")
         return subprocess.run([sys.executable, *arguments], cwd=self.directory,
@@ -221,7 +221,7 @@ class TestJsonStdout(CommandCase):
             for command in (("scan", str(path), "--format", "json"),
                             ("validate", str(path), "--format", "json")):
                 with self.subTest(text=text, command=command[0]):
-                    result = self.run_ansi("-m", "formal_companion_annotations.cli", *command)
+                    result = self.run_ansi("-m", "literature_links.cli", *command)
                     output = self.decode_output(result)
                     if command[0] == "scan":
                         self.assertEqual(output["records"][0]["annotation"], doc)
@@ -232,7 +232,7 @@ class TestJsonStdout(CommandCase):
     def test_text_output_escapes_what_an_ansi_stdout_cannot_encode(self):
         path = self.write("annotation-α.json", current_annotation())
         later = self.write("later.json", current_annotation())
-        result = self.run_ansi("-m", "formal_companion_annotations.cli", "validate", str(path), str(later))
+        result = self.run_ansi("-m", "literature_links.cli", "validate", str(path), str(later))
         self.assertEqual((result.returncode, result.stderr), (0, b""))
         self.assertIn(b"annotation-\\u03b1.json: ok", result.stdout)
         self.assertIn(b"later.json: ok", result.stdout)
@@ -250,7 +250,7 @@ class TestJsonStdout(CommandCase):
         path = self.write("annotation.json", current_annotation())
         script = """from pathlib import Path
 import sys
-from formal_companion_annotations import cli, companion
+from literature_links import cli, companion
 companion.SCHEMA_PATH = Path(sys.argv[1])
 raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
 """

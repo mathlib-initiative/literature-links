@@ -1,0 +1,15 @@
+{
+  "source": {
+    "type": "html",
+    "uri": "notes/groups.html"
+  },
+  "location": {
+    "quote": {
+      "exact": "the order of a subgroup divides the order of the group",
+      "prefix": "Lagrange's theorem says that ",
+      "suffix": "."
+    }
+  },
+  "target": "https://example.org/formal/Groups.html#lagrange",
+  "kind": "theorem"
+}
