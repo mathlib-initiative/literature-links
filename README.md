@@ -4,6 +4,9 @@ A small JSON format that links informal mathematics to formal mathematics. One
 annotation is one link. A set of annotations makes a companion to a book,
 article, wiki or other source.
 
+This repository holds the format and its offline checker, nothing else. Viewers,
+overlays and the companions built from annotations live in their own repositories.
+
 ```json
 {
   "source": { "type": "latex", "uri": "chapters/groups.tex" },
