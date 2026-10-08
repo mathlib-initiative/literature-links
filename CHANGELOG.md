@@ -16,6 +16,8 @@
 - Add optional typed pins on `source` and `target`: `website`, `book`, `paper`,
   `repository` and `generic`. Inside a pin only `type` is required.
 - Add optional `status`, `kind`, `label` and `note`.
+- `status` may be an object with optional `value`, `pin` and `extensions`, so a
+  status can say what it was checked against.
 
 ## 1.0.0 (2026-09-28)
 
