@@ -53,10 +53,9 @@ class TestSmallContract(unittest.TestCase):
 
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
-        for field in ("source", "target"):
-            doc = document()
-            del doc[field]
-            cases.append(doc)
+        doc = document()
+        del doc["source"]
+        cases.append(doc)
         for field in ("type", "uri"):
             doc = document()
             del doc["source"][field]
@@ -311,6 +310,105 @@ class TestLocatorBounds(unittest.TestCase):
         self.assertEqual(C.loads(C.dumps(doc)), original)
 
 
+PINS = {
+    "website": {"title": "C*-algebra", "owner": "Wikipedia", "revision": "1374776629", "date": "2026-09-30",
+                "url": "https://en.wikipedia.org/w/index.php?title=C*-algebra&oldid=1374776629",
+                "retrieved": "2026-10-01", "sha256": "0" * 64, "identifiers": {"wikidata": "Q263809"}},
+    "book": {"title": "Notes", "author": ["A. Author", "B. Coauthor"], "publisher": "Example Press", "edition": "2",
+             "date": "2026", "isbn": "978-0-00-000000-0", "url": "urn:isbn:9780000000000", "retrieved": "2026-10-01",
+             "sha256": "f" * 64, "identifiers": {"zbl": "0000.00001"}},
+    "paper": {"title": "A note", "author": "A. Author", "venue": "Journal of Examples", "volume": "1", "number": "2",
+              "pages": "1-12", "date": "2026-01", "doi": "10.0000/example.0001", "arxiv": "0000.00000",
+              "url": "https://example.org/paper.pdf", "retrieved": "2026-10-01", "sha256": "a" * 64, "identifiers": {}},
+    "repository": {"url": "https://github.com/leanprover-community/mathlib4", "commit": "9e6b3aac" * 5,
+                   "path": "Mathlib/Analysis/CStarAlgebra/Classes.lean", "line": 38,
+                   "module": "Mathlib.Analysis.CStarAlgebra.Classes", "declaration": "CStarAlgebra",
+                   "sha256": "4c4df77d40d71b3b3e0058720dce489e704789582f0ebb4ce464b3d5d4cfae6b", "identifiers": {}},
+    "generic": {"catalogue": {"shelf": 3, "tags": ["x", None]}, "anything": 1},
+}
+
+
+class TestPinsAndFacts(unittest.TestCase):
+    def test_target_is_optional_and_may_be_an_object(self):
+        doc = document("html", {"fragment": "Quotients_and_approximate_identities"})
+        del doc["target"]
+        self.assertEqual(C.validate(doc), [])
+        doc["status"] = "not_formalized"
+        self.assertEqual(C.validate(doc), [])
+        for target in ({"uri": "Mathlib/Analysis/CStarAlgebra/Classes.lean#CStarAlgebra"},
+                       {"uri": "urn:lean:CStarAlgebra", "pin": {"type": "repository", **PINS["repository"]}},
+                       {"uri": "a", "extensions": {"org.example": {"line": 38}}}):
+            doc["target"] = target
+            with self.subTest(target=target):
+                self.assertEqual(C.validate(doc), [])
+        for target in (None, 1, [], ["a"], {}, {"pin": {"type": "book"}}, {"uri": ""}, {"uri": "a b"},
+                       {"uri": "a", "extra": 1}, {"uri": "a", "pin": {}}, {"uri": "a", "pin": "book"}):
+            doc["target"] = target
+            with self.subTest(target=target):
+                self.assertTrue(C.validate(doc))
+
+    def test_facts_are_optional_nonempty_strings(self):
+        doc = document()
+        for key in ("status", "kind", "label", "note"):
+            for value in ("formalized", "definition", "A label with spaces", "α", "anything applications agree on"):
+                doc[key] = value
+                self.assertEqual(C.validate(doc), [], (key, value))
+            for value in ("", None, 1, True, [], {}, ["formalized"]):
+                doc[key] = value
+                with self.subTest(key=key, value=value):
+                    self.assertTrue(C.validate(doc))
+            del doc[key]
+        self.assertEqual(C.validate(doc), [])
+
+    def test_every_pin_type_with_all_keys_and_with_type_alone(self):
+        for kind, keys in PINS.items():
+            for pin in ({"type": kind}, {"type": kind, **keys}):
+                doc = document()
+                doc["source"]["pin"] = copy.deepcopy(pin)
+                doc["target"] = {"uri": "formal.html#x", "pin": copy.deepcopy(pin)}
+                with self.subTest(kind=kind, pin=pin):
+                    self.assertEqual(C.validate(doc), [])
+
+    def test_pins_need_a_known_type_and_reject_unknown_keys_except_in_generic(self):
+        doc = document()
+        for pin in ({}, {"title": "no type"}, {"type": "web"}, {"type": None}, {"type": ""}, "book", [], None,
+                    {"type": "website", "publisher": "sites have owners"}, {"type": "book", "owner": "x"},
+                    {"type": "paper", "commit": "x"}, {"type": "repository", "author": "x"}):
+            doc["source"]["pin"] = pin
+            with self.subTest(pin=pin):
+                self.assertTrue(C.validate(doc))
+        doc["source"]["pin"] = {"type": "generic", "owner": "x", "commit": "y", "nested": {"a": [1, None]}}
+        self.assertEqual(C.validate(doc), [])
+
+    def test_pin_value_shapes(self):
+        doc = document()
+        valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]), ("book", "author", []),
+                 ("repository", "line", 1), ("repository", "line", 38.0), ("website", "sha256", "0" * 64),
+                 ("paper", "identifiers", {}), ("paper", "identifiers", {"doi": "10.0000/x", "arxiv": "0000.00000"}),
+                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629")]
+        for kind, key, value in valid:
+            doc["source"]["pin"] = {"type": kind, key: value}
+            with self.subTest(kind=kind, key=key, value=value):
+                self.assertEqual(C.validate(doc), [])
+        invalid = [("book", "author", ""), ("book", "author", ["A", ""]), ("book", "author", [1]), ("book", "author", None),
+                   ("repository", "line", 0), ("repository", "line", "38"), ("repository", "line", 1.5),
+                   ("website", "sha256", "0" * 63), ("website", "sha256", "A" * 64), ("website", "sha256", "0" * 64 + "\n"),
+                   ("paper", "identifiers", {"doi": 1}), ("paper", "identifiers", {"doi": ""}), ("paper", "identifiers", []),
+                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123)]
+        for kind, key, value in invalid:
+            doc["source"]["pin"] = {"type": kind, key: value}
+            with self.subTest(kind=kind, key=key, value=value):
+                self.assertTrue(C.validate(doc))
+
+    def test_pins_and_facts_are_not_verified(self):
+        doc = document()
+        doc["source"]["pin"] = {"type": "website", "url": "https://unreachable.invalid/", "sha256": "0" * 64}
+        doc["target"] = {"uri": "urn:nothing", "pin": {"type": "repository", "commit": "not-a-commit", "line": 99999}}
+        doc["status"] = "formalized"
+        with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
+            self.assertEqual(C.validate(doc), [])
+
+
 class TestStrictJson(unittest.TestCase):
     def test_duplicate_keys_are_rejected_at_every_depth(self):
         for text in ('{"version":2,"version":2}', '{"extensions":{"tool":1,"tool":2}}',
@@ -445,13 +543,19 @@ class TestSchema(unittest.TestCase):
         cases = [document(mode, location) for mode, locations in VALID_LOCATIONS.items() for location in locations]
         cases += [document(mode) for mode in VALID_LOCATIONS]
         randomizer = random.Random(917)
-        values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1]]
+        values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1],
+                  {"type": "website"}, {"type": "book", "author": ["x", "y"]}, {"type": "book", "author": [1]},
+                  {"type": "paper", "sha256": "ab"}, {"type": "repository", "line": 0}, {"type": "nope"},
+                  {"type": "generic", "anything": [1, {}]}, {"title": "no type"}, {"type": "website", "owner": ""},
+                  {"uri": "a"}, {"uri": "a", "pin": {"type": "generic"}, "extensions": {"k": 1}}, {"pin": {"type": "book"}},
+                  {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}}]
         for _ in range(160):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
             node, key = randomizer.choice([(doc, "version"), (doc, "source"),
                                            (doc["source"], "type"), (doc["source"], "uri"),
-                                           (doc, "target"), (doc, "id"),
+                                           (doc["source"], "pin"), (doc, "target"), (doc, "id"),
+                                           (doc, "status"), (doc, "kind"), (doc, "label"), (doc, "note"),
                                            (doc, "location"), (doc, "extensions")])
             node[key] = copy.deepcopy(randomizer.choice(values))
             cases.append(doc)

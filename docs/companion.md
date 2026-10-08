@@ -20,16 +20,20 @@ A link does not claim equivalence, proof or review, or that the target exists.
 | Field | Required | Meaning |
 |---|---|---|
 | `source.type` | Yes | `pdf`, `latex`, `html` or `generic` |
-| `source.uri` | Yes | A [reference](#references) to the informal resource |
-| `target` | Yes | One reference to the formal destination |
+| `source.uri` | Yes | A [reference](#references) to the companion's copy of the informal resource |
+| `source.pin` | No | A [pin](#pins) citing the informal resource outside the companion |
+| `target` | No | A reference to the formal destination, or an object with `uri`, `pin` and `extensions` |
 | `location` | No | An object selecting part of the source |
+| `status`, `kind`, `label`, `note` | No | Nonempty strings: [facts](#facts) about the link |
 | `id` | No | A nonempty string label, not necessarily unique |
-| `extensions`, `source.extensions` | No | Objects of [application data](#extensions) |
+| `extensions`, `source.extensions`, `target.extensions` | No | Objects of [application data](#extensions) |
 | `$schema` | No | A reference used as a tooling hint |
 
-Other fields are invalid at the top level, in `source` and in built-in
-locations. Two targets or two passages need two annotations, and annotations
-share nothing. An array is not an annotation.
+Only `source` is required. Without `target`, the annotation records an informal
+passage with no formal counterpart. Other fields are invalid at the top level,
+in `source`, in a `target` object, in built-in pins and in built-in locations.
+Two targets or two passages need two annotations, and annotations share
+nothing. An array is not an annotation.
 
 ## Location
 
@@ -88,18 +92,71 @@ A generic location is any JSON object, such as `{ "table": "results", "row": "42
 Its producer and consumer define it. A `profile` key has no defined meaning.
 Text offsets need a unit defined by the application.
 
+## Pins
+
+`uri` is the local pin: where the companion keeps its copy of the resource,
+usually a relative path. A `pin` is the global pin: a citation that identifies
+the resource outside the companion, the way a bibliography entry does. A pin
+has a `type`, which chooses its keys. Every other key is optional, and a pin
+with only a `type` is valid.
+
+| `type` | Keys |
+|---|---|
+| `website` | `title`, `owner`, `url`, `revision`, `date`, `retrieved`, `sha256`, `identifiers` |
+| `book` | `title`, `author`, `publisher`, `edition`, `date`, `isbn`, `url`, `retrieved`, `sha256`, `identifiers` |
+| `paper` | `title`, `author`, `venue`, `volume`, `number`, `pages`, `date`, `doi`, `arxiv`, `url`, `retrieved`, `sha256`, `identifiers` |
+| `repository` | `url`, `commit`, `path`, `line`, `module`, `declaration`, `sha256`, `identifiers` |
+| `generic` | Any keys the application defines |
+
+Other keys are invalid in the built-in types; put them in `identifiers` or use
+`generic`. Values are nonempty strings, except that `author` is a string or an
+array of strings, `line` is a positive integer, `identifiers` maps names such
+as `wikidata`, `zbl` or `oldid` to strings, and `sha256` is 64 lowercase hex
+digits, the hash of the bytes that `uri` points at. `date` and `retrieved` are
+strings; ISO 8601 is recommended but not checked. `revision` is a site's own
+revision identifier and `commit` a full Git object ID. `url` is a
+[reference](#references).
+
+```json
+"pin": { "type": "website", "title": "C*-algebra", "owner": "Wikipedia",
+         "url": "https://en.wikipedia.org/w/index.php?title=C*-algebra&oldid=1374776629",
+         "revision": "1374776629", "retrieved": "2026-10-01" }
+```
+
+```json
+"pin": { "type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
+         "commit": "<40 hex digits>", "path": "Mathlib/Analysis/CStarAlgebra/Classes.lean",
+         "module": "Mathlib.Analysis.CStarAlgebra.Classes", "declaration": "CStarAlgebra" }
+```
+
+A pin describes; it does not verify. Whether the local copy matches the pinned
+bytes, and whether the pinned revision still exists, is for tools to check.
+
+## Facts
+
+`status`, `kind`, `label` and `note` are optional nonempty strings about the
+link. `status` says how far the informal item is formalised; `formalized`,
+`partial` and `not_formalized` are the recommended values. `kind` names the
+informal item; `definition`, `theorem`, `lemma`, `proposition`, `example`,
+`remark` and `exercise` are recommended. `label` is a short title and `note` is
+free text. Any nonempty string is valid, and applications agree on values among
+themselves. A record with no `target` and `status: not_formalized` records a
+checked absence; one with neither is merely unlinked. The format verifies none
+of these claims.
+
 ## Extensions
 
 `extensions` maps nonempty keys without whitespace or controls to any JSON
-values. Namespaced keys such as `org.example.tool` are recommended. Annotation
-and source extensions never merge. Consumers keep unknown values unchanged and
-never fetch or run them. An extension is not a trusted claim.
+values. Namespaced keys such as `org.example.tool` are recommended. Annotation,
+source and target extensions never merge. Consumers keep unknown values
+unchanged and never fetch or run them. An extension is not a trusted claim.
 
 ## References
 
-`source.uri`, `target` and `$schema` are nonempty URI or IRI references without
-`White_Space` or C0/C1 controls (U+0000–001F, U+007F–009F). Relative, absolute
-and opaque references are allowed. The check is lexical.
+`source.uri`, `target` or `target.uri`, a pin's `url` and `$schema` are nonempty
+URI or IRI references without `White_Space` or C0/C1 controls (U+0000–001F,
+U+007F–009F). Relative, absolute and opaque references are allowed. The check
+is lexical.
 
 A relative reference resolves against the URI of the file that holds the
 annotation, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
