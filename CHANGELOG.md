@@ -14,5 +14,5 @@
 
 First release: the v1 format (`schema_version` `"1.0"`) and the
 `formal-companion-annotations-validate` command, extracted from the
-formal-companion skill at `d4deedb`. Its full notes are in `CHANGELOG.md` at tag
-`v1.0.0`.
+formal-companion skill at `d4deedb`. The full release notes are in
+`CHANGELOG.md` at tag `v1.0.0`.
