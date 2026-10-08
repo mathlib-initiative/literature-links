@@ -1,0 +1,13 @@
+{
+  "source": {
+    "type": "html",
+    "uri": "notes/groups.html"
+  },
+  "location": {
+    "profile": "https://example.org/profiles/section-snippet/v1",
+    "section": "Subgroups",
+    "snippet": "the index of a subgroup"
+  },
+  "target": "https://example.org/formal/Groups.html#index",
+  "kind": "definition"
+}

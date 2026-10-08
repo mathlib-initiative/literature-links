@@ -178,7 +178,7 @@ def check(document: Any) -> Report:
 
     mode = document["source"]["type"]
     location = document.get("location")
-    if location is None:
+    if location is None or "profile" in location:
         return report
     if mode == "pdf" and "rect" in location:
         x, y, width, height = location["rect"]

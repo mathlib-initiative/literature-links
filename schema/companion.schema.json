@@ -44,7 +44,13 @@
     },
     "location": {
       "type": "object",
-      "description": "Part of the source. Its form depends on source.type. Absent means the whole source."
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/reference",
+          "description": "Names the application's convention for this location. Nothing fetches it."
+        }
+      },
+      "description": "Part of the source. With a profile it is application-defined; otherwise its form depends on source.type. Absent means the whole source."
     },
     "status": {
       "type": [
@@ -108,7 +114,14 @@
       "then": {
         "properties": {
           "location": {
-            "$ref": "#/$defs/pdf_location"
+            "if": {
+              "required": [
+                "profile"
+              ]
+            },
+            "else": {
+              "$ref": "#/$defs/pdf_location"
+            }
           }
         }
       }
@@ -128,7 +141,14 @@
       "then": {
         "properties": {
           "location": {
-            "$ref": "#/$defs/latex_location"
+            "if": {
+              "required": [
+                "profile"
+              ]
+            },
+            "else": {
+              "$ref": "#/$defs/latex_location"
+            }
           }
         }
       }
@@ -148,7 +168,14 @@
       "then": {
         "properties": {
           "location": {
-            "$ref": "#/$defs/html_location"
+            "if": {
+              "required": [
+                "profile"
+              ]
+            },
+            "else": {
+              "$ref": "#/$defs/html_location"
+            }
           }
         }
       }
