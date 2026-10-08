@@ -55,8 +55,6 @@ def _validate(args: argparse.Namespace) -> int:
 
 def _scan(args: argparse.Namespace) -> int:
     collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude)
-    # File, parsing, and selection failures are operational errors. An annotation
-    # with the wrong schema is invalid data, even when found inside a shard.
     operational = {"IO", "JSON", "NO_ANNOTATIONS", "SYMLINK", "PATH"}
     status = (2 if any(problem.code in operational for problem in collection.problems)
               else 1 if collection.problems else 0)

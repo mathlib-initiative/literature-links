@@ -1,18 +1,9 @@
-"""A small JSON Schema (draft 2020-12) evaluator for the keywords this package uses.
+"""A small JSON Schema (draft 2020-12) evaluator.
 
-This package uses only the standard library, so it cannot assume the
-``jsonschema`` package. This module evaluates the subset of draft 2020-12 that
-the bundled schema uses. It refuses a schema that uses any other keyword.
-``tests/test_companion.py`` checks that ``jsonschema``, when installed, agrees
-with this evaluator.
-
-Supported: ``$ref`` (local ``#/$defs/...`` only), ``type``, ``enum``, ``const``,
-``properties``, ``required``, ``additionalProperties``, ``patternProperties``,
-``items``, ``minItems``, ``maxItems``, ``uniqueItems``, ``minLength``,
-``maxLength``, ``pattern``, ``minimum``, ``maximum``, ``allOf``, ``anyOf``,
-``oneOf``, ``not``, ``if``/``then``/``else``.  Annotation keywords
-(``$schema``, ``$id``, ``$defs``, ``title``, ``description``) are accepted and
-ignored.
+It keeps the package free of dependencies. It supports ``ASSERTION_KEYWORDS``
+(``$ref`` only as a local ``#/...`` pointer), ignores ``ANNOTATION_KEYWORDS``
+and refuses any other keyword. When ``jsonschema`` is installed, the tests
+check that the two agree.
 """
 from __future__ import annotations
 
@@ -20,8 +11,7 @@ import json
 import re
 from typing import Any, Iterator
 
-#: The public API of this module: exactly these names.  Anything else,
-#: underscored or not, is internal and may change in any release.
+# Only these names are public.
 __all__ = [
     "SchemaError", "Validator",
 ]
