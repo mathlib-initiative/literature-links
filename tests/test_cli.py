@@ -241,6 +241,14 @@ class TestJsonStdout(CommandCase):
                         self.assertTrue(output["valid"])
                         self.assertEqual(output["document"], str(path))
 
+    def test_text_output_escapes_what_an_ansi_stdout_cannot_encode(self):
+        path = self.write("annotation-α.json", current_annotation())
+        later = self.write("later.json", current_annotation())
+        result = self.run_ansi("-m", "formal_companion_annotations.cli", "validate", str(path), str(later))
+        self.assertEqual((result.returncode, result.stderr), (0, b""))
+        self.assertIn(b"annotation-\\u03b1.json: ok", result.stdout)
+        self.assertIn(b"later.json: ok", result.stdout)
+
     def test_scan_machine_error_is_utf8_with_an_ansi_stdout(self):
         path = self.write("annotation.json", current_annotation())
         script = """from pathlib import Path

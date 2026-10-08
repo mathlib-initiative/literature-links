@@ -92,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
     scanning.add_argument("--exclude", action="append", default=[], help="exclude root-relative file patterns (repeatable)")
     scanning.add_argument("--format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
+    if args.format == "text" and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="backslashreplace")
     try:
         if args.command == "validate":
             return _validate(args)

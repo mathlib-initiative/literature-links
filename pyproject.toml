@@ -33,11 +33,6 @@ Source = "https://github.com/mathlib-initiative/formal-companion-annotations"
 Issues = "https://github.com/mathlib-initiative/formal-companion-annotations/issues"
 Changelog = "https://github.com/mathlib-initiative/formal-companion-annotations/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
-test = ["pytest>=7"]
-# Independent schema-agreement checks; never a runtime requirement.
-jsonschema = ["jsonschema>=4.18"]
-
 [project.scripts]
 formal-companion-annotations = "formal_companion_annotations.cli:main"
 
