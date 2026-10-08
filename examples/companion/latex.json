@@ -1,7 +1,17 @@
 {
   "source": {
     "type": "latex",
-    "uri": "chapters/groups.tex"
+    "uri": "chapters/groups.tex",
+    "pin": {
+      "type": "paper",
+      "title": "Synthetic notes on finite groups",
+      "author": "A. Author",
+      "venue": "Journal of Examples",
+      "volume": "1",
+      "pages": "1-12",
+      "date": "2026-01",
+      "doi": "10.0000/example.0001"
+    }
   },
   "location": {
     "label": "thm:lagrange"
