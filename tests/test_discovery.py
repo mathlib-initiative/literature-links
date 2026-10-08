@@ -1,4 +1,4 @@
-"""Independent annotation shards retain their origins and failure evidence."""
+"""Reading annotations from files and directories, with their origins and problems."""
 from __future__ import annotations
 
 import copy
@@ -210,6 +210,12 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([file, self.root / "invalid\x00name.json"])
         self.assertEqual(len(result.records), 1)
         self.assertEqual([problem.code for problem in result.problems], ["PATH"])
+
+    def test_a_bare_string_is_refused(self):
+        for arguments in ({"paths": "links"}, {"paths": [self.root], "include": "*.json"},
+                          {"paths": [self.root], "exclude": "*.json"}):
+            with self.subTest(arguments=arguments), self.assertRaises(TypeError):
+                discovery.collect(**arguments)
 
     def test_unreadable_directory_is_not_silently_empty(self):
         with patch.object(Path, "iterdir", side_effect=PermissionError("test access denied")):

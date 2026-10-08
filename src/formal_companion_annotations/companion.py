@@ -6,6 +6,7 @@ Generic locations and extension values are opaque JSON and retain their order.
 """
 from __future__ import annotations
 
+import functools
 import json
 import math
 from dataclasses import dataclass, field
@@ -30,7 +31,7 @@ class LoadError(ValueError):
 
 @dataclass(frozen=True)
 class Problem:
-    """A stable diagnostic code, JSON path, and human-readable explanation."""
+    """A stable diagnostic code, where it was found, and a readable explanation."""
 
     code: str
     path: str
@@ -130,7 +131,7 @@ def loads(text: str) -> Any:
     """
     try:
         value = json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant, parse_float=_float)
-    except (json.JSONDecodeError, RecursionError, ValueError) as exc:
+    except (ValueError, RecursionError) as exc:
         if isinstance(exc, LoadError):
             raise
         raise LoadError(f"not JSON: {exc}") from exc
@@ -161,6 +162,12 @@ def load_schema() -> dict[str, Any]:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+@functools.cache
+def _validator(path: Path) -> Validator:
+    # Keyed by path so a swapped SCHEMA_PATH is still read.
+    return Validator(load_schema())
+
+
 def check(document: Any) -> Report:
     """Check one annotation's structure and local invariants without mutation.
 
@@ -172,7 +179,7 @@ def check(document: Any) -> Report:
     report = Report(problems=_json_problems(document))
     if report.problems:
         return report
-    validator = Validator(load_schema())
+    validator = _validator(SCHEMA_PATH)
     try:
         report.problems.extend(Problem("SCHEMA", path, message)
                                for path, message in validator.errors(document))

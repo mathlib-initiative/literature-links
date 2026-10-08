@@ -14,17 +14,9 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from . import companion
+from .companion import Problem
 
 __all__ = ["Collection", "Problem", "Record", "collect"]
-
-
-@dataclass
-class Problem:
-    """A machine-readable finding with a carrier origin and human explanation."""
-
-    code: str
-    path: str
-    message: str
 
 
 @dataclass
@@ -104,7 +96,7 @@ def _read(path: Path, result: Collection) -> None:
     if path.suffix.lower() in (".jsonl", ".ndjson"):
         # splitlines() would incorrectly split valid strings containing U+2028.
         for line, row in enumerate(text.split("\n"), 1):
-            if not row.strip(" \t\r"):
+            if not row.strip(" \t"):
                 continue
             try:
                 value = companion.loads(row)
@@ -145,10 +137,12 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
     There are no hidden-directory exclusions, required manifests, identifier
     uniqueness rules, or automatic searches inside arbitrary JSON objects.
     """
+    if any(isinstance(value, str) for value in (paths, include, exclude)):
+        raise TypeError("paths, include and exclude take lists, not one string")
     result = Collection()
     includes = None if include is None else tuple(include)
     excludes = tuple(exclude)
-    selected: dict[Path, Path] = {}
+    selected: set[Path] = set()
 
     def select(path: Path, relative: str, *, explicit: bool = False) -> None:
         if _matches(relative, excludes):
@@ -163,7 +157,7 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
         except (OSError, RuntimeError, ValueError) as exc:
             result.problems.append(Problem("PATH", str(path), str(exc)))
             return
-        selected.setdefault(resolved, path)
+        selected.add(resolved)
 
     def walk(directory: Path, root: Path) -> None:
         try:
