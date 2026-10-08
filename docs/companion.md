@@ -48,10 +48,20 @@ invalid. In `generic` mode any object is valid, including `{}`. In the other
 modes `location` must take one of the forms below, so `{}` is invalid. An empty
 generic location is not the same as an absent one.
 
+A location with a `profile` key is application-defined in every mode. `profile`
+is a [reference](#references) that names the convention, and the convention
+gives the other keys their meaning. Only `profile` is checked. Use it when no
+built-in form fits, rather than declaring the source `generic`.
+
+```json
+"location": { "profile": "https://example.org/profiles/section-snippet/v1",
+              "section": "Subgroups", "snippet": "the index of a subgroup" }
+```
+
 A consumer must not treat an unresolved, ambiguous or unsupported location as
-the whole source. It keeps the location and reports its status. It reports
-missing or ambiguous matches, such as duplicate labels or IDs, and never picks
-the first one.
+the whole source. A location whose `profile` it does not know is unsupported. It
+keeps the location and reports its status. It reports missing or ambiguous
+matches, such as duplicate labels or IDs, and never picks the first one.
 
 ### PDF
 
@@ -100,7 +110,8 @@ conventions belong in `generic` mode.
 ### Generic
 
 A generic location is any JSON object, such as `{ "table": "results", "row": "42" }`.
-Its producer and consumer define it. A `profile` key has no defined meaning.
+Its producer and consumer define it. A `profile` key names the convention, as in
+every mode.
 Text offsets need a unit defined by the application.
 
 ## Pins
@@ -179,8 +190,8 @@ unchanged and never fetch or run them. An extension is not a trusted claim.
 
 ## References
 
-`source.uri`, `target` or `target.uri`, a pin's `url` and `$schema` are nonempty
-URI or IRI references without `White_Space` or C0/C1 controls (U+0000–001F,
+`source.uri`, `target` or `target.uri`, a pin's `url`, a location's `profile`
+and `$schema` are nonempty URI or IRI references without `White_Space` or C0/C1 controls (U+0000–001F,
 U+007F–009F). Relative, absolute and opaque references are allowed. The check
 is lexical.
 
@@ -198,12 +209,14 @@ kept as part of the reference but selects nothing; in built-in modes `location`
 is the selection.
 
 A valid annotation grants no permission to open or run anything. `$schema` never
-replaces the bundled schema. The schema's `$id` is a name, not a download.
+replaces the bundled schema. The schema's `$id` and a location's `profile` are
+names, not downloads.
 
 ## Validation
 
 Validation is the JSON Schema plus two checks: a PDF `rect` has positive size
-and fits the page, and LaTeX `lines` are in order. It never resolves locations,
+and fits the page, and LaTeX `lines` are in order. Neither applies to a location
+with a `profile`. Validation never resolves locations,
 fetches resources or judges mathematics. Where the schema asks for an integer, a
 JSON number with no fractional part counts, so `2.0` is a valid `page`, as in
 JSON Schema.

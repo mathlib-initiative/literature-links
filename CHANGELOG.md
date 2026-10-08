@@ -7,6 +7,8 @@ First public release.
 - One annotation links one informal `source`, optionally narrowed by a
   `location`, to one formal `target`. Sources are PDF, LaTeX, HTML or generic.
   Without `target`, an annotation records a passage with no formal counterpart.
+- A location with a `profile` key is application-defined under every source
+  type, so a location no built-in form fits does not force a `generic` source.
 - Optional typed pins on `source`, `target` and `status`: `website`, `book`,
   `paper`, `repository` and `generic`.
 - Optional facts `status`, `kind`, `label` and `note`. `status` may be an object

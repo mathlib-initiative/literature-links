@@ -299,6 +299,21 @@ class TestLocatorBounds(unittest.TestCase):
                 self.assertEqual(C.validate(document("pdf", {"page": number})), [])
                 self.assertEqual(C.validate(document("latex", {"lines": [number, number]})), [])
 
+    def test_profile_marks_an_application_defined_location_in_every_mode(self):
+        profiled = {"pdf": {"profile": "urn:example:figure", "page": 0, "rect": [0.9, 0.9, 0.5, 0.5]},
+                    "latex": {"profile": "urn:example:environment", "lines": [9, 2]},
+                    "html": {"profile": "urn:wikilean:anchor:v3", "section": "Definition", "snippet": "a group"},
+                    "generic": {"profile": "https://example.org/profiles/row", "row": 4}}
+        for mode, location in profiled.items():
+            with self.subTest(mode=mode):
+                self.assertEqual(C.validate(document(mode, location)), [])
+            for profile in ("", "a b", 1, None, [], {}):
+                with self.subTest(mode=mode, profile=profile):
+                    self.assertTrue(C.validate(document(mode, {"profile": profile})))
+        for mode, location in (("html", {"fragmnet": "x"}), ("pdf", {"pag": 1}), ("latex", {"label": "a", "extra": 1})):
+            with self.subTest(mode=mode, location=location):
+                self.assertTrue(C.validate(document(mode, location)))
+
     def test_schema_looking_generic_payloads_are_never_interpreted(self):
         payload = {"$id": "../private.json", "$schema": "https://example.org/unknown",
                    "$ref": "https://example.org/execute", "type": "future-mode",
@@ -574,7 +589,8 @@ class TestSchema(unittest.TestCase):
                   {"uri": "a"}, {"uri": "a", "pin": {"type": "generic"}, "extensions": {"k": 1}}, {"pin": {"type": "book"}},
                   {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}},
                   {"value": "a"}, {"value": ""}, {"value": "a", "pin": {"type": "repository", "line": 1}},
-                  {"value": "a", "extra": 1}]
+                  {"value": "a", "extra": 1},
+                  {"profile": "urn:x"}, {"profile": "a b"}, {"profile": "urn:x", "page": 0}]
         for _ in range(160):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
