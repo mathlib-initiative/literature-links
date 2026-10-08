@@ -32,7 +32,7 @@
     "target"
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://mathlib-initiative.github.io/formal-companion-annotations/schema/companion.schema.json",
+  "$id": "https://raw.githubusercontent.com/mathlib-initiative/formal-companion-annotations/main/schema/companion.schema.json",
   "title": "Formal companion annotation",
   "description": "One link from an informal source, or a location in it, to a formal target. Validation also checks that a PDF rect has positive size and fits its page, and that LaTeX lines are in order.",
   "allOf": [
