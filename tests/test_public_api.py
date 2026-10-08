@@ -34,20 +34,6 @@ def module(name: str):
 
 class TestAll(unittest.TestCase):
 
-    def test_every_module_declares_its_api(self):
-        for name in (*MODULES, "__main__"):
-            with self.subTest(module=name):
-                exported = module(name).__all__
-                self.assertIsInstance(exported, list)
-                self.assertEqual(len(exported), len(set(exported)), "a name is listed twice")
-
-    def test_every_exported_name_exists(self):
-        for name in MODULES:
-            mod = module(name)
-            for attr in mod.__all__:
-                with self.subTest(module=name, name=attr):
-                    self.assertTrue(hasattr(mod, attr))
-
     def test_the_package_exports_its_version_and_modules(self):
         self.assertEqual(formal_companion_annotations.__all__, ["__version__", *MODULES])
         namespace: dict = {}

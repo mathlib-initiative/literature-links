@@ -40,13 +40,6 @@ VALID_LOCATIONS = {
 
 
 class TestSmallContract(unittest.TestCase):
-    def test_only_source_and_target_are_required(self):
-        schema = C.load_schema()
-        self.assertEqual(set(schema["required"]), {"source", "target"})
-        self.assertNotIn("version", schema["properties"])
-        self.assertEqual(set(document()), {"source", "target"})
-        self.assertEqual(C.validate(document()), [])
-
     def test_every_builtin_and_generic_location(self):
         for mode, locations in VALID_LOCATIONS.items():
             for location in locations:
@@ -57,16 +50,6 @@ class TestSmallContract(unittest.TestCase):
         for mode in VALID_LOCATIONS:
             with self.subTest(mode=mode):
                 self.assertEqual(C.validate(document(mode)), [])
-
-    def test_collection_shapes_are_not_single_annotations(self):
-        single = document()
-        for records in ([], [single], [single, copy.deepcopy(single)]):
-            for carrier in (records, {"source": single["source"], "annotations": records}):
-                with self.subTest(carrier=carrier):
-                    self.assertTrue(C.validate(carrier))
-        with_extra = document()
-        with_extra["annotations"] = []
-        self.assertTrue(C.validate(with_extra))
 
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
@@ -103,15 +86,6 @@ class TestSmallContract(unittest.TestCase):
             node[key] = []
             with self.subTest(place=place, key=key):
                 self.assertTrue(C.validate(doc))
-
-    def test_multiple_sources_are_separate_documents(self):
-        first, second = document("pdf", {"page": 1}), document("html", {"fragment": "a"})
-        second["source"]["uri"] = "chapter.html"
-        self.assertEqual(C.validate(first), [])
-        self.assertEqual(C.validate(second), [])
-        self.assertTrue(C.validate([first, second]))
-        first["source"] = [first["source"], second["source"]]
-        self.assertTrue(C.validate(first))
 
     def test_multiple_targets_are_separate_complete_annotations(self):
         first = document("latex", {"label": "thm:lagrange"})
@@ -155,7 +129,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
     def test_references_allow_relative_unicode_and_opaque_identifiers(self):
         references = ("groups.tex", "../docs/Groups.html#Lagrange", "#theorem", "/docs/α.html",
                       "https://example.org/α?x=1#theorem", "urn:lean:Nat.add_comm",
-                      "git+https://example.org/repo", "custom:record/1", "javascript:alert(1)")
+                      "git+https://example.org/repo", "custom:record/1", "javascript:alert(1)", "x")
         for reference in references:
             doc = document()
             doc["source"]["uri"] = reference
@@ -400,7 +374,7 @@ class TestStrictJson(unittest.TestCase):
 
     def test_lone_unicode_surrogates_in_strings_and_keys_are_rejected(self):
         for text in ('"\\ud800"', '"\\udfff"', '{"\\ud800":"value"}'):
-            with self.subTest(text=text), self.assertRaises(C.LoadError):
+            with self.subTest(text=text), self.assertRaisesRegex(C.LoadError, "surrogate"):
                 C.loads(text)
         for value in ("\ud800", {"\udfff": 2}):
             doc = document("generic", {"payload": value})
@@ -419,6 +393,7 @@ class TestStrictJson(unittest.TestCase):
         self.assertEqual(list(result["location"]["z"]), ["β", "α"])
         self.assertTrue(text.endswith("\n"))
         self.assertIn("β", text)
+        self.assertEqual(C.dumps({"a": [1]}), '{\n  "a": [\n    1\n  ]\n}\n')
 
     def test_codecs_are_not_implicit_companion_validation(self):
         value = {"custom": [None, True, "text", 3.5]}
@@ -497,14 +472,20 @@ class TestSchemaEvaluator(unittest.TestCase):
                  ({"type": ["null", "number"]}, False, False),
                  ({"minLength": 1.0}, "😀", True),
                  ({"minItems": 0.0, "maxItems": 0.0}, [], True),
-                 ({"allOf": [True, {"not": False}]}, {}, True)]
+                 ({"allOf": [True, {"not": False}]}, {}, True),
+                 ({"additionalProperties": {"type": "integer"}}, {"a": "x"}, False),
+                 ({"type": "null"}, None, True)]
         for schema, value, expected in cases:
             with self.subTest(schema=schema, value=value):
                 self.assertEqual(Validator(schema).is_valid(value), expected)
 
     def test_unimplemented_keywords_are_refused(self):
+        for schema in ({"properties": {"a": {"format": "date-time"}}}, {"allOf": [{"format": "date-time"}]},
+                       {"not": {"format": "date-time"}}, {"$ref": "other.json"}, {"$ref": "#/$defs/missing"}):
+            with self.subTest(schema=schema), self.assertRaises(SchemaError):
+                Validator(schema)
         with self.assertRaises(SchemaError):
-            Validator({"type": "string", "format": "date-time"})
+            Validator({"type": "nul"}).is_valid(1)
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):

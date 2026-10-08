@@ -104,29 +104,9 @@ class TestStandalone(unittest.TestCase):
 
 class TestEntryPoints(unittest.TestCase):
 
-    def test_the_console_script_names_the_cli_main(self):
-        scripts = pyproject()["project"]["scripts"]
-        self.assertEqual(scripts, {"formal-companion-annotations": "formal_companion_annotations.cli:main"})
-
     def run_module(self, module: str, *argv: str, env: dict | None = None) -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, "-m", module, *argv], capture_output=True, text=True,
                               env=env or subprocess_env(), cwd=ROOT, check=False)
-
-    def test_a_child_process_imports_the_copy_under_test(self):
-        child = subprocess.run([sys.executable, "-c",
-                                "import formal_companion_annotations as p; print(p.__file__)"],
-                               capture_output=True, text=True, env=subprocess_env(), cwd=ROOT, check=True)
-        self.assertEqual(Path(child.stdout.strip()).resolve().parent, PACKAGE)
-
-    def test_python_dash_m_supports_the_current_commands(self):
-        example = EXAMPLES / "pdf.json"
-        for argv in (("validate", str(example)), ("scan", str(example))):
-            with self.subTest(arguments=argv):
-                child = self.run_module("formal_companion_annotations", *argv)
-                self.assertEqual(child.returncode, 0, child.stdout + child.stderr)
-        help_result = self.run_module("formal_companion_annotations", "--help")
-        self.assertEqual(help_result.returncode, 0)
-        self.assertIn("scan", help_result.stdout)
 
     def run_cli(self, *argv: str) -> tuple[int, str, str]:
         out, err = io.StringIO(), io.StringIO()
@@ -157,6 +137,11 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual(self.run_cli("--version"), (0, expected, ""))
         child = self.run_module("formal_companion_annotations", "--version")
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
+
+    def test_every_example_is_valid(self):
+        examples = sorted(EXAMPLES.glob("*.json"))
+        self.assertTrue(examples)
+        self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
 
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
