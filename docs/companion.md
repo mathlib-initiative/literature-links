@@ -1,9 +1,10 @@
 # Annotation reference
 
 An annotation links one informal source, or a location in it, to one formal
-destination. The format is an unversioned working draft. The
-[JSON Schema](../schema/companion.schema.json) gives its structure, and
-[validation](#validation) adds two checks.
+destination. The [JSON Schema](../schema/companion.schema.json) gives its
+structure, and [validation](#validation) adds two checks. The format has no
+version field; it carries the version of the release. Records valid under 1.x
+stay valid in later 1.x; a breaking change bumps the major version.
 
 ```json
 {
@@ -60,8 +61,8 @@ the first one.
 selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
 displayed page box: the CropBox, or the MediaBox when there is none, after the
 page's `Rotate` entry is applied. The origin is the top-left corner and y grows
-down. The values are in [0, 1], width and height
-are positive, and x + width and y + height are at most 1.
+down. The values are in [0, 1], width and height are positive, and x + width and
+y + height are at most 1.
 
 ### LaTeX
 
@@ -122,7 +123,9 @@ Other keys are invalid in the built-in types; put them in `identifiers` or use
 `generic`. Values are nonempty strings, except that `author` is a string or an
 array of strings, `line` is a positive integer, `identifiers` maps names such
 as `wikidata`, `zbl` or `oldid` to strings, and `sha256` is 64 lowercase hex
-digits, the hash of the bytes that `uri` points at. `date` and `retrieved` are
+digits: the SHA-256 of the bytes that the `uri` next to the pin points at. A
+status pin has no `uri` next to it, so there `sha256` is the SHA-256 of the file
+the pin names. `date` and `retrieved` are
 strings; ISO 8601 is recommended but not checked. `revision` is a site's own
 revision identifier and `commit` a full Git object ID. `url` is a
 [reference](#references).
