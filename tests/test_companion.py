@@ -353,12 +353,36 @@ class TestPinsAndFacts(unittest.TestCase):
             for value in ("formalized", "definition", "A label with spaces", "α", "anything applications agree on"):
                 doc[key] = value
                 self.assertEqual(C.validate(doc), [], (key, value))
-            for value in ("", None, 1, True, [], {}, ["formalized"]):
+            for value in ("", None, 1, True, [], ["formalized"]):
                 doc[key] = value
                 with self.subTest(key=key, value=value):
                     self.assertTrue(C.validate(doc))
             del doc[key]
         self.assertEqual(C.validate(doc), [])
+
+    def test_status_may_be_an_object_with_value_pin_and_extensions(self):
+        doc = document("html", {"fragment": "Quotients_and_approximate_identities"})
+        del doc["target"]
+        mathlib = {"type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
+                   "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8"}
+        for status in ({}, {"value": "not_formalized"}, {"pin": mathlib}, {"value": "not_formalized", "pin": mathlib},
+                       {"value": "partial", "pin": {"type": "generic", "searched": ["Mathlib", "Batteries"]},
+                        "extensions": {"org.example": {"checked": "2026-10-08"}}}):
+            doc["status"] = copy.deepcopy(status)
+            with self.subTest(status=status):
+                self.assertEqual(C.validate(doc), [])
+        for status in ({"value": ""}, {"value": 1}, {"value": None}, {"value": ["a"]}, {"pin": {}},
+                       {"pin": {"type": "web"}}, {"pin": "repository"}, {"pin": {**mathlib, "author": "x"}},
+                       {"extensions": []}, {"value": "a", "uri": "b"}, {"status": "a"}, [{"value": "a"}]):
+            doc["status"] = status
+            with self.subTest(status=status):
+                self.assertTrue(C.validate(doc))
+        del doc["status"]
+        for key in ("kind", "label", "note"):
+            doc[key] = {"value": "x"}
+            with self.subTest(key=key):
+                self.assertTrue(C.validate(doc))
+            del doc[key]
 
     def test_every_pin_type_with_all_keys_and_with_type_alone(self):
         for kind, keys in PINS.items():
@@ -548,7 +572,9 @@ class TestSchema(unittest.TestCase):
                   {"type": "paper", "sha256": "ab"}, {"type": "repository", "line": 0}, {"type": "nope"},
                   {"type": "generic", "anything": [1, {}]}, {"title": "no type"}, {"type": "website", "owner": ""},
                   {"uri": "a"}, {"uri": "a", "pin": {"type": "generic"}, "extensions": {"k": 1}}, {"pin": {"type": "book"}},
-                  {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}}]
+                  {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}},
+                  {"value": "a"}, {"value": ""}, {"value": "a", "pin": {"type": "repository", "line": 1}},
+                  {"value": "a", "extra": 1}]
         for _ in range(160):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
