@@ -491,6 +491,8 @@ class TestSchemaEvaluator(unittest.TestCase):
                  ({"$schema": "https://json-schema.org/draft/2020-12/schema#"}, None, True),
                  ({"required": []}, {}, True), ({"enum": []}, None, False),
                  ({"enum": [True, 1, 1.0]}, 1, True),
+                 # Older jsonschema (4.19) wrongly accepts this nested True.
+                 ({"enum": [{"n": [1, None]}]}, {"n": [True, None]}, False),
                  ({"uniqueItems": False}, [1, 1], True),
                  ({"type": ["null", "number"]}, False, False),
                  ({"minLength": 1.0}, "😀", True),
@@ -522,7 +524,7 @@ class TestSchemaEvaluator(unittest.TestCase):
         ]
         values = [None, False, True, 0, 1, 1.0, 2, 1.5, "", "a", "😀", "😀a", "aaa",
                   [], [1, True], [1, 1.0], [{"n": 1}, {"n": 1.0}], {"n": [1, None]},
-                  {"n": [True, None]}, {}, {"a": 1}, {"a": 2}, {"a": "2"}, {"b": 2}]
+                  {}, {"a": 1}, {"a": 2}, {"a": "2"}, {"b": 2}]
         for schema in schemas:
             jsonschema.Draft202012Validator.check_schema(schema)
             reference = jsonschema.Draft202012Validator(schema)

@@ -131,11 +131,12 @@ numbers as floats. It rejects overflow and nonzero underflow. Very large or deep
 input may be rejected. Consumers that use doubles keep integers exact only up to
 2⁵³ − 1, so use strings for exact decimals and large identifiers.
 
-`companion.check` returns `Problem(code, path, message)` items with the codes
-`JSON`, `SCHEMA`, `PDF_RECT` and `LATEX_LINES`. `companion.validate` returns the
-messages. `companion.loads` only parses. Nothing checks uniqueness across
-annotations. `companion.dumps` keeps key order and writes two-space indentation
-and a final newline.
+`companion.check` returns a `Report` whose `problems` are
+`Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
+`PDF_RECT` and `LATEX_LINES`. `companion.validate` returns them as
+`path: message` strings. `companion.loads` only parses. Nothing checks
+uniqueness across annotations. `companion.dumps` keeps key order and writes
+two-space indentation and a final newline.
 
 ## Discovery
 
