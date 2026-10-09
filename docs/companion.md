@@ -35,10 +35,9 @@ the target is the thing being annotated.
 | `extensions`, `source.extensions`, `target.extensions`, `status.extensions` | No | Objects of [application data](#extensions) |
 | `$schema` | No | A reference used as a tooling hint |
 
-Only `source` is required. Without `target`, the annotation records an informal
-passage with no formal counterpart. Other fields are invalid at the top level,
-in `source`, in `target` and `status` objects, in built-in pins and in built-in
-locations. Two targets or two passages need two annotations. No field is
+Only `source` is required. Without `target`, the annotation records the
+informal passage alone. Other fields are invalid at the top level, in `source`,
+in `target` and `status` objects, in built-in pins and in built-in locations. Two targets or two passages need two annotations. No field is
 inherited from another record, only from [folder defaults](#folder-defaults).
 An array is not an annotation.
 
@@ -93,7 +92,7 @@ Use exactly one of these:
   leading `#`, whitespace or controls; `name` attributes do not count. It is
   not percent-decoded again, so `"a%20b"` is a literal ID.
 - `css` is a nonempty CSS selector. The checker does not parse it. A selector
-  that matches several elements is an ambiguous match.
+  that matches more than one element is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
