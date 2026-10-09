@@ -92,7 +92,8 @@ Use exactly one of these:
 - `fragment` is the decoded value of an element's `id` attribute, with no
   leading `#`, whitespace or controls; `name` attributes do not count. It is
   not percent-decoded again, so `"a%20b"` is a literal ID.
-- `css` is a nonempty CSS selector. The checker does not parse it.
+- `css` is a nonempty CSS selector. The checker does not parse it. A selector
+  that matches several elements is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
@@ -106,7 +107,7 @@ Do not change case, normalize Unicode or add spaces between elements, so
 `<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text counts. Shadow
 DOM and iframes do not. `White_Space` means U+0009–000D, U+0020, U+0085,
 U+00A0, U+1680, U+2000–200A, U+2028–2029, U+202F, U+205F and U+3000. Other text
-conventions belong in `generic` mode.
+conventions need a `profile`.
 
 ### Generic
 
@@ -186,8 +187,9 @@ is merely unlinked. The format verifies none of these claims.
 
 `extensions` maps nonempty keys without whitespace or controls to any JSON
 values. Namespaced keys such as `org.example.tool` are recommended. Annotation,
-source, target and status extensions never merge. Consumers keep unknown values
-unchanged and never fetch or run them. An extension is not a trusted claim.
+source, target and status extensions never merge with each other. Consumers keep
+unknown values unchanged and never fetch or run them. An extension is not a
+trusted claim.
 
 ## References
 
