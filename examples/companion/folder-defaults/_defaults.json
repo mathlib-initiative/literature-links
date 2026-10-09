@@ -1,0 +1,14 @@
+{
+  "source": {
+    "type": "pdf",
+    "uri": "https://example.org/notes.pdf",
+    "pin": { "type": "book", "title": "Lecture Notes on Groups", "url": "https://example.org/notes.html" }
+  },
+  "target": {
+    "pin": {
+      "type": "repository",
+      "url": "https://example.org/formal",
+      "commit": "0123456789abcdef0123456789abcdef01234567"
+    }
+  }
+}
