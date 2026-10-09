@@ -302,7 +302,7 @@ class TestLocatorBounds(unittest.TestCase):
     def test_profile_marks_an_application_defined_location_in_every_mode(self):
         profiled = {"pdf": {"profile": "urn:example:figure", "page": 0, "rect": [0.9, 0.9, 0.5, 0.5]},
                     "latex": {"profile": "urn:example:environment", "lines": [9, 2]},
-                    "html": {"profile": "urn:wikilean:anchor:v3", "section": "Definition", "snippet": "a group"},
+                    "html": {"profile": "urn:example:anchor:v3", "section": "Definition", "snippet": "a group"},
                     "generic": {"profile": "https://example.org/profiles/row", "row": 4}}
         for mode, location in profiled.items():
             with self.subTest(mode=mode):

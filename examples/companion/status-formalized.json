@@ -36,7 +36,7 @@
   },
   "note": "A complex Banach algebra with an isometric involution satisfying the C*-identity; NonUnitalCStarAlgebra covers the non-unital case.",
   "extensions": {
-    "org.wikilean": {
+    "org.example.wiki": {
       "provenance": "ai",
       "match_kind": "exact"
     }

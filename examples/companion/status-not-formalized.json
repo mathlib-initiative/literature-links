@@ -30,7 +30,7 @@
   },
   "note": "Mathlib's approximate units are filter-based; no result derives a sequential approximate identity for separable C*-algebras.",
   "extensions": {
-    "org.wikilean": {
+    "org.example.wiki": {
       "provenance": "ai"
     }
   }
