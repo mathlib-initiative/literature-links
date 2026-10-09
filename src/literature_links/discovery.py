@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import fnmatch
+import os
 import stat
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -90,6 +91,8 @@ class _Defaults:
                 self.problems.append(Problem("SYMLINK", str(path), "defaults files must not be symlinks"))
             elif not stat.S_ISREG(mode):
                 self.problems.append(Problem("PATH", str(path), "a defaults file must be a regular file"))
+            elif not self._spelled(path):
+                value = None
             else:
                 try:
                     value = companion.loads(path.read_text(encoding="utf-8"))
@@ -106,6 +109,14 @@ class _Defaults:
                         value = _BROKEN
         self.files[path] = value
         return value
+
+    @staticmethod
+    def _spelled(path: Path) -> bool:
+        """Whether the folder's entry is spelled exactly; lstat ignores case on some file systems."""
+        try:
+            return path.name in os.listdir(path.parent)
+        except OSError:
+            return True  # a folder that can be searched but not listed
 
     def chain(self, path: Path) -> list[tuple[Path, dict[str, Any]]] | None:
         """The defaults files covering the file ``path``, outermost first; None if one is broken."""
@@ -142,7 +153,14 @@ def inherit(annotation: dict[str, Any], path: Path | str) -> tuple[dict[str, Any
     chain = _Defaults(problems).chain(Path(path).resolve())
     if chain is None:
         return None, (), problems
-    return _apply(annotation, Path(path).resolve(), chain), tuple(file for file, _ in chain), problems
+    try:
+        merged = _apply(annotation, Path(path).resolve(), chain)
+    except RecursionError:
+        return None, (), [Problem("JSON", "$", _TOO_DEEP)]
+    return merged, tuple(file for file, _ in chain), problems
+
+
+_TOO_DEEP = "JSON nesting exceeds this implementation's recursion limit"
 
 
 def _origin(path: Path, pointer: str = "", line: int | None = None) -> str:
@@ -160,13 +178,17 @@ def _read(path: Path, result: Collection, defaults: _Defaults) -> None:
     def record(value: Any, pointer: str = "", line: int | None = None) -> None:
         origin = _origin(path, pointer, line)
         if not isinstance(value, dict):
-            result.problems.append(Problem("SHARD_SHAPE", origin,
+            result.problems.append(Problem("SHAPE", origin,
                                            "each annotation must be a JSON object"))
             return
         chain = defaults.chain(path)
         if chain is None:
             return
-        value = _apply(value, path, chain)
+        try:
+            value = _apply(value, path, chain)
+        except RecursionError:
+            result.problems.append(Problem("JSON", origin, _TOO_DEEP))
+            return
         applied = tuple(file for file, _ in chain)
         findings = companion.check(value).problems
         if findings:
@@ -286,7 +308,8 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
             result.problems.append(Problem("PATH", str(path),
                                            "input must be a regular file or directory"))
 
-    result.files = sorted(selected, key=str)
+    # as_posix, so that Windows reads files in the same order as everyone else.
+    result.files = sorted(selected, key=Path.as_posix)
     for path in result.files:
         _read(path, result, defaults)
     if not result.records and not result.problems:
