@@ -129,7 +129,7 @@ with only a `type` is valid.
 | `book` | `title`, `author`, `publisher`, `edition`, `date`, `isbn`, `url`, `retrieved`, `sha256`, `identifiers` |
 | `paper` | `title`, `author`, `venue`, `volume`, `number`, `pages`, `date`, `doi`, `arxiv`, `url`, `retrieved`, `sha256`, `identifiers` |
 | `repository` | `url`, `commit`, `path`, `line`, `module`, `declaration`, `sha256`, `identifiers` |
-| `generic` | Any keys the application defines |
+| `generic` | Any keys the application defines; a `url` is still a reference |
 
 Other keys are invalid in the built-in types; put them in `identifiers` or use
 `generic`. Values are nonempty strings, except that `author` is a string or an

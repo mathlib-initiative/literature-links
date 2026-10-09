@@ -51,6 +51,12 @@ class TestSmallContract(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertEqual(C.validate(document(mode)), [])
 
+    def test_a_missing_source_is_the_only_problem_it_causes(self):
+        for location in ({"page": 3, "rect": [0.1, 0.2, 0.3, 0.4]}, {"label": "a"}, {"fragment": "a"}):
+            for source in ({}, {"source": {"uri": "a"}}):
+                with self.subTest(location=location, source=source):
+                    self.assertEqual(len(C.validate({"location": location, "target": "x.html", **source})), 1)
+
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
         doc = document()
@@ -424,7 +430,8 @@ class TestPinsAndFacts(unittest.TestCase):
         valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]), ("book", "author", []),
                  ("repository", "line", 1), ("repository", "line", 38.0), ("website", "sha256", "0" * 64),
                  ("paper", "identifiers", {}), ("paper", "identifiers", {"doi": "10.0000/x", "arxiv": "0000.00000"}),
-                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629")]
+                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629"),
+                 ("generic", "url", "catalogue/17"), ("generic", "shelf", 3)]
         for kind, key, value in valid:
             doc["source"]["pin"] = {"type": kind, key: value}
             with self.subTest(kind=kind, key=key, value=value):
@@ -433,7 +440,8 @@ class TestPinsAndFacts(unittest.TestCase):
                    ("repository", "line", 0), ("repository", "line", "38"), ("repository", "line", 1.5),
                    ("website", "sha256", "0" * 63), ("website", "sha256", "A" * 64), ("website", "sha256", "0" * 64 + "\n"),
                    ("paper", "identifiers", {"doi": 1}), ("paper", "identifiers", {"doi": ""}), ("paper", "identifiers", []),
-                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123)]
+                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123),
+                   ("generic", "url", "a b"), ("generic", "url", 5)]
         for kind, key, value in invalid:
             doc["source"]["pin"] = {"type": kind, key: value}
             with self.subTest(kind=kind, key=key, value=value):
