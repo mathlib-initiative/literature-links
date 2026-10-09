@@ -53,7 +53,7 @@ class TestSmallContract(unittest.TestCase):
 
     def test_a_missing_source_is_the_only_problem_it_causes(self):
         for location in ({"page": 3, "rect": [0.1, 0.2, 0.3, 0.4]}, {"label": "a"}, {"fragment": "a"}):
-            for source in ({}, {"source": {"uri": "a"}}):
+            for source in ({}, {"source": {"uri": "a"}}, {"source": None}, {"source": "a.pdf"}):
                 with self.subTest(location=location, source=source):
                     self.assertEqual(len(C.validate({"location": location, "target": "x.html", **source})), 1)
 
@@ -599,6 +599,8 @@ class TestSchema(unittest.TestCase):
         ours = Validator(schema)
         cases = [document(mode, location) for mode, locations in VALID_LOCATIONS.items() for location in locations]
         cases += [document(mode) for mode in VALID_LOCATIONS]
+        cases += [{"target": "x", "location": {"page": 1}}, {"source": "a.pdf", "location": {"page": 1}}]
+        cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "generic", "url": url}}} for url in (5, "a b", "a")]
         randomizer = random.Random(917)
         values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1],
                   {"type": "website"}, {"type": "book", "author": ["x", "y"]}, {"type": "book", "author": [1]},

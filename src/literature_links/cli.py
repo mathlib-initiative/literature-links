@@ -47,7 +47,7 @@ def _validate(args: argparse.Namespace) -> int:
                 warnings = [asdict(warning) for warning in report.warnings]
                 item_status = 1 if problems else 0
         except (OSError, ValueError, RecursionError) as exc:
-            item_status = 2
+            item_status, applied = 2, ()
             code = "IO" if isinstance(exc, (OSError, UnicodeError)) else "JSON"
             problems = [{"code": code, "path": "$", "message": str(exc)}]
         status = max(status, item_status)
