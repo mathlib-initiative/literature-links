@@ -13,6 +13,8 @@ First public release.
   `paper`, `repository` and `generic`.
 - Optional facts `status`, `kind`, `label` and `note`. `status` may be an object
   with `value`, `pin` and `extensions`.
+- Folder defaults: a `_defaults.json` file supplies shared members to every
+  annotation in its folder and below, merged like JSON Merge Patch.
 - The `literature-links` command with `validate` and `scan`, and the
   `companion` and `discovery` modules.
 - Records valid under 1.x stay valid in later 1.x; a breaking change bumps the

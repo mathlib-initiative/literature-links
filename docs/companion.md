@@ -39,7 +39,8 @@ Only `source` is required. Without `target`, the annotation records an informal
 passage with no formal counterpart. Other fields are invalid at the top level,
 in `source`, in `target` and `status` objects, in built-in pins and in built-in
 locations. Two targets or two passages need two annotations. No field is
-inherited from another record. An array is not an annotation.
+inherited from another record, only from [folder defaults](#folder-defaults).
+An array is not an annotation.
 
 ## Location
 
@@ -212,6 +213,50 @@ A valid annotation grants no permission to open or run anything. `$schema` never
 replaces the bundled schema. The schema's `$id` and a location's `profile` are
 names, not downloads.
 
+## Folder defaults
+
+A file named `_defaults.json` holds one JSON object: members shared by every
+annotation file in its folder and in the folders below it. It is not an
+annotation. Each record read from those files is the defaults merged with the
+record as written:
+
+- A member the record leaves out is inherited.
+- Where both hold an object, the two merge member by member, at any depth.
+- Otherwise the record's value wins. Arrays are replaced, not merged.
+- A `null` removes the inherited member. Where nothing is inherited, the
+  record's value is kept as written.
+
+This is [JSON Merge Patch](https://www.rfc-editor.org/rfc/rfc7396) with the
+record as the patch, except that a `null` with nothing to remove is kept, so a
+record read without defaults is read exactly as written. The rules name no
+member: any member can have a default, `extensions` included.
+
+```json
+{ "source": { "type": "pdf", "uri": "../notes.pdf" },
+  "target": { "pin": { "type": "repository", "url": "https://example.org/formal",
+                       "commit": "<40 hex digits>" } } }
+```
+
+With that file as `chapter-1/_defaults.json`, a record in `chapter-1/` or
+below needs only what is its own, such as a `location` and a `target.uri`.
+
+Defaults files nest. A reader applies the `_defaults.json` in the annotation
+file's folder and in each folder above it, outermost first, so the nearest one
+wins. For local files that goes up to the root of the file system. A reader
+that fetches annotations over the web is given the collection's base URL and
+never looks above it. Arrays and JSONL files take defaults like any annotation
+file, one record at a time.
+
+A relative reference in a defaults file resolves against the defaults file.
+A reader that merges records rewrites the inherited references in
+[References](#references) so that they resolve the same way from the
+annotation's file; extension strings are copied unchanged.
+
+Validation applies to the merged record, so a record may leave out `source`
+when a defaults file supplies it. A defaults file that is not a JSON object,
+or that a reader cannot read, is a problem, and the records below it are not
+read.
+
 ## Validation
 
 Validation is the JSON Schema plus two checks: a PDF `rect` has positive size
@@ -232,7 +277,9 @@ input may be rejected. Consumers that use doubles keep integers exact only up to
 `PDF_RECT` and `LATEX_LINES`. `companion.validate` returns them as
 `path: message` strings. `companion.loads` only parses. Nothing checks
 uniqueness across annotations. `companion.dumps` keeps key order and writes
-two-space indentation and a final newline.
+two-space indentation and a final newline. `companion.merge` and
+`companion.rebase` implement [folder defaults](#folder-defaults), and
+`discovery.inherit` applies them to a record read from a file.
 
 ## Discovery
 
@@ -257,6 +304,9 @@ from local files. This is a reader convention, not part of the schema.
   leading `**/` also matches files in the root.
 - Hidden directories are read. Symlinks are skipped while walking and are an
   error when named explicitly.
+- A file named `_defaults.json` holds [folder defaults](#folder-defaults), not
+  annotations. Every defaults file that covers a selected file applies,
+  whatever `--include` and `--exclude` select, and a symlinked one is an error.
 - Files are read in sorted path order, each resolved path once.
 - Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
   annotations from other files are still returned.
@@ -268,5 +318,5 @@ problem. Keep annotations in a directory of their own, or name them
 `*.annotations.json` and select them with `--include '*.annotations.json'`.
 
 `scan` exits 0 when it finds annotations and no problems. It exits 1 for an
-invalid annotation or file shape. It exits 2 for a read, JSON, path or symlink
-failure, or when it finds no annotations. Status 2 wins over 1.
+invalid annotation, file shape or defaults file. It exits 2 for a read, JSON,
+path or symlink failure, or when it finds no annotations. Status 2 wins over 1.
