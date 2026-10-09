@@ -7,7 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,6 +39,8 @@ class TestMerge(unittest.TestCase):
     def test_a_written_string_replaces_an_inherited_object(self):
         self.assertEqual(companion.merge({"target": {"pin": {"type": "repository"}}}, {"target": "A.html"}),
                          {"target": "A.html"})
+        self.assertEqual(companion.merge({"status": {"pin": {"type": "repository"}}}, {"status": "partial"}),
+                         {"status": "partial"})
 
     def test_arguments_are_not_changed_or_shared(self):
         inherited, written = {"a": {"b": [1]}}, {"a": {"c": {"d": 1}}}
@@ -245,6 +247,9 @@ class TestFolders(unittest.TestCase):
         self.write("_defaults.json", [], raw=False)
         with redirect_stdout(io.StringIO()):
             self.assertEqual(cli.main(["validate", str(leaf)]), 1)
+        self.write("_defaults.json", "{", raw=True)
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.assertEqual(cli.main(["validate", str(leaf)]), 2)
 
     def test_validate_names_the_defaults_behind_a_problem(self):
         defaults = self.write("_defaults.json", {"source": SOURCE, "location": {"page": 0}})

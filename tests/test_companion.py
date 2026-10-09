@@ -447,6 +447,16 @@ class TestPinsAndFacts(unittest.TestCase):
             with self.subTest(kind=kind, key=key, value=value):
                 self.assertTrue(C.validate(doc))
 
+    def test_every_key_of_a_builtin_pin_is_typed(self):
+        wrong = {"line": (0, "1"), "author": ("", [1]), "identifiers": ([], {"a": 1})}
+        for kind, keys in PINS.items():
+            for key in keys if kind != "generic" else ():
+                for value in wrong.get(key, (1, "")):
+                    doc = document()
+                    doc["source"]["pin"] = {"type": kind, key: value}
+                    with self.subTest(kind=kind, key=key, value=value):
+                        self.assertTrue(C.validate(doc))
+
     def test_pins_and_facts_are_not_verified(self):
         doc = document()
         doc["source"]["pin"] = {"type": "website", "url": "https://unreachable.invalid/", "sha256": "0" * 64}
