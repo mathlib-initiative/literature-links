@@ -234,9 +234,14 @@ _SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
 
 
 def _rebased(reference: str, base: str) -> str:
-    if _SCHEME.match(reference) or reference.startswith("/"):
+    # An empty reference is invalid and must stay so.
+    if not reference or _SCHEME.match(reference) or reference.startswith("/"):
         return reference
-    if reference.startswith(("#", "?")):
+    base = base.partition("#")[0]
+    if reference.startswith("#"):
+        return base + reference
+    base = base.partition("?")[0]
+    if reference.startswith("?"):
         return base + reference
     return base[:base.rfind("/") + 1] + reference
 

@@ -158,6 +158,36 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertTrue(any("line 2" in problem["path"] and problem["code"] == "JSON"
                             for problem in result["problems"]))
 
+    def test_the_json_reports_have_this_shape(self):
+        good = self.write("a.json", current_annotation())
+        bad = self.write("b.json", [None])
+        status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
+        self.assertEqual((status, err), (1, ""))
+        self.assertEqual(json.loads(out), {
+            "valid": False, "status": 1, "files": [str(good.resolve()), str(bad.resolve())],
+            "records": [{"annotation": current_annotation(),
+                         "origin": {"path": str(good.resolve()), "pointer": "", "line": None,
+                                    "base_uri": good.resolve().as_uri(), "defaults": []}}],
+            "problems": [{"code": "SHAPE", "path": f"{bad.resolve()}#/0",
+                          "message": "each annotation must be a JSON object"}]})
+        status, out, err = self.run_command("validate", str(good), "--format", "json")
+        self.assertEqual((status, err), (0, ""))
+        self.assertEqual(json.loads(out), {"document": str(good), "valid": True, "status": 0, "defaults": [],
+                                           "problems": [], "warnings": []})
+
+    def test_a_defaults_file_that_is_not_an_object_exits_one(self):
+        self.write("a.json", current_annotation())
+        (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
+        status, out, _ = self.run_command("scan", str(self.directory), "--format", "json")
+        self.assertEqual((status, [problem["code"] for problem in json.loads(out)["problems"]]), (1, ["DEFAULTS"]))
+
+    def test_options_are_not_abbreviated(self):
+        good = self.write("a.json", current_annotation())
+        for arguments in (("scan", str(good), "--form", "json"), ("validate", str(good), "--form", "json"),
+                          ("scan", str(good), "--incl", "*"), ("--vers",)):
+            with self.subTest(arguments=arguments):
+                self.assertEqual(self.run_command(*arguments)[0], 2)
+
     def test_scope_patterns_leave_graph_and_reports_as_application_data(self):
         self.write("one.annotations.json", current_annotation())
         self.write("graph.json", {"nodes": [{"annotation": current_annotation()}]})

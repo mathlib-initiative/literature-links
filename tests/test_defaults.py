@@ -36,6 +36,10 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(companion.merge({"target": "a.html"}, {"target": {"uri": "b.html", "x": None}}),
                          {"target": {"uri": "b.html", "x": None}})
 
+    def test_a_written_string_replaces_an_inherited_object(self):
+        self.assertEqual(companion.merge({"target": {"pin": {"type": "repository"}}}, {"target": "A.html"}),
+                         {"target": "A.html"})
+
     def test_arguments_are_not_changed_or_shared(self):
         inherited, written = {"a": {"b": [1]}}, {"a": {"c": {"d": 1}}}
         merged = companion.merge(inherited, written)
@@ -66,6 +70,24 @@ class TestRebase(unittest.TestCase):
         self.assertEqual(companion.rebase(value, "../_defaults.json"), value)
         self.assertEqual(companion.rebase({"target": {"uri": "lean:Nat.add"}}, "../_defaults.json"),
                          {"target": {"uri": "lean:Nat.add"}})
+
+    def test_target_and_its_pin_are_rebased_and_only_a_scheme_is_absolute(self):
+        value = {"target": {"uri": "site/A.html", "pin": {"type": "repository", "url": "repo/"}}}
+        self.assertEqual(companion.rebase(value, "../../_defaults.json")["target"],
+                         {"uri": "../../site/A.html", "pin": {"type": "repository", "url": "../../repo/"}})
+        self.assertEqual(companion.rebase({"target": "1.2:intro.html"}, "../_defaults.json"), {"target": "../1.2:intro.html"})
+        self.assertEqual(companion.rebase({"target": "git+https://example.org/r"}, "../_defaults.json"),
+                         {"target": "git+https://example.org/r"})
+
+    def test_an_empty_reference_stays_empty(self):
+        self.assertEqual(companion.rebase({"source": {"uri": ""}}, "../_defaults.json"), {"source": {"uri": ""}})
+
+    def test_the_query_and_fragment_of_the_base_are_not_part_of_its_path(self):
+        value = {"source": {"uri": "x.pdf"}, "target": "?q=2", "location": {"profile": "#p"}}
+        self.assertEqual(companion.rebase(value, "https://example.org/c/_defaults.json?sig=a/b#top"),
+                         {"source": {"uri": "https://example.org/c/x.pdf"},
+                          "target": "https://example.org/c/_defaults.json?q=2",
+                          "location": {"profile": "https://example.org/c/_defaults.json?sig=a/b#p"}})
 
     def test_a_defaults_file_in_the_same_folder_changes_only_same_document_references(self):
         value = {"source": {"uri": "book.pdf"}, "target": "#a"}
@@ -114,6 +136,38 @@ class TestFolders(unittest.TestCase):
         self.assertEqual(second.defaults, (self.root / "_defaults.json", inner))
         self.assertNotIn("status", second.annotation)
         self.assertEqual(second.annotation["target"], {"pin": {"type": "repository"}, "uri": "../../B.html"})
+
+    def test_a_null_in_a_defaults_file_removes_the_outer_default_and_is_kept_at_the_top(self):
+        self.write("_defaults.json", {"source": SOURCE, "kind": "lemma", "note": None})
+        self.write("1.2/_defaults.json", {"kind": None})
+        self.write("1.2/a.json", {"note": "kept"})
+        self.write("b.json", {})
+        result = discovery.collect([self.root])
+        record, = result.records
+        self.assertEqual((record.path.name, "kind" in record.annotation, record.annotation["note"]),
+                         ("a.json", False, "kept"))
+        problem, = result.problems  # the outermost null has nothing to remove, so b.json keeps it
+        self.assertEqual((problem.code, problem.path), ("SCHEMA", f"{self.root / 'b.json'}# $.note"))
+
+    def test_only_a_file_spelled_exactly_is_a_defaults_file(self):
+        self.write("_Defaults.json", {"source": SOURCE})
+        self.write("a.json", {"target": "x.html"})
+        result = discovery.collect([self.root])
+        # On every file system it is an ordinary annotation file, and a.json inherits nothing.
+        self.assertEqual([(record.path.name, record.defaults) for record in result.records], [("_Defaults.json", ())])
+        self.assertEqual([(problem.code, problem.path) for problem in result.problems],
+                         [("SCHEMA", str(self.root / "a.json") + "# $")])
+
+    def test_a_record_too_deep_to_merge_is_reported_and_the_others_are_read(self):
+        self.write("_defaults.json", {"source": SOURCE})
+        self.write("a.json", '{"extensions": {"x.y": ' + "[" * 600 + "]" * 600 + "}}", raw=True)
+        self.write("b.json", {})
+        result = discovery.collect([self.root])
+        self.assertEqual([(problem.code, problem.path) for problem in result.problems],
+                         [("JSON", str(self.root / "a.json") + "#")])
+        self.assertEqual([record.path for record in result.records], [self.root / "b.json"])
+        annotation, _, problems = discovery.inherit(companion.loads((self.root / "a.json").read_text()), self.root / "a.json")
+        self.assertEqual((annotation, [problem.code for problem in problems]), (None, ["JSON"]))
 
     def test_defaults_do_not_reach_sibling_folders(self):
         self.write("a/_defaults.json", {"source": SOURCE})
@@ -191,6 +245,14 @@ class TestFolders(unittest.TestCase):
         self.write("_defaults.json", [], raw=False)
         with redirect_stdout(io.StringIO()):
             self.assertEqual(cli.main(["validate", str(leaf)]), 1)
+
+    def test_validate_names_the_defaults_behind_a_problem(self):
+        defaults = self.write("_defaults.json", {"source": SOURCE, "location": {"page": 0}})
+        leaf = self.write("a.json", {})
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(cli.main(["validate", str(leaf)]), 1)
+        self.assertIn(f"(with defaults from {defaults}) [SCHEMA]", output.getvalue())
 
 
 if __name__ == "__main__":
