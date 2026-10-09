@@ -29,7 +29,9 @@ stay valid in later 1.x; a breaking change bumps the major version.
 | `html` | An element ID, a CSS selector or a quotation |
 | `generic` | Any JSON object the application defines |
 
-Relative references resolve against the file that holds the annotation.
+Relative references resolve against the file that holds the annotation. A
+`_defaults.json` file gives every annotation in its folder and below the members
+they share, such as `source`; see [folder defaults](docs/companion.md#folder-defaults).
 Validation checks structure, PDF rectangles and LaTeX line order. It does not
 fetch resources or check mathematics.
 
