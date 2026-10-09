@@ -40,7 +40,7 @@
           }
         }
       ],
-      "description": "The formal destination: a reference, or an object with uri, pin and extensions. Absent means no formal counterpart. This name does not mean the W3C annotation target."
+      "description": "The formal destination: a reference, or an object with uri, pin and extensions. Absent means the record links nothing. This name does not mean the W3C annotation target."
     },
     "location": {
       "type": "object",
@@ -103,6 +103,7 @@
       "if": {
         "properties": {
           "source": {
+            "type": "object",
             "properties": {
               "type": {
                 "const": "pdf"
@@ -136,6 +137,7 @@
       "if": {
         "properties": {
           "source": {
+            "type": "object",
             "properties": {
               "type": {
                 "const": "latex"
@@ -169,6 +171,7 @@
       "if": {
         "properties": {
           "source": {
+            "type": "object",
             "properties": {
               "type": {
                 "const": "html"

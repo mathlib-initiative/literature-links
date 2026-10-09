@@ -126,6 +126,10 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [selected])
 
+    def test_patterns_are_case_sensitive(self):
+        self.write("a.json", annotation())
+        self.assertEqual([p.code for p in discovery.collect([self.root], include=["*.JSON"]).problems], ["NO_ANNOTATIONS"])
+
     def test_explicit_files_support_arbitrary_suffixes_and_patterns(self):
         selected = self.write("link.data", annotation())
         self.assertEqual(discovery.collect([selected]).files, [selected])

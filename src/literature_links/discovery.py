@@ -87,12 +87,12 @@ class _Defaults:
         except OSError as exc:
             self.problems.append(Problem("PATH", str(path), str(exc)))
         else:
-            if stat.S_ISLNK(mode):
+            if not self._spelled(path):
+                value = None
+            elif stat.S_ISLNK(mode):
                 self.problems.append(Problem("SYMLINK", str(path), "defaults files must not be symlinks"))
             elif not stat.S_ISREG(mode):
                 self.problems.append(Problem("PATH", str(path), "a defaults file must be a regular file"))
-            elif not self._spelled(path):
-                value = None
             else:
                 try:
                     value = companion.loads(path.read_text(encoding="utf-8"))
@@ -147,7 +147,8 @@ def inherit(annotation: dict[str, Any], path: Path | str) -> tuple[dict[str, Any
 
     Return the merged annotation, the defaults files applied (outermost first)
     and the problems reading them. The annotation is None when a defaults file
-    cannot be used. Relative references keep resolving against ``path``.
+    cannot be used or the record is too deep to merge. Relative references
+    keep resolving against ``path``.
     """
     problems: list[Problem] = []
     chain = _Defaults(problems).chain(Path(path).resolve())
@@ -289,7 +290,7 @@ def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None
                 result.problems.append(Problem("PATH", str(child),
                                                "selected input is not a regular file"))
 
-    roots = sorted({Path(path).absolute() for path in paths}, key=str)
+    roots = sorted({Path(path).absolute() for path in paths}, key=Path.as_posix)
     for path in roots:
         try:
             if path.is_symlink():

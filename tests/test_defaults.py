@@ -4,11 +4,13 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parent.parent
 if importlib.util.find_spec("literature_links") is None:
@@ -137,6 +139,7 @@ class TestFolders(unittest.TestCase):
             **SOURCE["pin"], "url": "../notes.html"}}, "status": "partial", "kind": "remark"})
         self.assertEqual(second.defaults, (self.root / "_defaults.json", inner))
         self.assertNotIn("status", second.annotation)
+        self.assertEqual(second.annotation["source"]["uri"], "../../../book.pdf")
         self.assertEqual(second.annotation["target"], {"pin": {"type": "repository"}, "uri": "../../B.html"})
 
     def test_a_null_in_a_defaults_file_removes_the_outer_default_and_is_kept_at_the_top(self):
@@ -159,6 +162,35 @@ class TestFolders(unittest.TestCase):
         self.assertEqual([(record.path.name, record.defaults) for record in result.records], [("_Defaults.json", ())])
         self.assertEqual([(problem.code, problem.path) for problem in result.problems],
                          [("SCHEMA", str(self.root / "a.json") + "# $")])
+        (self.root / "sub" / "_Defaults.json").mkdir(parents=True)  # nor is a folder of that name a broken one
+        self.write("sub/b.json", {"source": SOURCE})
+        self.assertEqual([record.path.name for record in discovery.collect([self.root / "sub"]).records], ["b.json"])
+
+    @unittest.skipIf(sys.platform == "win32" or getattr(os, "geteuid", lambda: 0)() == 0, "needs POSIX permissions")
+    def test_a_folder_that_cannot_be_listed_still_gives_its_defaults(self):
+        self.write("locked/_defaults.json", {"source": SOURCE})
+        self.write("locked/inner/a.json", {})
+        (self.root / "locked").chmod(0o111)
+        self.addCleanup((self.root / "locked").chmod, 0o755)
+        result = discovery.collect([self.root / "locked" / "inner"])
+        self.assertEqual((len(result.records), result.problems), (1, []))
+
+    def test_excluded_or_unselected_defaults_still_apply(self):
+        self.write("_defaults.json", {"source": SOURCE})
+        self.write("a.x.json", {})
+        for options in ({"exclude": ["**/_defaults.json"]}, {"include": ["*.x.json"]}):
+            with self.subTest(options=options):
+                result = discovery.collect([self.root], **options)
+                self.assertEqual((len(result.records), result.problems), (1, []))
+
+    def test_scan_json_names_the_defaults_of_each_record(self):
+        defaults = self.write("_defaults.json", {"source": SOURCE})
+        self.write("1.1/a.json", {})
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(cli.main(["scan", str(self.root), "--format", "json"]), 0)
+        record, = json.loads(output.getvalue())["records"]
+        self.assertEqual(record["origin"]["defaults"], [str(defaults)])
 
     def test_a_record_too_deep_to_merge_is_reported_and_the_others_are_read(self):
         self.write("_defaults.json", {"source": SOURCE})
@@ -258,6 +290,10 @@ class TestFolders(unittest.TestCase):
         with redirect_stdout(output):
             self.assertEqual(cli.main(["validate", str(leaf)]), 1)
         self.assertIn(f"(with defaults from {defaults}) [SCHEMA]", output.getvalue())
+        errors = io.StringIO()  # a problem of the installation is not one of the defaults
+        with patch.object(companion, "SCHEMA_PATH", self.root / "missing.json"), redirect_stderr(errors):
+            self.assertEqual(cli.main(["validate", str(leaf)]), 2)
+        self.assertNotIn("with defaults from", errors.getvalue())
 
 
 if __name__ == "__main__":
