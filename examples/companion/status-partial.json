@@ -36,7 +36,7 @@
   },
   "note": "Injective star homomorphisms are isometric, which implies that the C*-norm is unique; the uniqueness statement itself is not stated separately.",
   "extensions": {
-    "org.wikilean": {
+    "org.example.wiki": {
       "provenance": "ai"
     }
   }

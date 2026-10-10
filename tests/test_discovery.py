@@ -126,6 +126,10 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [selected])
 
+    def test_patterns_are_case_sensitive(self):
+        self.write("a.json", annotation())
+        self.assertEqual([p.code for p in discovery.collect([self.root], include=["*.JSON"]).problems], ["NO_ANNOTATIONS"])
+
     def test_explicit_files_support_arbitrary_suffixes_and_patterns(self):
         selected = self.write("link.data", annotation())
         self.assertEqual(discovery.collect([selected]).files, [selected])
@@ -149,14 +153,14 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([path])
         self.assertEqual([r.pointer for r in result.records], ["/0", "/3"])
         self.assertTrue(any("#/1" in p.path for p in result.problems))
-        self.assertTrue(any(p.code == "SHARD_SHAPE" and "#/2" in p.path for p in result.problems))
+        self.assertTrue(any(p.code == "SHAPE" and "#/2" in p.path for p in result.problems))
 
     def test_jsonl_reports_physical_line_and_disallows_array_rows(self):
         path = self.raw("links.jsonl", "\n" + json.dumps(annotation()) + "\n{broken}\n[]\n" + json.dumps(annotation(2)))
         result = discovery.collect([path])
         self.assertEqual([r.line for r in result.records], [2, 5])
         self.assertTrue(any(p.code == "JSON" and "line 3" in p.path for p in result.problems))
-        self.assertTrue(any(p.code == "SHARD_SHAPE" and "line 4" in p.path for p in result.problems))
+        self.assertTrue(any(p.code == "SHAPE" and "line 4" in p.path for p in result.problems))
 
     def test_jsonl_crlf_and_cr_end_lines(self):
         path = self.root / "links.JSONL"
@@ -202,6 +206,11 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(len(result.records), 1)
         self.assertEqual({p.code for p in result.problems}, {"PATH", "IO"})
         self.assertTrue(any(str(missing) == p.path for p in result.problems))
+
+    def test_files_are_read_in_the_same_order_on_every_platform(self):
+        nested = self.write("a/x.json", annotation())
+        flat = self.write("a0.json", annotation())
+        self.assertEqual(discovery.collect([self.root]).files, [nested.resolve(), flat.resolve()])
 
     def test_alias_paths_keep_canonical_origins_and_read_once(self):
         file = self.write("link.json", annotation())
