@@ -72,7 +72,8 @@ selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
 displayed page box: the CropBox, or the MediaBox when there is none, after the
 page's `Rotate` entry is applied. The origin is the top-left corner and y grows
 down. The values are in [0, 1], width and height are positive, and x + width and
-y + height are at most 1.
+y + height are at most 1. The sums are taken in IEEE 754 double arithmetic, so a
+width computed as 1 − x always fits.
 
 ### LaTeX
 
