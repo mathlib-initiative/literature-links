@@ -141,6 +141,7 @@ class TestEntryPoints(unittest.TestCase):
         examples = sorted(EXAMPLES.glob("*.json"))
         self.assertTrue(examples)
         self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
+        self.assertEqual(self.run_cli("scan", str(EXAMPLES))[0], 0)  # the folders too
 
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"

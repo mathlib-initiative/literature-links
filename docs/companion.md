@@ -35,10 +35,9 @@ the target is the thing being annotated.
 | `extensions`, `source.extensions`, `target.extensions`, `status.extensions` | No | Objects of [application data](#extensions) |
 | `$schema` | No | A reference used as a tooling hint |
 
-Only `source` is required. Without `target`, the annotation records an informal
-passage with no formal counterpart. Other fields are invalid at the top level,
-in `source`, in `target` and `status` objects, in built-in pins and in built-in
-locations. Two targets or two passages need two annotations. No field is
+Only `source` is required. Without `target`, the annotation records the
+informal passage alone. Other fields are invalid at the top level, in `source`,
+in `target` and `status` objects, in built-in pins and in built-in locations. Two targets or two passages need two annotations. No field is
 inherited from another record, only from [folder defaults](#folder-defaults).
 An array is not an annotation.
 
@@ -73,7 +72,8 @@ selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
 displayed page box: the CropBox, or the MediaBox when there is none, after the
 page's `Rotate` entry is applied. The origin is the top-left corner and y grows
 down. The values are in [0, 1], width and height are positive, and x + width and
-y + height are at most 1.
+y + height are at most 1. The sums are taken in IEEE 754 double arithmetic, so a
+width computed as 1 − x always fits.
 
 ### LaTeX
 
@@ -92,7 +92,8 @@ Use exactly one of these:
 - `fragment` is the decoded value of an element's `id` attribute, with no
   leading `#`, whitespace or controls; `name` attributes do not count. It is
   not percent-decoded again, so `"a%20b"` is a literal ID.
-- `css` is a nonempty CSS selector. The checker does not parse it.
+- `css` is a nonempty CSS selector. The checker does not parse it. A selector
+  that matches more than one element is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
@@ -106,7 +107,7 @@ Do not change case, normalize Unicode or add spaces between elements, so
 `<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text counts. Shadow
 DOM and iframes do not. `White_Space` means U+0009–000D, U+0020, U+0085,
 U+00A0, U+1680, U+2000–200A, U+2028–2029, U+202F, U+205F and U+3000. Other text
-conventions belong in `generic` mode.
+conventions need a `profile`.
 
 ### Generic
 
@@ -129,7 +130,7 @@ with only a `type` is valid.
 | `book` | `title`, `author`, `publisher`, `edition`, `date`, `isbn`, `url`, `retrieved`, `sha256`, `identifiers` |
 | `paper` | `title`, `author`, `venue`, `volume`, `number`, `pages`, `date`, `doi`, `arxiv`, `url`, `retrieved`, `sha256`, `identifiers` |
 | `repository` | `url`, `commit`, `path`, `line`, `module`, `declaration`, `sha256`, `identifiers` |
-| `generic` | Any keys the application defines |
+| `generic` | Any keys the application defines; a `url` is still a reference |
 
 Other keys are invalid in the built-in types; put them in `identifiers` or use
 `generic`. Values are nonempty strings, except that `author` is a string or an
@@ -186,8 +187,9 @@ is merely unlinked. The format verifies none of these claims.
 
 `extensions` maps nonempty keys without whitespace or controls to any JSON
 values. Namespaced keys such as `org.example.tool` are recommended. Annotation,
-source, target and status extensions never merge. Consumers keep unknown values
-unchanged and never fetch or run them. An extension is not a trusted claim.
+source, target and status extensions never merge with each other. Consumers keep
+unknown values unchanged and never fetch or run them. An extension is not a
+trusted claim.
 
 ## References
 

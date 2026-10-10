@@ -16,9 +16,8 @@ overlays and the companions built from annotations live in their own repositorie
 ```
 
 Only `source` is required. Without `location`, the annotation links the whole
-source; without `target`, it records a passage with no formal counterpart. A
-typed `pin` on either end cites the resource outside the companion, like a
-bibliography entry. Optional `status`, `kind`, `label` and `note` describe the
+source; without `target`, it records the passage alone. A typed `pin` on either
+end cites the resource outside the companion, like a bibliography entry. Optional `status`, `kind`, `label` and `note` describe the
 link, and `id` and `extensions` hold application data. Records valid under 1.x
 stay valid in later 1.x; a breaking change bumps the major version.
 

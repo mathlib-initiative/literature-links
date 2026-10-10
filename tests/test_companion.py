@@ -51,6 +51,12 @@ class TestSmallContract(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertEqual(C.validate(document(mode)), [])
 
+    def test_a_missing_source_is_the_only_problem_it_causes(self):
+        for location in ({"page": 3, "rect": [0.1, 0.2, 0.3, 0.4]}, {"label": "a"}, {"fragment": "a"}):
+            for source in ({}, {"source": {"uri": "a"}}, {"source": None}, {"source": "a.pdf"}):
+                with self.subTest(location=location, source=source):
+                    self.assertEqual(len(C.validate({"location": location, "target": "x.html", **source})), 1)
+
     def test_required_fields_and_object_shapes(self):
         cases = [None, [], 2, "document", {}, {"version": 2}]
         doc = document()
@@ -254,12 +260,18 @@ class TestLocatorBounds(unittest.TestCase):
     def test_pdf_rectangles_require_page_positive_extent_and_page_bounds(self):
         invalid = ([0, 0, 0, 1], [0, 0, 1, 0], [-0.1, 0, 0.5, 0.5], [0, 0, 1.1, 0.5],
                    [0.7, 0, 0.4, 1], [0, 0.7, 1, 0.4], [1, 0, 0.1, 1],
-                   [0.9, 0, 0.10000000000000002, 1], [1e-100, 0, 1, 1],
+                   [0.5, 0, 0.5000000000000002, 1], [0, 0.5, 1, 0.5000000000000002],
                    [0, 0, 1], [0, 0, 1, 1, 1], [True, 0, 1, 1], "0,0,1,1")
         for rectangle in invalid:
             with self.subTest(rect=rectangle):
                 self.assertTrue(C.validate(document("pdf", {"page": 1, "rect": rectangle})))
         self.assertTrue(C.validate(document("pdf", {"rect": [0, 0, 1, 1]})))
+
+    def test_a_pdf_rectangle_fits_when_the_double_sums_do(self):
+        for rect in ([0.9, 0, 0.10000000000000002, 1], [1e-100, 0, 1, 1], [100 / 612, 0, 512 / 612, 1],
+                     *([n / 997, n / 997, 1 - n / 997, 1 - n / 997] for n in range(1, 997))):
+            with self.subTest(rect=rect):
+                self.assertEqual(C.validate(document("pdf", {"page": 1, "rect": rect})), [])
 
     def test_latex_anchor_alternatives_and_inclusive_ranges(self):
         invalid = ({"label": ""}, {"label": "a", "lines": [1, 2]}, {"lines": [2, 1]},
@@ -302,7 +314,7 @@ class TestLocatorBounds(unittest.TestCase):
     def test_profile_marks_an_application_defined_location_in_every_mode(self):
         profiled = {"pdf": {"profile": "urn:example:figure", "page": 0, "rect": [0.9, 0.9, 0.5, 0.5]},
                     "latex": {"profile": "urn:example:environment", "lines": [9, 2]},
-                    "html": {"profile": "urn:wikilean:anchor:v3", "section": "Definition", "snippet": "a group"},
+                    "html": {"profile": "urn:example:anchor:v3", "section": "Definition", "snippet": "a group"},
                     "generic": {"profile": "https://example.org/profiles/row", "row": 4}}
         for mode, location in profiled.items():
             with self.subTest(mode=mode):
@@ -424,7 +436,8 @@ class TestPinsAndFacts(unittest.TestCase):
         valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]), ("book", "author", []),
                  ("repository", "line", 1), ("repository", "line", 38.0), ("website", "sha256", "0" * 64),
                  ("paper", "identifiers", {}), ("paper", "identifiers", {"doi": "10.0000/x", "arxiv": "0000.00000"}),
-                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629")]
+                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629"),
+                 ("generic", "url", "catalogue/17"), ("generic", "shelf", 3)]
         for kind, key, value in valid:
             doc["source"]["pin"] = {"type": kind, key: value}
             with self.subTest(kind=kind, key=key, value=value):
@@ -433,11 +446,22 @@ class TestPinsAndFacts(unittest.TestCase):
                    ("repository", "line", 0), ("repository", "line", "38"), ("repository", "line", 1.5),
                    ("website", "sha256", "0" * 63), ("website", "sha256", "A" * 64), ("website", "sha256", "0" * 64 + "\n"),
                    ("paper", "identifiers", {"doi": 1}), ("paper", "identifiers", {"doi": ""}), ("paper", "identifiers", []),
-                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123)]
+                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123),
+                   ("generic", "url", "a b"), ("generic", "url", 5)]
         for kind, key, value in invalid:
             doc["source"]["pin"] = {"type": kind, key: value}
             with self.subTest(kind=kind, key=key, value=value):
                 self.assertTrue(C.validate(doc))
+
+    def test_every_key_of_a_builtin_pin_is_typed(self):
+        wrong = {"line": (0, "1"), "author": ("", [1]), "identifiers": ([], {"a": 1})}
+        for kind, keys in PINS.items():
+            for key in keys if kind != "generic" else ():
+                for value in wrong.get(key, (1, "")):
+                    doc = document()
+                    doc["source"]["pin"] = {"type": kind, key: value}
+                    with self.subTest(kind=kind, key=key, value=value):
+                        self.assertTrue(C.validate(doc))
 
     def test_pins_and_facts_are_not_verified(self):
         doc = document()
@@ -581,6 +605,8 @@ class TestSchema(unittest.TestCase):
         ours = Validator(schema)
         cases = [document(mode, location) for mode, locations in VALID_LOCATIONS.items() for location in locations]
         cases += [document(mode) for mode in VALID_LOCATIONS]
+        cases += [{"target": "x", "location": {"page": 1}}, {"source": "a.pdf", "location": {"page": 1}}]
+        cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "generic", "url": url}}} for url in (5, "a b", "a")]
         randomizer = random.Random(917)
         values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1],
                   {"type": "website"}, {"type": "book", "author": ["x", "y"]}, {"type": "book", "author": [1]},
