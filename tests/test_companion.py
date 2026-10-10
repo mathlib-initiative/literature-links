@@ -260,12 +260,18 @@ class TestLocatorBounds(unittest.TestCase):
     def test_pdf_rectangles_require_page_positive_extent_and_page_bounds(self):
         invalid = ([0, 0, 0, 1], [0, 0, 1, 0], [-0.1, 0, 0.5, 0.5], [0, 0, 1.1, 0.5],
                    [0.7, 0, 0.4, 1], [0, 0.7, 1, 0.4], [1, 0, 0.1, 1],
-                   [0.9, 0, 0.10000000000000002, 1], [1e-100, 0, 1, 1],
+                   [0.5, 0, 0.5000000000000002, 1], [0, 0.5, 1, 0.5000000000000002],
                    [0, 0, 1], [0, 0, 1, 1, 1], [True, 0, 1, 1], "0,0,1,1")
         for rectangle in invalid:
             with self.subTest(rect=rectangle):
                 self.assertTrue(C.validate(document("pdf", {"page": 1, "rect": rectangle})))
         self.assertTrue(C.validate(document("pdf", {"rect": [0, 0, 1, 1]})))
+
+    def test_a_pdf_rectangle_fits_when_the_double_sums_do(self):
+        for rect in ([0.9, 0, 0.10000000000000002, 1], [1e-100, 0, 1, 1], [100 / 612, 0, 512 / 612, 1],
+                     *([n / 997, n / 997, 1 - n / 997, 1 - n / 997] for n in range(1, 997))):
+            with self.subTest(rect=rect):
+                self.assertEqual(C.validate(document("pdf", {"page": 1, "rect": rect})), [])
 
     def test_latex_anchor_alternatives_and_inclusive_ranges(self):
         invalid = ({"label": ""}, {"label": "a", "lines": [1, 2]}, {"lines": [2, 1]},
