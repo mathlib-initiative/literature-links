@@ -1,4 +1,4 @@
-"""Read annotations from local JSON and JSONL files (docs/companion.md, "Discovery")."""
+"""Read annotations from local JSON and JSONL files (docs/tools.md, "Discovery")."""
 from __future__ import annotations
 
 import fnmatch

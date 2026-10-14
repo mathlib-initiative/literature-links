@@ -4,7 +4,9 @@ An annotation links one informal source, or a location in it, to one formal
 destination. The [JSON Schema](../schema/companion.schema.json) gives its
 structure, and [validation](#validation) adds two checks. The format has no
 version field; it carries the version of the release. Records valid under 1.x
-stay valid in later 1.x; a breaking change bumps the major version.
+stay valid in later 1.x; a breaking change bumps the major version. This page
+defines the format; [tools.md](tools.md) documents the checker, its Python API,
+the command line and how files and folders are read.
 
 ```json
 {
@@ -272,59 +274,13 @@ JSON number with no fractional part counts, so `2.0` is a valid `page`, as in
 JSON Schema.
 
 JSON input must have unique keys, finite numbers and no unpaired surrogates,
-even inside opaque data. The Python reader keeps integers exact and reads other
-numbers as floats. It rejects overflow and nonzero underflow. Very large or deep
-input may be rejected. Consumers that use doubles keep integers exact only up to
+even inside opaque data. An implementation may reject very large or deeply
+nested input. Consumers that use doubles keep integers exact only up to
 2⁵³ − 1, so use strings for exact decimals and large identifiers.
 
-`companion.check` returns a `Report` whose `problems` are
-`Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
-`PDF_RECT` and `LATEX_LINES`. `companion.validate` returns them as
-`path: message` strings. `companion.loads` only parses. Nothing checks
-uniqueness across annotations. `companion.dumps` keeps key order and writes
-two-space indentation and a final newline. `companion.merge` and
-`companion.rebase` implement [folder defaults](#folder-defaults), and
-`discovery.inherit` applies them to a record read from a file.
-`companion.normalize` copies a record with a string `target` as
-`{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle one
-shape; it does not validate, and belongs after folder defaults are applied.
+[The checker](tools.md#python-api) implements these rules.
 
 ## Discovery
 
-`literature-links scan` and `discovery.collect` read annotations
-from local files. This is a reader convention, not part of the schema.
-
-| File | Annotations | Origin |
-|---|---|---|
-| JSON object | One | Pointer `""` |
-| JSON array | One per member | Pointer `/0`, `/1`, ... |
-| JSONL or NDJSON | One per nonblank line | Line number, from 1 |
-
-- Files are UTF-8. A JSONL line holds an object, not an array.
-- In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
-  with only spaces and tabs is blank. Blank lines are skipped but still counted.
-- Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
-  ignoring case. A file named explicitly may have any suffix.
-- `.jsonl` and `.ndjson` files are read by line. Other files are one JSON value.
-- `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
-  are case-sensitive shell wildcards on the path relative to the root, or on
-  the file name for a file named explicitly. `*` also matches `/`, and a
-  leading `**/` also matches files in the root.
-- Hidden directories are read. Symlinks are skipped while walking and are an
-  error when named explicitly.
-- A file named `_defaults.json` holds [folder defaults](#folder-defaults), not
-  annotations. Every defaults file that covers a selected file applies,
-  whatever `--include` and `--exclude` select, and a symlinked one is an error.
-- Files are read in sorted path order, each resolved path once.
-- Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
-  annotations from other files are still returned.
-- Repeated `id` values and identical annotations are kept.
-
-Scanning a repository root reads every JSON file under it, vendored and
-generated ones included, and reports each one that is not an annotation as a
-problem. Keep annotations in a directory of their own, or name them
-`*.annotations.json` and select them with `--include '*.annotations.json'`.
-
-`scan` exits 0 when it finds annotations and no problems. It exits 1 for an
-invalid annotation, file shape or defaults file. It exits 2 for a read, JSON,
-path or symlink failure, or when it finds no annotations. Status 2 wins over 1.
+How the tools read annotations from files and folders is in
+[tools.md](tools.md#discovery).
