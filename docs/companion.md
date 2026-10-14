@@ -6,7 +6,7 @@ structure, and [validation](#validation) adds two checks. The format has no
 version field; it carries the version of the release. Records valid under 1.x
 stay valid in later 1.x; a breaking change bumps the major version. This page
 defines the format; [tools.md](tools.md) documents the checker, its Python API,
-the command line and how files and folders are read.
+the command line and how files are found and read.
 
 ```json
 {
@@ -39,10 +39,12 @@ the target is the thing being annotated.
 | `$schema` | No | A reference used as a tooling hint |
 
 Only `source` is required. Without `target`, the annotation records the
-informal passage alone. Other fields are invalid at the top level, in `source`,
-in `target` and `status` objects, in built-in pins and in built-in locations. Two targets or two passages need two annotations. No field is
-inherited from another record, only from [folder defaults](#folder-defaults).
-An array is not an annotation.
+informal passage alone. A string `target` says the same as an object with that
+`uri`: `"x"` and `{ "uri": "x" }` are one link. Other fields are invalid at the
+top level, in `source`, in `target` and `status` objects, in built-in pins and
+in built-in locations. Two targets or two passages need two annotations. No
+field is inherited from another record, only from
+[folder defaults](#folder-defaults). An array is not an annotation.
 
 ## Location
 
@@ -95,13 +97,13 @@ Use exactly one of these:
 - `fragment` is the decoded value of an element's `id` attribute, with no
   leading `#`, whitespace or controls; `name` attributes do not count. It is
   not percent-decoded again, so `"a%20b"` is a literal ID.
-- `css` is a nonempty CSS selector. The checker does not parse it. A selector
+- `css` is a nonempty CSS selector. Validation does not parse it. A selector
   that matches more than one element is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
   followed by them; they narrow the match and are not part of the selection.
-  The checker keeps all three as written.
+  Consumers keep all three as written.
 
 A quote matches this text layer. Take the `textContent` of the body, or of the
 document element if there is no body, without `script`, `style` and `template`
@@ -204,10 +206,10 @@ is lexical.
 A relative reference resolves against the URI of the document that carries
 the annotation: the file, or the retrieval URI of the response that delivered
 the record, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
-This holds inside JSONL files too. It never resolves against the source, the
-`id`, the repository or the working directory. Code that holds an annotation in
-memory must keep that base. Moving an annotation means keeping the base or
-rewriting the references.
+This holds inside [JSONL](#discovery) files too. It never resolves against
+the source, the `id`, the repository or the working directory. Code that holds
+an annotation in memory must keep that base. Moving an annotation means keeping
+the base or rewriting the references.
 
 Extension strings are not references. To link a Lean declaration, give
 `target.uri` a URL, such as the file at a commit, and name the declaration in
@@ -217,15 +219,15 @@ kept as part of the reference but selects nothing; in built-in modes `location`
 is the selection.
 
 A valid annotation grants no permission to open or run anything. `$schema` never
-replaces the bundled schema. The schema's `$id` and a location's `profile` are
+changes which schema applies. The schema's `$id` and a location's `profile` are
 names, not downloads.
 
 ## Folder defaults
 
 A file named `_defaults.json` holds one JSON object: members shared by every
-annotation file in its folder and in the folders below it. It is not an
-annotation. Each record read from those files is the defaults merged with the
-record as written:
+[annotation file](#discovery) in its folder and in the folders below it. It is
+not an annotation. Each record read from those files is the defaults merged
+with the record as written:
 
 - A member the record leaves out is inherited.
 - Where both hold an object, the two merge member by member, at any depth.
@@ -236,7 +238,9 @@ record as written:
 This is [JSON Merge Patch](https://www.rfc-editor.org/rfc/rfc7396) with the
 record as the patch, except that a `null` with nothing to remove is kept, so a
 record read without defaults is read exactly as written. The rules name no
-member: any member can have a default, `extensions` included.
+member: any member can have a default, `extensions` included. So a string
+`target` or `status` replaces an inherited object, `pin` included; write
+`{ "uri": ... }` or `{ "value": ... }` to keep it.
 
 ```json
 { "source": { "type": "pdf", "uri": "../notes.pdf" },
@@ -251,8 +255,8 @@ Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
 wins. For local files that goes up to the root of the file system. A reader
 that fetches annotations over the web is given the collection's base URL and
-never looks above it. A JSONL file takes defaults like any annotation file, one
-record at a time.
+never looks above it. A [JSONL](#discovery) file takes defaults like any
+annotation file, one record at a time.
 
 A relative reference in a defaults file resolves against the defaults file.
 A reader that merges records rewrites the inherited references in
@@ -275,12 +279,16 @@ JSON Schema.
 
 JSON input must have unique keys, finite numbers and no unpaired surrogates,
 even inside opaque data. An implementation may reject very large or deeply
-nested input. Consumers that use doubles keep integers exact only up to
+nested input, a number outside the IEEE 754 double range, or a nonzero number
+that rounds to zero. Consumers that use doubles keep integers exact only up to
 2⁵³ − 1, so use strings for exact decimals and large identifiers.
 
 [The checker](tools.md#python-api) implements these rules.
 
 ## Discovery
 
-How the tools read annotations from files and folders is in
+An annotation file is a JSON or JSONL document, whether a file or a web
+response. A JSON document carries one annotation, an object; an array is not
+one. A JSONL document carries one annotation object on each nonblank line, and
+is how one document carries several. How the tools find and read files is in
 [tools.md](tools.md#discovery).

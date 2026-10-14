@@ -209,10 +209,13 @@ def normalize(annotation: dict[str, Any]) -> dict[str, Any]:
 
     A string ``target`` becomes ``{"uri": target}`` and a string ``status``
     becomes ``{"value": status}``. Everything else is copied unchanged, so an
-    already normal record comes back equal. This does not validate. Normalize
-    a record after its folder defaults are applied: a written string replaces
-    an inherited object, but a written object merges with it.
+    already normal record comes back equal. ``annotation`` must be a dict;
+    beyond that this does not validate. Normalize a record after its folder
+    defaults are applied: a written string replaces an inherited object, but a
+    written object merges with it.
     """
+    if not isinstance(annotation, dict):
+        raise TypeError("normalize takes one annotation object")
     result = copy.deepcopy(annotation)
     if isinstance(result.get("target"), str):
         result["target"] = {"uri": result["target"]}
