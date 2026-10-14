@@ -5,6 +5,9 @@
 - `companion.normalize` copies a record with a string `target` as
   `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
   one shape.
+- `docs/companion.md` now holds only the format. The checker, its Python API,
+  the command line and how files and folders are read moved to `docs/tools.md`.
+  The specification keeps its headings.
 
 ## 1.0.0 (2026-10-09)
 
