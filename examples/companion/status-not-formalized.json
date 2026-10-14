@@ -28,7 +28,7 @@
   "location": {
     "fragment": "Quotients_and_approximate_identities"
   },
-  "note": "Mathlib's approximate units are filter-based; no result derives a sequential approximate identity for separable C*-algebras.",
+  "note": "Illustrative record of a checked absence; not a reviewed claim about Mathlib.",
   "extensions": {
     "org.example.wiki": {
       "provenance": "ai"
