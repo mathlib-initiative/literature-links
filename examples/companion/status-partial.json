@@ -34,7 +34,7 @@
       "sha256": "39e02df0389ade95f3747f8fc58e05836b7b708e2c64ed34ef2bdeeb696c9f68"
     }
   },
-  "note": "Injective star homomorphisms are isometric, which implies that the C*-norm is unique; the uniqueness statement itself is not stated separately.",
+  "note": "Illustrative record of a partial status: the target states that an injective star homomorphism of C*-algebras is isometric, from which uniqueness of the C*-norm follows. Not a reviewed claim about Mathlib.",
   "extensions": {
     "org.example.wiki": {
       "provenance": "ai"
