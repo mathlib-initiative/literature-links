@@ -291,6 +291,8 @@ class TestLocatorBounds(unittest.TestCase):
         # Both is a structural problem, so the rect checks never run on it.
         report = C.check(document("pdf", {"page": 3, "rect": [0.8, 0, 0.3, 1], "quote": quote}))
         self.assertEqual([(p.code, p.path) for p in report.problems], [("SCHEMA", "$.location")])
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "rect": [0, 0, 1, 1], "quote": quote})),
+                         ["$.location: must not have both 'rect' and 'quote'"])
         self.assertEqual(C.check(document("pdf", {"page": 3, "quote": quote})).problems, [])
 
     def test_latex_anchor_alternatives_and_inclusive_ranges(self):
@@ -742,6 +744,15 @@ class TestSchemaEvaluator(unittest.TestCase):
                 Validator(schema)
         with self.assertRaises(SchemaError):
             Validator({"type": "nul"}).is_valid(1)
+
+    def test_a_banned_set_of_keys_is_named(self):
+        self.assertEqual(Validator({"not": {"required": ["a", "b", "c"]}}).errors({"a": 1, "b": 2, "c": 3}),
+                         [("$", "must not have all of 'a', 'b' and 'c'")])
+        generic = [("$", "matches a shape that is not allowed here (not)")]
+        self.assertEqual(Validator({"not": {"required": ["a", "b"]}}).errors(3), generic)
+        self.assertEqual(Validator({"not": {"required": ["a"]}}).errors({"a": 1}), generic)
+        self.assertEqual(Validator({"not": {"required": ["a", "b"], "type": "object"}}).errors({"a": 1, "b": 2}),
+                         generic)
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):
