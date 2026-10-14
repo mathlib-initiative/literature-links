@@ -47,7 +47,7 @@ Optional `status`, `kind`, `label` and `note` describe the link, and `id` and
 
 | `source.type` | `location` selects |
 |---|---|
-| `pdf` | A page, optionally with a rectangle |
+| `pdf` | A page, optionally with a rectangle or a quotation |
 | `latex` | A label or an inclusive line range |
 | `html` | An element ID, a CSS selector or a quotation |
 | `generic` | Any JSON object the application defines |

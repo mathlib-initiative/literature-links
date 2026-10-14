@@ -12,6 +12,10 @@
   are keyword-only, so a positional call fails instead of shifting fields. The
   `scan --format json` origin has no `pointer`. Problem paths no longer put `#`
   after the file name: `a.json $.location`, `a.jsonl (line 2) $.location`.
+- Added an optional `quote` to PDF locations, beside `page`: the HTML quote
+  object, matched against the extracted text of that one page. A PDF location
+  carries at most one of `rect` and `quote`. Every record valid before stays
+  valid.
 - `validate` reads `.jsonl` and `.ndjson` files one annotation per line and
   names the line in each problem; an empty one exits 2. A JSON file holding a
   scalar is a `SHAPE` problem, as in `scan`, and a `JSON` problem exits 2, as
