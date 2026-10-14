@@ -143,14 +143,6 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
         self.assertEqual(self.run_cli("scan", str(EXAMPLES))[0], 0)  # the folders too
 
-    def test_the_readme_example_is_valid(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        blocks = re.findall(r"(?ms)^```json\n(.*?)^```", readme)
-        self.assertTrue(blocks)
-        for block in blocks:
-            with self.subTest(block=block[:40]):
-                self.assertEqual(C.validate(C.loads(block)), [])
-
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
         with tempfile.TemporaryDirectory() as tmp:
@@ -187,6 +179,14 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                         keep.append(part)
                     with self.subTest(doc=name, path=token):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
+
+    def test_the_readme_example_is_valid(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        blocks = re.findall(r"(?ms)^```json\n(.*?)^```", readme)
+        self.assertTrue(blocks)
+        for block in blocks:
+            with self.subTest(block=block[:40]):
+                self.assertEqual(C.validate(C.loads(block)), [])
 
     def test_no_em_dash_in_the_docs(self):
         for name in DOCS + ("CHANGELOG.md",):
