@@ -70,15 +70,28 @@ matches, such as duplicate labels or IDs, and never picks the first one.
 
 ### PDF
 
-`{ "page": 3, "rect": [0.1, 0.2, 0.6, 0.15] }`
+`{ "page": 3, "rect": [0.1, 0.2, 0.6, 0.15] }` or
+`{ "page": 3, "quote": { "exact": "a finite group", "prefix": "Let G be " } }`
 
-`page` counts physical pages from 1, ignoring page labels. Without `rect` it
-selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
-displayed page box: the CropBox, or the MediaBox when there is none, after the
-page's `Rotate` entry is applied. The origin is the top-left corner and y grows
-down. The values are in [0, 1], width and height are positive, and x + width and
-y + height are at most 1. The sums are taken in IEEE 754 double arithmetic, so a
-width computed as 1 − x always fits.
+`page` counts physical pages from 1, ignoring page labels. It may carry `rect`
+or `quote`, not both; with neither it selects the whole page.
+
+`rect` is `[x, y, width, height]` as fractions of the displayed page box: the
+CropBox, or the MediaBox when there is none, after the page's `Rotate` entry is
+applied. The origin is the top-left corner and y grows down. The values are in
+[0, 1], width and height are positive, and x + width and y + height are at
+most 1. The sums are taken in IEEE 754 double arithmetic, so a width computed
+as 1 − x always fits.
+
+`quote` is the quote object of [HTML](#html), with the same rules for `exact`,
+`prefix` and `suffix`. It matches the text of that one physical page, `prefix`
+and `suffix` included, so it never crosses a page break. That text is what a
+PDF text extractor reads from the page, in reading order, with each run of
+`White_Space`, as defined under [HTML](#html), replaced by one space and both
+ends trimmed. Do not change case or normalize Unicode. Hyphenation, ligatures
+and differences between extractors are the application's concern. A quote that
+matches nowhere on the page, or more than once, is unresolved: as in
+[Location](#location), a consumer reports it and never picks the first match.
 
 ### LaTeX
 

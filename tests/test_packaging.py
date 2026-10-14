@@ -142,8 +142,8 @@ class TestEntryPoints(unittest.TestCase):
         self.assertIn(EXAMPLES / "latex-several.jsonl", examples)
         self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
         status, out, _ = self.run_cli("scan", str(EXAMPLES))  # the folders too
-        # 12 JSON files, 2 JSONL rows and 2 files under folder-defaults/.
-        self.assertEqual((status, out), (0, "16 annotations from 15 files; 0 problems\n"))
+        # 13 JSON files, 2 JSONL rows and 2 files under folder-defaults/.
+        self.assertEqual((status, out), (0, "17 annotations from 16 files; 0 problems\n"))
 
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
