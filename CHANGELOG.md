@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `companion.normalize` copies a record with a string `target` as
+  `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
+  one shape.
+
 ## 1.0.0 (2026-10-09)
 
 First public release.

@@ -217,6 +217,25 @@ class TestFolders(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual([record.annotation["location"]["page"] for record in result.records], [1, 2, 3, 4])
 
+    def test_normalize_gives_merged_records_one_shape(self):
+        pin = {"type": "repository", "url": "https://example.org/formal"}
+        self.write("_defaults.json", {"source": SOURCE, "target": {"pin": pin}, "status": "formalized"})
+        self.write("a.json", {"target": {"uri": "A.html"}})
+        self.write("b.json", {"target": "B.html", "status": {"value": "partial"}})
+        self.write("c.json", {"target": None})
+        result = discovery.collect([self.root])
+        self.assertEqual(result.problems, [])
+        a, b, c = (companion.normalize(record.annotation) for record in result.records)
+        self.assertEqual((a["target"], a["status"]), ({"uri": "A.html", "pin": pin}, {"value": "formalized"}))
+        # A written string replaces the inherited object, so b keeps no pin.
+        self.assertEqual((b["target"], b["status"]), ({"uri": "B.html"}, {"value": "partial"}))
+        self.assertEqual((c.get("target"), c["status"]), (None, {"value": "formalized"}))
+        self.assertEqual([companion.validate(value) for value in (a, b, c)], [[], [], []])
+        # Hence normalize after merging, not before.
+        inherited, written = {"target": {"pin": pin}}, {"target": "B.html"}
+        self.assertNotEqual(companion.merge(companion.normalize(inherited), companion.normalize(written)),
+                            companion.normalize(companion.merge(inherited, written)))
+
     def test_problems_name_the_defaults_that_were_applied(self):
         self.write("_defaults.json", {"source": {"type": "pdf"}})
         self.write("a.json", {"location": {"page": 1}})

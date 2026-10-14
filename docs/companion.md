@@ -285,6 +285,9 @@ uniqueness across annotations. `companion.dumps` keeps key order and writes
 two-space indentation and a final newline. `companion.merge` and
 `companion.rebase` implement [folder defaults](#folder-defaults), and
 `discovery.inherit` applies them to a record read from a file.
+`companion.normalize` copies a record with a string `target` as
+`{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle one
+shape; it does not validate, and belongs after folder defaults are applied.
 
 ## Discovery
 
