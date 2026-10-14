@@ -95,12 +95,16 @@ class TestStableApi(unittest.TestCase):
     def test_the_record_types_keep_their_fields(self):
         companion, discovery = module("companion"), module("discovery")
         expected = {companion.Problem: ["code", "path", "message"], companion.Report: ["problems", "warnings"],
-                    discovery.Record: ["annotation", "path", "pointer", "line", "defaults"],
+                    discovery.Record: ["annotation", "path", "line", "defaults"],
                     discovery.Collection: ["records", "problems", "files"]}
         for record, names in expected.items():
             with self.subTest(record=f"{record.__module__}.{record.__name__}"):
                 self.assertEqual([f.name for f in dataclasses.fields(record)], names)
         self.assertTrue(issubclass(companion.LoadError, ValueError))
+        # Before 2.0 a pointer came third. A positional call fails rather than shift the fields.
+        with self.assertRaises(TypeError):
+            discovery.Record({}, Path("a.json"), "", 1)
+        self.assertEqual(discovery.Record({}, Path("a.json"), line=1, defaults=()).line, 1)
         self.assertIs(discovery.Problem, companion.Problem)
 
 

@@ -1,0 +1,2 @@
+{"source": {"type": "latex", "uri": "chapters/groups.tex"}, "location": {"label": "def:index"}, "target": "https://example.org/formal/Groups.html#index", "kind": "definition"}
+{"source": {"type": "latex", "uri": "chapters/groups.tex"}, "location": {"lines": [40, 52]}, "target": "https://example.org/formal/Groups.html#lagrange", "kind": "theorem"}

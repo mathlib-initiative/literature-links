@@ -1,0 +1,127 @@
+# Literature Links tools
+
+The `literature_links` package checks annotations offline and reads them from
+files. It needs Python 3.11 or newer and nothing else. The format is defined in
+[companion.md](companion.md); this page documents the checker, its Python API,
+the command line and how files are found and read.
+
+## Python API
+
+`companion` checks one annotation:
+
+- `check(document)` returns a `Report` whose `problems` are
+  `Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
+  `PDF_RECT` and `LATEX_LINES`. Any problem makes the annotation invalid.
+  `warnings` is always empty.
+- `validate(document)` returns the problems as `path: message` strings.
+- `loads(text)` only parses. It keeps integers exact and reads other numbers as
+  floats. It raises `LoadError`, a `ValueError`, for duplicate keys, NaN and
+  Infinity, unpaired surrogates, overflow and nonzero underflow.
+- `dumps(value)` keeps key order and writes two-space indentation and a final
+  newline.
+- `merge(inherited, written)` and `rebase(value, base)` implement
+  [folder defaults](companion.md#folder-defaults).
+- `normalize(annotation)` copies a record with a string `target` as
+  `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
+  one shape. It raises `TypeError` unless `annotation` is a dict, and otherwise
+  does not validate. It belongs after folder defaults are applied.
+- `load_schema()` reads the bundled schema at `SCHEMA_PATH`.
+
+Nothing checks uniqueness across annotations.
+
+`discovery` reads annotations from files and folders, as in
+[Discovery](#discovery):
+
+- `collect(paths, *, include=None, exclude=())` returns a `Collection` of
+  `records`, `problems` and the `files` read. Valid records are kept when other
+  files fail, so check `problems` first. Each argument is a list: one string
+  raises `TypeError`.
+- A `Record(annotation, path, *, line=None, defaults=())` holds the
+  `annotation` with its folder defaults applied, its file `path`, its `line` in
+  a JSONL file (None in a JSON file), the `defaults` files applied, outermost
+  first, and the `base_uri` that its relative references resolve against.
+- `inherit(annotation, path)` applies the folder defaults that cover the file
+  `path` to a record read from it. It returns the merged annotation or None,
+  the defaults files applied, and the problems.
+- `DEFAULTS` is the file name of folder defaults, `_defaults.json`.
+- Reading adds the codes `IO`, `JSON`, `PATH`, `SYMLINK`, `SHAPE`, `DEFAULTS`
+  and `NO_ANNOTATIONS` to those of `check`.
+
+`schemacheck` is the JSON Schema evaluator that `check` runs, not a general
+JSON Schema implementation. `Validator(schema)` raises `SchemaError`, a
+`ValueError`, for what it does not implement; `errors(value)` returns
+`(path, message)` pairs and `is_valid(value)` a bool. `cli.main(argv)` runs the
+command line and returns its exit status.
+
+```python
+from literature_links import companion, discovery
+problems = companion.validate({"source": {"type": "generic", "uri": "a"}, "target": "b"})
+collection = discovery.collect(["examples/companion"])  # check .problems before .records
+```
+
+## Command line
+
+```sh
+literature-links validate FILE... [--format text|json]
+literature-links scan PATH... [--include PATTERN]... [--exclude PATTERN]... [--format text|json]
+literature-links --version
+```
+
+`validate` checks each file with its folder defaults applied: a JSONL file one
+annotation per line, as in [Discovery](#discovery), and any other file as one
+annotation. It exits 0 when every file is valid, 1 for an invalid annotation,
+file shape or defaults file, and 2 for a read, JSON, path or symlink failure,
+or a JSONL file with no annotations. A `_defaults.json` named directly is a
+problem: it is not an annotation.
+
+`scan` reads annotations from files and folders, as in [Discovery](#discovery).
+It exits 0 when it finds annotations and no problems. It exits 1 for an invalid
+annotation, file shape or defaults file. It exits 2 for a read, JSON, path or
+symlink failure, or when it finds no annotations.
+
+For both, status 2 wins over 1, and a usage error exits 2. `--format json`
+writes machine-readable output: one report per input for `validate`, and one
+report with the files, the records with their origins, and the problems for
+`scan`. A problem's path in `scan` is the file, then `(line N)` for a JSONL
+line, then the place in the annotation, such as `$.location`. `validate` names
+the file first and gives a JSONL line as `line N`.
+
+## Discovery
+
+`literature-links scan` and `discovery.collect` read annotations from local
+files, and `literature-links validate` reads each file the same way. The
+[specification](companion.md#discovery) says what a JSON and a JSONL document
+carry; the rest is a reader convention.
+
+| File | Annotations | Origin |
+|---|---|---|
+| JSON | One object | The file |
+| JSONL or NDJSON | One object per nonblank line | Line number, from 1 |
+
+- Files are UTF-8. A JSON file holds one annotation, an object. A JSON file
+  that holds an array is a `SHAPE` problem: put several annotations in a
+  `.jsonl` file. A JSONL line holds an object, not an array.
+- In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
+  with only spaces and tabs is blank. Blank lines are skipped but still counted.
+- Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
+  ignoring case. A file named explicitly may have any suffix.
+- `.jsonl` and `.ndjson` files are read by line. Other files are read as JSON.
+- `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
+  are case-sensitive shell wildcards on the path relative to the root, or on
+  the file name for a file named explicitly. `*` also matches `/`, and a
+  leading `**/` also matches files in the root.
+- Hidden directories are read. Symlinks are skipped while walking and are an
+  error when named explicitly.
+- A file named `_defaults.json` holds
+  [folder defaults](companion.md#folder-defaults), not annotations. Every
+  defaults file that covers a selected file applies, whatever `--include` and
+  `--exclude` select, and a symlinked one is an error.
+- Files are read in sorted path order, each resolved path once.
+- Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
+  annotations from other files are still returned.
+- Repeated `id` values and identical annotations are kept.
+
+Scanning a repository root reads every JSON file under it, vendored and
+generated ones included, and reports each one that is not an annotation as a
+problem. Keep annotations in a directory of their own, or name them
+`*.annotations.json` and select them with `--include '*.annotations.json'`.

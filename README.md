@@ -70,22 +70,17 @@ literature-links validate examples/companion/latex.json
 literature-links scan examples/companion
 ```
 
-`validate` checks files that each hold one annotation. `scan` walks directories
-and reads JSON files, JSON arrays and JSONL files. Point `scan` at the annotation
-folder, not a project root: it reads every JSON file below, hidden folders such
-as `.lake` included. Add `--format json` for machine-readable output. Both exit 0
-when everything is valid, 1 for invalid annotations and 2 for errors such as
-unreadable files.
-
-```python
-from literature_links import companion, discovery
-problems = companion.validate({"source": {"type": "generic", "uri": "a"}, "target": "b"})
-collection = discovery.collect(["examples/companion"])  # check .problems before .records
-```
+A `.json` file holds one annotation, and a `.jsonl` file one per line.
+`validate` checks the files it is given, and `scan` also walks directories.
+Point `scan` at the annotation folder, not a project root: it reads every JSON
+file below, hidden folders such as `.lake` included.
+[`docs/tools.md`](docs/tools.md) documents both commands, their exit codes and
+the Python API.
 
 ## Repository
 
 - [`docs/companion.md`](docs/companion.md): the specification.
+- [`docs/tools.md`](docs/tools.md): the checker, its Python API and the command line.
 - [`schema/companion.schema.json`](schema/companion.schema.json): the JSON Schema.
 - [`examples/companion/`](examples/companion/): valid examples.
 - [`src/literature_links/`](src/literature_links/): the checker. `companion`
