@@ -36,11 +36,13 @@ def _validate(args: argparse.Namespace) -> int:
             failures: list[companion.Problem] = []
             if path.name == discovery.DEFAULTS:
                 failures = [companion.Problem("DEFAULTS", "$", "a defaults file is not an annotation")]
+            elif isinstance(document, list):
+                failures = [companion.Problem("SHAPE", "$", discovery._ONE_PER_FILE)]
             elif isinstance(document, dict):
                 document, applied, failures = discovery.inherit(document, path)
             if failures:
                 problems = [asdict(problem) for problem in failures]
-                item_status = 1 if all(problem.code == "DEFAULTS" for problem in failures) else 2
+                item_status = 1 if all(problem.code in ("DEFAULTS", "SHAPE") for problem in failures) else 2
             else:
                 report = companion.check(document)
                 problems = [asdict(problem) for problem in report.problems]

@@ -8,6 +8,9 @@
 - `docs/companion.md` now holds only the format. The checker, its Python API,
   the command line and how files and folders are read moved to `docs/tools.md`.
   The specification keeps its headings.
+- How files are read: a `.json` file holds one annotation, an object. A `.json`
+  file that holds an array is now a `SHAPE` problem; put several annotations in
+  a `.jsonl` file. The schema is unchanged, so every valid record stays valid.
 
 ## 1.0.0 (2026-10-09)
 

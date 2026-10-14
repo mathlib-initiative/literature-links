@@ -204,10 +204,10 @@ is lexical.
 A relative reference resolves against the URI of the document that carries
 the annotation: the file, or the retrieval URI of the response that delivered
 the record, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
-This holds inside arrays and JSONL files too. It never resolves against the
-source, the `id`, the repository or the working directory. Code that holds an
-annotation in memory must keep that base. Moving an annotation means keeping
-the base or rewriting the references.
+This holds inside JSONL files too. It never resolves against the source, the
+`id`, the repository or the working directory. Code that holds an annotation in
+memory must keep that base. Moving an annotation means keeping the base or
+rewriting the references.
 
 Extension strings are not references. To link a Lean declaration, give
 `target.uri` a URL, such as the file at a commit, and name the declaration in
@@ -251,8 +251,8 @@ Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
 wins. For local files that goes up to the root of the file system. A reader
 that fetches annotations over the web is given the collection's base URL and
-never looks above it. Arrays and JSONL files take defaults like any annotation
-file, one record at a time.
+never looks above it. A JSONL file takes defaults like any annotation file, one
+record at a time.
 
 A relative reference in a defaults file resolves against the defaults file.
 A reader that merges records rewrites the inherited references in

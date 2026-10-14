@@ -125,28 +125,38 @@ class TestSingleAnnotationDiscovery(CommandCase):
         status, out, _ = self.run_command("validate", str(undecodable), "--format", "json")
         self.assertEqual((status, json.loads(out)["problems"][0]["code"]), (2, "IO"))
 
-    def test_collection_carriers_are_separate_from_single_annotation_validation(self):
-        first = self.write("chapter.json", [current_annotation(), current_annotation()])
+    def test_many_annotations_go_in_jsonl_which_scan_reads(self):
+        first = self.write("chapter.json", current_annotation())
         nested = self.directory / "nested"
         nested.mkdir()
         second = nested / "generated.jsonl"
-        second.write_text("\n" + json.dumps(current_annotation()) + "\n", encoding="utf-8")
-        status, _, _ = self.run_command("validate", str(first))
-        self.assertEqual(status, 1)
+        second.write_text("\n" + json.dumps(current_annotation()) + "\n" + json.dumps(current_annotation()) + "\n",
+                          encoding="utf-8")
         status, out, err = self.run_command("scan", str(self.directory), str(first), "--format", "json")
         report = json.loads(out)
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(len(report["files"]), 2)
         records = report["records"]
-        self.assertEqual([record["annotation"] for record in records], [current_annotation(), current_annotation(), current_annotation()])
-        self.assertEqual([record["origin"]["pointer"] for record in records], ["/0", "/1", ""])
-        self.assertEqual(records[2]["origin"]["line"], 2)
+        self.assertEqual([record["annotation"] for record in records], [current_annotation()] * 3)
+        self.assertEqual([(record["origin"]["pointer"], record["origin"]["line"]) for record in records],
+                         [("", None), ("", 2), ("", 3)])
         self.assertEqual(records[0]["origin"]["base_uri"], first.resolve().as_uri())
-        self.assertEqual(records[2]["origin"]["base_uri"], second.resolve().as_uri())
-        self.assertNotEqual(records[0]["origin"]["base_uri"], records[2]["origin"]["base_uri"])
+        self.assertEqual(records[1]["origin"]["base_uri"], second.resolve().as_uri())
+
+    def test_a_json_file_holding_an_array_exits_one_and_names_jsonl(self):
+        array = self.write("chapter.json", [current_annotation(), current_annotation()])
+        message = "an annotation file holds one JSON object; put several in a .jsonl file"
+        status, out, err = self.run_command("validate", str(array))
+        self.assertEqual((status, out, err), (1, f"{array}: $: {message} [SHAPE]\n", ""))
+        status, out, _ = self.run_command("validate", str(array), "--format", "json")
+        self.assertEqual((status, json.loads(out)["problems"]), (1, [{"code": "SHAPE", "path": "$", "message": message}]))
+        status, out, _ = self.run_command("scan", str(array), "--format", "json")
+        self.assertEqual((status, json.loads(out)["problems"]),
+                         (1, [{"code": "SHAPE", "path": f"{array.resolve()}#", "message": message}]))
 
     def test_scan_preserves_valid_records_but_reports_failure_and_exact_origins(self):
-        self.write("array.json", [current_annotation(), {"version": 99}])
+        self.write("single.json", current_annotation())
+        self.write("invalid.json", {"version": 99})
         stream = self.directory / "stream.jsonl"
         stream.write_text(json.dumps(current_annotation()) + "\n{\n" + json.dumps(current_annotation()) + "\n", encoding="utf-8")
         status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
@@ -154,13 +164,14 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertFalse(result["valid"])
         self.assertEqual(len(result["records"]), 3)
-        self.assertTrue(any("#/1" in problem["path"] for problem in result["problems"]))
+        self.assertTrue(any(problem["path"].startswith(f"{(self.directory / 'invalid.json').resolve()}# ")
+                            and problem["code"] == "SCHEMA" for problem in result["problems"]))
         self.assertTrue(any("line 2" in problem["path"] and problem["code"] == "JSON"
                             for problem in result["problems"]))
 
     def test_the_json_reports_have_this_shape(self):
         good = self.write("a.json", current_annotation())
-        bad = self.write("b.json", [None])
+        bad = self.write("b.json", [current_annotation()])
         status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
         self.assertEqual((status, err), (1, ""))
         self.assertEqual(json.loads(out), {
@@ -168,8 +179,8 @@ class TestSingleAnnotationDiscovery(CommandCase):
             "records": [{"annotation": current_annotation(),
                          "origin": {"path": str(good.resolve()), "pointer": "", "line": None,
                                     "base_uri": good.resolve().as_uri(), "defaults": []}}],
-            "problems": [{"code": "SHAPE", "path": f"{bad.resolve()}#/0",
-                          "message": "each annotation must be a JSON object"}]})
+            "problems": [{"code": "SHAPE", "path": f"{bad.resolve()}#",
+                          "message": "an annotation file holds one JSON object; put several in a .jsonl file"}]})
         status, out, err = self.run_command("validate", str(good), "--format", "json")
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(json.loads(out), {"document": str(good), "valid": True, "status": 0, "defaults": [],
