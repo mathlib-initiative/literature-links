@@ -472,6 +472,60 @@ class TestPinsAndFacts(unittest.TestCase):
             self.assertEqual(C.validate(doc), [])
 
 
+class TestNormalize(unittest.TestCase):
+    PIN = {"type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
+           "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8"}
+
+    def test_string_target_and_status_become_objects_in_place(self):
+        doc = {"source": {"type": "pdf", "uri": "a.pdf"}, "target": "A.html#x", "status": "partial", "kind": "lemma"}
+        normal = C.normalize(doc)
+        self.assertEqual(normal, {"source": {"type": "pdf", "uri": "a.pdf"}, "target": {"uri": "A.html#x"},
+                                  "status": {"value": "partial"}, "kind": "lemma"})
+        self.assertEqual(list(normal), list(doc))
+        self.assertEqual(C.validate(normal), [])
+
+    def test_object_forms_come_back_equal(self):
+        doc = {"source": {"type": "generic", "uri": "a"},
+               "target": {"uri": "A.html", "pin": self.PIN, "extensions": {"x.y": "B.html"}},
+               "status": {"value": "not_formalized", "pin": self.PIN}}
+        self.assertEqual(C.normalize(doc), doc)
+        self.assertEqual(C.normalize({"status": {}}), {"status": {}})
+
+    def test_absent_fields_stay_absent_and_nothing_else_changes(self):
+        doc = {"source": {"type": "generic", "uri": "a", "extensions": {"target": "t"}},
+               "extensions": {"x.y": {"target": "t", "status": "s"}}, "label": "Lemma 1"}
+        self.assertEqual(C.normalize(doc), doc)
+        self.assertNotIn("target", C.normalize(doc))
+        self.assertEqual(C.normalize({}), {})
+
+    def test_it_does_not_validate(self):
+        for value in (None, 1, True, [], ["a"], {}, {"pin": "x"}):
+            with self.subTest(value=value):
+                self.assertEqual(C.normalize({"target": value, "status": value}), {"target": value, "status": value})
+        self.assertEqual(C.normalize({"target": "", "status": ""}), {"target": {"uri": ""}, "status": {"value": ""}})
+
+    def test_it_is_idempotent_and_keeps_valid_records_valid(self):
+        examples = sorted((ROOT / "examples" / "companion").glob("*.json"))
+        self.assertTrue(examples)
+        for path in examples:
+            with self.subTest(example=path.name):
+                once = C.normalize(C.loads(path.read_text(encoding="utf-8")))
+                self.assertEqual(C.normalize(once), once)
+                self.assertEqual(C.validate(once), [])
+                self.assertTrue(all(isinstance(once[key], dict) for key in ("target", "status") if key in once))
+
+    def test_the_input_is_not_changed_or_shared(self):
+        doc = {"source": {"type": "generic", "uri": "a"}, "target": "A.html",
+               "status": {"value": "partial", "pin": copy.deepcopy(self.PIN)}, "extensions": {"x.y": [1]}}
+        before = copy.deepcopy(doc)
+        normal = C.normalize(doc)
+        self.assertEqual(doc, before)
+        normal["source"]["uri"] = "b"
+        normal["status"]["pin"]["commit"] = "c"
+        normal["extensions"]["x.y"].append(2)
+        self.assertEqual(doc, before)
+
+
 class TestStrictJson(unittest.TestCase):
     def test_duplicate_keys_are_rejected_at_every_depth(self):
         for text in ('{"version":2,"version":2}', '{"extensions":{"tool":1,"tool":2}}',
