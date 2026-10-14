@@ -60,8 +60,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [single, nested, jsonl, ndjson])
         self.assertEqual([r.annotation["location"]["page"] for r in result.records], list(range(1, 6)))
-        self.assertEqual([(r.pointer, r.line) for r in result.records],
-                         [("", None), ("", None), ("", 2), ("", 4), ("", 1)])
+        self.assertEqual([r.line for r in result.records], [None, None, 2, 4, 1])
 
     def test_every_record_uses_its_carrier_as_reference_base(self):
         first = self.raw("first/links.jsonl", json.dumps(annotation()) + "\n" + json.dumps(annotation(2)))
@@ -146,13 +145,13 @@ class TestDiscovery(unittest.TestCase):
         self.assertTrue(result.problems)
         self.assertTrue(all(str(nested) in p.path for p in result.problems))
 
-    def test_a_json_file_holding_an_array_is_a_problem_that_names_jsonl(self):
+    def test_a_json_file_holding_an_array_is_a_problem(self):
         good = self.write("good.json", annotation())
         arrays = [self.write(f"links-{size}.json", [annotation()] * size) for size in (0, 1, 2)]
         result = discovery.collect([self.root])
         self.assertEqual([r.path for r in result.records], [good])
         self.assertEqual([(p.code, p.path, p.message) for p in result.problems],
-                         [("SHAPE", f"{path}#", "an annotation file holds one JSON object; put several in a .jsonl file")
+                         [("SHAPE", str(path), "a JSON file holds one annotation, an object, not an array")
                           for path in arrays])
         named = self.write("links.data", [annotation()])
         self.assertEqual([p.code for p in discovery.collect([named]).problems], ["SHAPE"])

@@ -16,6 +16,7 @@ if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
 from literature_links import companion as C
+from literature_links import discovery
 from literature_links.schemacheck import SchemaError, Validator
 
 
@@ -498,6 +499,11 @@ class TestNormalize(unittest.TestCase):
         self.assertNotIn("target", C.normalize(doc))
         self.assertEqual(C.normalize({}), {})
 
+    def test_it_takes_one_annotation_object(self):
+        for value in (None, 1, "x", [], [{}]):
+            with self.subTest(value=value), self.assertRaisesRegex(TypeError, "one annotation object"):
+                C.normalize(value)
+
     def test_it_does_not_validate(self):
         for value in (None, 1, True, [], ["a"], {}, {"pin": "x"}):
             with self.subTest(value=value):
@@ -505,11 +511,11 @@ class TestNormalize(unittest.TestCase):
         self.assertEqual(C.normalize({"target": "", "status": ""}), {"target": {"uri": ""}, "status": {"value": ""}})
 
     def test_it_is_idempotent_and_keeps_valid_records_valid(self):
-        examples = sorted((ROOT / "examples" / "companion").glob("*.json"))
-        self.assertTrue(examples)
-        for path in examples:
-            with self.subTest(example=path.name):
-                once = C.normalize(C.loads(path.read_text(encoding="utf-8")))
+        examples = discovery.collect([ROOT / "examples" / "companion"])
+        self.assertEqual((len(examples.records), examples.problems), (16, []))
+        for record in examples.records:
+            with self.subTest(example=record.path.name, line=record.line):
+                once = C.normalize(record.annotation)
                 self.assertEqual(C.normalize(once), once)
                 self.assertEqual(C.validate(once), [])
                 self.assertTrue(all(isinstance(once[key], dict) for key in ("target", "status") if key in once))

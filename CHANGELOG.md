@@ -2,15 +2,29 @@
 
 ## Unreleased
 
+- Breaking: a `.json` file holds one annotation, an object. One that holds an
+  array is now a `SHAPE` problem, and `scan` exits 1 on it; 1.0.0 read `[x]`
+  and `[x, y]` with exit 0, and `[]` was `NO_ANNOTATIONS` with exit 2.
+  `validate` reports `SHAPE` there instead of `SCHEMA`. To migrate, put one
+  object in each `.json` file, or convert: `jq -c '.[]' a.json > a.jsonl`. The
+  schema is unchanged.
+- Breaking: `discovery.Record` has no `pointer`, and its `line` and `defaults`
+  are keyword-only, so a positional call fails instead of shifting fields. The
+  `scan --format json` origin has no `pointer`. Problem paths no longer put `#`
+  after the file name: `a.json $.location`, `a.jsonl (line 2) $.location`.
+- `validate` reads `.jsonl` and `.ndjson` files one annotation per line and
+  names the line in each problem; an empty one exits 2. A JSON file holding a
+  scalar is a `SHAPE` problem, as in `scan`, and a `JSON` problem exits 2, as
+  in `scan`.
 - `companion.normalize` copies a record with a string `target` as
   `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
-  one shape.
+  one shape. It raises `TypeError` for anything but a dict.
+- The specification says what an annotation file carries: a JSON document one
+  annotation, a JSONL document one per nonblank line, for files and web
+  responses alike.
 - `docs/companion.md` now holds only the format. The checker, its Python API,
-  the command line and how files and folders are read moved to `docs/tools.md`.
+  the command line and how files are found and read moved to `docs/tools.md`.
   The specification keeps its headings.
-- How files are read: a `.json` file holds one annotation, an object. A `.json`
-  file that holds an array is now a `SHAPE` problem; put several annotations in
-  a `.jsonl` file. The schema is unchanged, so every valid record stays valid.
 
 ## 1.0.0 (2026-10-09)
 

@@ -152,7 +152,7 @@ class TestFolders(unittest.TestCase):
         self.assertEqual((record.path.name, "kind" in record.annotation, record.annotation["note"]),
                          ("a.json", False, "kept"))
         problem, = result.problems  # the outermost null has nothing to remove, so b.json keeps it
-        self.assertEqual((problem.code, problem.path), ("SCHEMA", f"{self.root / 'b.json'}# $.note"))
+        self.assertEqual((problem.code, problem.path), ("SCHEMA", f"{self.root / 'b.json'} $.note"))
 
     def test_only_a_file_spelled_exactly_is_a_defaults_file(self):
         self.write("_Defaults.json", {"source": SOURCE})
@@ -161,7 +161,7 @@ class TestFolders(unittest.TestCase):
         # On every file system it is an ordinary annotation file, and a.json inherits nothing.
         self.assertEqual([(record.path.name, record.defaults) for record in result.records], [("_Defaults.json", ())])
         self.assertEqual([(problem.code, problem.path) for problem in result.problems],
-                         [("SCHEMA", str(self.root / "a.json") + "# $")])
+                         [("SCHEMA", str(self.root / "a.json") + " $")])
         (self.root / "sub" / "_Defaults.json").mkdir(parents=True)  # nor is a folder of that name a broken one
         self.write("sub/b.json", {"source": SOURCE})
         self.assertEqual([record.path.name for record in discovery.collect([self.root / "sub"]).records], ["b.json"])
@@ -198,7 +198,7 @@ class TestFolders(unittest.TestCase):
         self.write("b.json", {})
         result = discovery.collect([self.root])
         self.assertEqual([(problem.code, problem.path) for problem in result.problems],
-                         [("JSON", str(self.root / "a.json") + "#")])
+                         [("JSON", str(self.root / "a.json"))])
         self.assertEqual([record.path for record in result.records], [self.root / "b.json"])
         annotation, _, problems = discovery.inherit(companion.loads((self.root / "a.json").read_text()), self.root / "a.json")
         self.assertEqual((annotation, [problem.code for problem in problems]), (None, ["JSON"]))

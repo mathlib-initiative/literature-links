@@ -138,10 +138,12 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
 
     def test_every_example_is_valid(self):
-        examples = sorted(EXAMPLES.glob("*.json"))
-        self.assertTrue(examples)
+        examples = sorted(EXAMPLES.glob("*.json*"))
+        self.assertIn(EXAMPLES / "latex-several.jsonl", examples)
         self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
-        self.assertEqual(self.run_cli("scan", str(EXAMPLES))[0], 0)  # the folders too
+        status, out, _ = self.run_cli("scan", str(EXAMPLES))  # the folders too
+        # 12 JSON files, 2 JSONL rows and 2 files under folder-defaults/.
+        self.assertEqual((status, out), (0, "16 annotations from 15 files; 0 problems\n"))
 
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
@@ -160,7 +162,7 @@ REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
-#: The heading anchors of docs/companion.md at 1.0.0. Other repositories may link to them.
+#: The section anchors of docs/companion.md at 1.0.0, plus its current title. Other repositories may link to them.
 SPEC_ANCHORS = ("literature-links-specification", "fields", "location", "pdf", "latex", "html", "generic", "pins",
                 "facts", "extensions", "references", "folder-defaults", "validation", "discovery")
 
