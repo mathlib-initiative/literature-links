@@ -73,8 +73,9 @@ matches, such as duplicate labels or IDs, and never picks the first one.
 `{ "page": 3, "rect": [0.1, 0.2, 0.6, 0.15] }` or
 `{ "page": 3, "quote": { "exact": "a finite group", "prefix": "Let G be " } }`
 
-`page` counts physical pages from 1, ignoring page labels. It may carry `rect`
-or `quote`, not both; with neither it selects the whole page.
+`page` counts physical pages from 1, ignoring page labels. A PDF location may
+carry `rect` or `quote` beside `page`, not both; with neither it selects the
+whole page.
 
 `rect` is `[x, y, width, height]` as fractions of the displayed page box: the
 CropBox, or the MediaBox when there is none, after the page's `Rotate` entry is
@@ -90,8 +91,9 @@ PDF text extractor reads from the page, in reading order, with each run of
 `White_Space`, as defined under [HTML](#html), replaced by one space and both
 ends trimmed. Do not change case or normalize Unicode. Hyphenation, ligatures
 and differences between extractors are the application's concern. A quote that
-matches nowhere on the page, or more than once, is unresolved: as in
-[Location](#location), a consumer reports it and never picks the first match.
+matches nowhere on the page is missing, and one that matches at more than one
+position, overlapping or not, is ambiguous: as in [Location](#location), a
+consumer reports it and never picks the first match.
 
 ### LaTeX
 
@@ -116,7 +118,10 @@ Use exactly one of these:
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
   followed by them; they narrow the match and are not part of the selection.
-  Consumers keep all three as written.
+  Consumers keep all three as written and compare them as written with the
+  text layer below, so write them with single spaces and no other
+  `White_Space`. Each matching position counts, overlapping or not: an `exact`
+  of `aa` matches the text `aaa` at two positions, which is ambiguous.
 
 A quote matches this text layer. Take the `textContent` of the body, or of the
 document element if there is no body, without `script`, `style` and `template`

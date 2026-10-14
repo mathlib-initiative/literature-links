@@ -6,8 +6,8 @@
   array is now a `SHAPE` problem, and `scan` exits 1 on it; 1.0.0 read `[x]`
   and `[x, y]` with exit 0, and `[]` was `NO_ANNOTATIONS` with exit 2.
   `validate` reports `SHAPE` there instead of `SCHEMA`. To migrate, put one
-  object in each `.json` file, or convert: `jq -c '.[]' a.json > a.jsonl`. The
-  schema is unchanged.
+  object in each `.json` file, or convert: `jq -c '.[]' a.json > a.jsonl`.
+  Records are unchanged.
 - Breaking: `discovery.Record` has no `pointer`, and its `line` and `defaults`
   are keyword-only, so a positional call fails instead of shifting fields. The
   `scan --format json` origin has no `pointer`. Problem paths no longer put `#`
@@ -23,6 +23,9 @@
 - `companion.normalize` copies a record with a string `target` as
   `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
   one shape. It raises `TypeError` for anything but a dict.
+- The quote rules say to write `exact`, `prefix` and `suffix` with single
+  spaces and no other `White_Space`, since they are compared as written, and
+  that overlapping matches each count. Validity is unchanged.
 - The specification says what an annotation file carries: a JSON document one
   annotation, a JSONL document one per nonblank line, for files and web
   responses alike.
