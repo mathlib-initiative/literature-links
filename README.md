@@ -71,10 +71,11 @@ literature-links scan examples/companion
 ```
 
 `validate` checks files that each hold one annotation. `scan` walks directories
-and reads JSON files, JSON arrays and JSONL files. Point `scan` at the annotation
-folder, not a project root: it reads every JSON file below, hidden folders such
-as `.lake` included. [`docs/tools.md`](docs/tools.md) documents both commands,
-their exit codes and the Python API.
+and reads `.json` files, one annotation each, and `.jsonl` files, one per line.
+Point `scan` at the annotation folder, not a project root: it reads every JSON
+file below, hidden folders such as `.lake` included.
+[`docs/tools.md`](docs/tools.md) documents both commands, their exit codes and
+the Python API.
 
 ## Repository
 

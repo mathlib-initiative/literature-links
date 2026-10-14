@@ -53,19 +53,19 @@ class TestDiscovery(unittest.TestCase):
 
     def test_mixed_carriers_recurse_and_keep_deterministic_origins(self):
         single = self.write("a.json", annotation(1))
-        array = self.write("chapter/b.json", [annotation(2), annotation(3)])
-        jsonl = self.raw("chapter/c.jsonl", "\n" + json.dumps(annotation(4)) + "\n\n" + json.dumps(annotation(5)))
-        ndjson = self.raw("z.ndjson", json.dumps(annotation(6)) + "\n")
+        nested = self.write("chapter/b.json", annotation(2))
+        jsonl = self.raw("chapter/c.jsonl", "\n" + json.dumps(annotation(3)) + "\n\n" + json.dumps(annotation(4)))
+        ndjson = self.raw("z.ndjson", json.dumps(annotation(5)) + "\n")
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
-        self.assertEqual(result.files, [single, array, jsonl, ndjson])
-        self.assertEqual([r.annotation["location"]["page"] for r in result.records], list(range(1, 7)))
+        self.assertEqual(result.files, [single, nested, jsonl, ndjson])
+        self.assertEqual([r.annotation["location"]["page"] for r in result.records], list(range(1, 6)))
         self.assertEqual([(r.pointer, r.line) for r in result.records],
-                         [("", None), ("/0", None), ("/1", None), ("", 2), ("", 4), ("", 1)])
+                         [("", None), ("", None), ("", 2), ("", 4), ("", 1)])
 
     def test_every_record_uses_its_carrier_as_reference_base(self):
-        first = self.write("first/links.json", [annotation(), annotation(2)])
-        second = self.raw("second/links.jsonl", json.dumps(annotation()))
+        first = self.raw("first/links.jsonl", json.dumps(annotation()) + "\n" + json.dumps(annotation(2)))
+        second = self.write("second/link.json", annotation())
         result = discovery.collect([first, second])
         self.assertEqual(result.problems, [])
         self.assertEqual([r.base_uri for r in result.records],
@@ -91,7 +91,7 @@ class TestDiscovery(unittest.TestCase):
         second = annotation(2)
         second["id"] = "optional-id"
         original = [first, copy.deepcopy(first), second]
-        self.write("links.json", original)
+        self.raw("links.jsonl", "\n".join(map(json.dumps, original)))
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual([r.annotation for r in result.records], original)
@@ -146,14 +146,27 @@ class TestDiscovery(unittest.TestCase):
         self.assertTrue(result.problems)
         self.assertTrue(all(str(nested) in p.path for p in result.problems))
 
-    def test_bad_array_members_report_pointer_and_keep_other_valid_records(self):
+    def test_a_json_file_holding_an_array_is_a_problem_that_names_jsonl(self):
+        good = self.write("good.json", annotation())
+        arrays = [self.write(f"links-{size}.json", [annotation()] * size) for size in (0, 1, 2)]
+        result = discovery.collect([self.root])
+        self.assertEqual([r.path for r in result.records], [good])
+        self.assertEqual([(p.code, p.path, p.message) for p in result.problems],
+                         [("SHAPE", f"{path}#", "an annotation file holds one JSON object; put several in a .jsonl file")
+                          for path in arrays])
+        named = self.write("links.data", [annotation()])
+        self.assertEqual([p.code for p in discovery.collect([named]).problems], ["SHAPE"])
+        rows = discovery.collect([self.raw("links.jsonl", "\n".join(json.dumps(annotation()) for _ in range(2)))])
+        self.assertEqual((len(rows.records), rows.problems), (2, []))
+
+    def test_bad_jsonl_rows_report_their_line_and_keep_other_valid_records(self):
         bad = annotation()
         bad["location"]["page"] = 0
-        path = self.write("links.json", [annotation(), bad, None, annotation(3)])
+        path = self.raw("links.jsonl", "\n".join(map(json.dumps, [annotation(), bad, None, annotation(3)])))
         result = discovery.collect([path])
-        self.assertEqual([r.pointer for r in result.records], ["/0", "/3"])
-        self.assertTrue(any("#/1" in p.path for p in result.problems))
-        self.assertTrue(any(p.code == "SHAPE" and "#/2" in p.path for p in result.problems))
+        self.assertEqual([r.line for r in result.records], [1, 4])
+        self.assertTrue(any(p.code == "SCHEMA" and "line 2" in p.path for p in result.problems))
+        self.assertTrue(any(p.code == "SHAPE" and "line 3" in p.path for p in result.problems))
 
     def test_jsonl_reports_physical_line_and_disallows_array_rows(self):
         path = self.raw("links.jsonl", "\n" + json.dumps(annotation()) + "\n{broken}\n[]\n" + json.dumps(annotation(2)))
@@ -245,8 +258,8 @@ class TestDiscovery(unittest.TestCase):
             with self.subTest(paths=paths):
                 result = discovery.collect(paths)
                 self.assertEqual([p.code for p in result.problems], ["NO_ANNOTATIONS"])
-        first = self.write("empty.json", [])
-        second = self.raw("empty.jsonl", "\n \t\r\n")
+        first = self.raw("empty.jsonl", "\n \t\r\n")
+        second = self.raw("empty.ndjson", "")
         result = discovery.collect([first, second])
         self.assertEqual([p.code for p in result.problems], ["NO_ANNOTATIONS"])
         self.write("valid.json", annotation())

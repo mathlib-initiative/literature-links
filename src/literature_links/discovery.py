@@ -16,15 +16,18 @@ __all__ = ["DEFAULTS", "Collection", "Problem", "Record", "collect", "inherit"]
 # The file name of folder defaults (docs/companion.md, "Folder defaults").
 DEFAULTS = "_defaults.json"
 
+# A JSON file holding an array is not read; JSONL is the format for many annotations.
+_ONE_PER_FILE = "an annotation file holds one JSON object; put several in a .jsonl file"
+
 
 @dataclass
 class Record:
-    """An annotation and its origin; ``pointer`` is relative to its JSON value.
+    """An annotation and its origin.
 
-    A standalone JSON annotation and every JSONL row use the empty pointer.
-    Array members use ``/0``, ``/1``, and so on. JSONL origins additionally
-    provide their one-based physical line number. ``annotation`` has its folder
-    defaults applied; ``defaults`` lists their files, outermost first.
+    ``pointer`` is always the empty JSON Pointer: a JSON file and each JSONL
+    line hold one annotation. A JSONL record also has its one-based physical
+    ``line``. ``annotation`` has its folder defaults applied; ``defaults``
+    lists their files, outermost first.
     """
 
     annotation: dict[str, Any]
@@ -164,8 +167,8 @@ def inherit(annotation: dict[str, Any], path: Path | str) -> tuple[dict[str, Any
 _TOO_DEEP = "JSON nesting exceeds this implementation's recursion limit"
 
 
-def _origin(path: Path, pointer: str = "", line: int | None = None) -> str:
-    result = str(path) + "#" + pointer
+def _origin(path: Path, line: int | None = None) -> str:
+    result = str(path) + "#"
     return result if line is None else f"{result} (line {line})"
 
 
@@ -176,8 +179,8 @@ def _read(path: Path, result: Collection, defaults: _Defaults) -> None:
         result.problems.append(Problem("IO", str(path), str(exc)))
         return
 
-    def record(value: Any, pointer: str = "", line: int | None = None) -> None:
-        origin = _origin(path, pointer, line)
+    def record(value: Any, line: int | None = None) -> None:
+        origin = _origin(path, line)
         if not isinstance(value, dict):
             result.problems.append(Problem("SHAPE", origin,
                                            "each annotation must be a JSON object"))
@@ -197,7 +200,7 @@ def _read(path: Path, result: Collection, defaults: _Defaults) -> None:
             for finding in findings:
                 result.problems.append(Problem(finding.code, f"{origin} {finding.path}", finding.message + note))
             return
-        result.records.append(Record(value, path, pointer, line, applied))
+        result.records.append(Record(value, path, "", line, applied))
 
     if path.suffix.lower() in (".jsonl", ".ndjson"):
         # splitlines() would incorrectly split valid strings containing U+2028.
@@ -218,10 +221,9 @@ def _read(path: Path, result: Collection, defaults: _Defaults) -> None:
         result.problems.append(Problem("JSON", str(path), str(exc)))
         return
     if isinstance(value, list):
-        for index, annotation in enumerate(value):
-            record(annotation, pointer=f"/{index}")
-    else:
-        record(value)
+        result.problems.append(Problem("SHAPE", _origin(path), _ONE_PER_FILE))
+        return
+    record(value)
 
 
 def collect(paths: Iterable[Path | str], *, include: Iterable[str] | None = None,

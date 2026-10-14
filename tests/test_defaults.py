@@ -209,13 +209,15 @@ class TestFolders(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual([problem.code for problem in result.problems], ["SCHEMA"])
 
-    def test_arrays_and_jsonl_rows_each_inherit(self):
+    def test_jsonl_rows_each_inherit(self):
         self.write("_defaults.json", {"source": SOURCE})
-        self.write("a.json", [{"location": {"page": 1}}, {"location": {"page": 2}}])
-        self.write("b.jsonl", '{"location": {"page": 3}}\n{"location": {"page": 4}}\n', raw=True)
+        self.write("a.json", {"location": {"page": 1}})
+        self.write("b.jsonl", '{"location": {"page": 2}}\n{"location": {"page": 3}}\n', raw=True)
+        self.write("c.ndjson", '{"location": {"page": 4}}\n', raw=True)
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual([record.annotation["location"]["page"] for record in result.records], [1, 2, 3, 4])
+        self.assertTrue(all(record.annotation["source"]["uri"] == "../book.pdf" for record in result.records))
 
     def test_normalize_gives_merged_records_one_shape(self):
         pin = {"type": "repository", "url": "https://example.org/formal"}

@@ -14,9 +14,9 @@ the command line and how files and folders are read.
   `PDF_RECT` and `LATEX_LINES`. Any problem makes the annotation invalid.
   `warnings` is always empty.
 - `validate(document)` returns the problems as `path: message` strings.
-- `loads(text)` only parses, and raises `LoadError`, a `ValueError`, for input
-  that is not strict JSON. It keeps integers exact and reads other numbers as
-  floats. It rejects overflow and nonzero underflow.
+- `loads(text)` only parses. It keeps integers exact and reads other numbers as
+  floats. It raises `LoadError`, a `ValueError`, for duplicate keys, NaN and
+  Infinity, unpaired surrogates, overflow and nonzero underflow.
 - `dumps(value)` keeps key order and writes two-space indentation and a final
   newline.
 - `merge(inherited, written)` and `rebase(value, base)` implement
@@ -36,8 +36,9 @@ Nothing checks uniqueness across annotations.
   `records`, `problems` and the `files` read. Valid records are kept when other
   files fail, so check `problems` first.
 - A `Record` holds the `annotation` with its folder defaults applied, its file
-  `path`, its `pointer` and `line`, the `defaults` files applied, outermost
-  first, and the `base_uri` that its relative references resolve against.
+  `path`, its `line` in a JSONL file, the `defaults` files applied, outermost
+  first, and the `base_uri` that its relative references resolve against. Its
+  `pointer` is always `""`.
 - `inherit(annotation, path)` applies the folder defaults that cover the file
   `path` to a record read from it.
 - Reading adds the codes `IO`, `JSON`, `PATH`, `SYMLINK`, `SHAPE`, `DEFAULTS`
@@ -58,8 +59,8 @@ literature-links scan PATH... [--include PATTERN]... [--exclude PATTERN]...
 
 `validate` checks files that each hold one annotation, with their folder
 defaults applied. It exits 0 when every file is valid, 1 for an invalid
-annotation or defaults file, and 2 for a read, JSON, path or symlink failure. A
-`_defaults.json` named directly is a problem: it is not an annotation.
+annotation, file shape or defaults file, and 2 for a read, JSON, path or symlink
+failure. A `_defaults.json` named directly is a problem: it is not an annotation.
 
 `scan` reads annotations from files and folders, as in [Discovery](#discovery).
 It exits 0 when it finds annotations and no problems. It exits 1 for an invalid
@@ -77,16 +78,17 @@ files. This is a reader convention, not part of the format.
 
 | File | Annotations | Origin |
 |---|---|---|
-| JSON object | One | Pointer `""` |
-| JSON array | One per member | Pointer `/0`, `/1`, ... |
-| JSONL or NDJSON | One per nonblank line | Line number, from 1 |
+| JSON | One object | The file |
+| JSONL or NDJSON | One object per nonblank line | Line number, from 1 |
 
-- Files are UTF-8. A JSONL line holds an object, not an array.
+- Files are UTF-8. A JSON file holds one annotation, an object. A JSON file
+  that holds an array is a `SHAPE` problem: put several annotations in a
+  `.jsonl` file. A JSONL line holds an object, not an array.
 - In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
   with only spaces and tabs is blank. Blank lines are skipped but still counted.
 - Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
   ignoring case. A file named explicitly may have any suffix.
-- `.jsonl` and `.ndjson` files are read by line. Other files are one JSON value.
+- `.jsonl` and `.ndjson` files are read by line. Other files are read as JSON.
 - `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
   are case-sensitive shell wildcards on the path relative to the root, or on
   the file name for a file named explicitly. `*` also matches `/`, and a
