@@ -13,6 +13,13 @@ whose PDF overlay reads these annotations.
 This repository holds the format and its offline checker, nothing else. Viewers,
 overlays and the companions built from annotations live in their own repositories.
 
+Mathlib's `@[stacks]` and `@[wikidata]` attributes and its
+[1000.yaml](https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/docs/1000.yaml)
+link a declaration to a reference from inside Mathlib, and a blueprint's
+`\lean{}` links from LaTeX the project writes. An annotation is kept outside the
+source and records where in that source the passage is, so the source can be one
+the project does not control.
+
 ```json
 {
   "source": { "type": "latex", "uri": "chapters/groups.tex" },
@@ -64,9 +71,11 @@ literature-links scan examples/companion
 ```
 
 `validate` checks files that each hold one annotation. `scan` walks directories
-and reads JSON files, JSON arrays and JSONL files. Add `--format json` for
-machine-readable output. Both exit 0 when everything is valid, 1 for invalid
-annotations and 2 for errors such as unreadable files.
+and reads JSON files, JSON arrays and JSONL files. Point `scan` at the annotation
+folder, not a project root: it reads every JSON file below, hidden folders such
+as `.lake` included. Add `--format json` for machine-readable output. Both exit 0
+when everything is valid, 1 for invalid annotations and 2 for errors such as
+unreadable files.
 
 ```python
 from literature_links import companion, discovery
