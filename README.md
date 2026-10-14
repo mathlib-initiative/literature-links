@@ -1,8 +1,14 @@
 # Literature Links
 
-A small JSON format that links informal mathematics to formal mathematics. One
-annotation is one link. A set of annotations makes a companion to a book,
-article, wiki or other source.
+A small JSON format that links informal mathematics to formal declarations, such
+as Lean declarations in Mathlib. One annotation is one link. A set of annotations
+makes a companion to a book, article, wiki or other source.
+
+Status: 1.0.0. Records valid under 1.x stay valid in later 1.x; a breaking
+change bumps the major version.
+
+Used by [formal-companion](https://github.com/mathlib-initiative/formal-companion),
+whose PDF overlay reads these annotations.
 
 This repository holds the format and its offline checker, nothing else. Viewers,
 overlays and the companions built from annotations live in their own repositories.
@@ -11,15 +17,26 @@ overlays and the companions built from annotations live in their own repositorie
 {
   "source": { "type": "latex", "uri": "chapters/groups.tex" },
   "location": { "label": "thm:lagrange" },
-  "target": "https://example.org/formal/Groups.html#lagrange"
+  "target": {
+    "uri": "https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/Mathlib/GroupTheory/Coset/Card.lean#L69",
+    "pin": {
+      "type": "repository",
+      "url": "https://github.com/leanprover-community/mathlib4",
+      "commit": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "path": "Mathlib/GroupTheory/Coset/Card.lean",
+      "line": 69,
+      "module": "Mathlib.GroupTheory.Coset.Card",
+      "declaration": "Subgroup.card_subgroup_dvd_card"
+    }
+  }
 }
 ```
 
 Only `source` is required. Without `location`, the annotation links the whole
 source; without `target`, it records the passage alone. A typed `pin` on either
-end cites the resource outside the companion, like a bibliography entry. Optional `status`, `kind`, `label` and `note` describe the
-link, and `id` and `extensions` hold application data. Records valid under 1.x
-stay valid in later 1.x; a breaking change bumps the major version.
+end cites the resource outside the companion, like a bibliography entry.
+Optional `status`, `kind`, `label` and `note` describe the link, and `id` and
+`extensions` hold application data.
 
 | `source.type` | `location` selects |
 |---|---|
@@ -57,7 +74,14 @@ problems = companion.validate({"source": {"type": "generic", "uri": "a"}, "targe
 collection = discovery.collect(["examples/companion"])  # check .problems before .records
 ```
 
-See the [specification](docs/companion.md), the
-[JSON Schema](schema/companion.schema.json) and the
-[examples](examples/companion/). [CONTRIBUTING.md](CONTRIBUTING.md) has the rules
-for changes. Licensed under [Apache 2.0](LICENSE).
+## Repository
+
+- [`docs/companion.md`](docs/companion.md): the specification.
+- [`schema/companion.schema.json`](schema/companion.schema.json): the JSON Schema.
+- [`examples/companion/`](examples/companion/): valid examples.
+- [`src/literature_links/`](src/literature_links/): the checker. `companion`
+  checks one annotation, `discovery` reads files and applies folder defaults,
+  and `cli` runs `validate` and `scan`.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) has the rules for changes. Licensed under
+[Apache 2.0](LICENSE).
