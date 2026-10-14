@@ -3,7 +3,12 @@
   "label": "Theorem 1.4 (Lagrange)",
   "location": { "page": 7, "rect": [0.12, 0.3, 0.76, 0.1] },
   "target": {
-    "uri": "https://example.org/formal/Groups.html#lagrange",
-    "pin": { "path": "Groups.lean", "declaration": "Subgroup.card_dvd" }
+    "uri": "https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/Mathlib/GroupTheory/Coset/Card.lean#L69",
+    "pin": {
+      "path": "Mathlib/GroupTheory/Coset/Card.lean",
+      "line": 69,
+      "module": "Mathlib.GroupTheory.Coset.Card",
+      "declaration": "Subgroup.card_subgroup_dvd_card"
+    }
   }
 }

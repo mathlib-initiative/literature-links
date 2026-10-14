@@ -180,6 +180,14 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                     with self.subTest(doc=name, path=token):
                         self.assertTrue((ROOT / Path(*keep)).exists(), f"{name} cites {token}, which is not here")
 
+    def test_the_readme_example_is_valid(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        blocks = re.findall(r"(?ms)^```json\n(.*?)^```", readme)
+        self.assertTrue(blocks)
+        for block in blocks:
+            with self.subTest(block=block[:40]):
+                self.assertEqual(C.validate(C.loads(block)), [])
+
     def test_no_em_dash_in_the_docs(self):
         for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
