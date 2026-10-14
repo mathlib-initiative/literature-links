@@ -152,7 +152,7 @@ class TestFolders(unittest.TestCase):
         self.assertEqual((record.path.name, "kind" in record.annotation, record.annotation["note"]),
                          ("a.json", False, "kept"))
         problem, = result.problems  # the outermost null has nothing to remove, so b.json keeps it
-        self.assertEqual((problem.code, problem.path), ("SCHEMA", f"{self.root / 'b.json'}# $.note"))
+        self.assertEqual((problem.code, problem.path), ("SCHEMA", f"{self.root / 'b.json'} $.note"))
 
     def test_only_a_file_spelled_exactly_is_a_defaults_file(self):
         self.write("_Defaults.json", {"source": SOURCE})
@@ -161,7 +161,7 @@ class TestFolders(unittest.TestCase):
         # On every file system it is an ordinary annotation file, and a.json inherits nothing.
         self.assertEqual([(record.path.name, record.defaults) for record in result.records], [("_Defaults.json", ())])
         self.assertEqual([(problem.code, problem.path) for problem in result.problems],
-                         [("SCHEMA", str(self.root / "a.json") + "# $")])
+                         [("SCHEMA", str(self.root / "a.json") + " $")])
         (self.root / "sub" / "_Defaults.json").mkdir(parents=True)  # nor is a folder of that name a broken one
         self.write("sub/b.json", {"source": SOURCE})
         self.assertEqual([record.path.name for record in discovery.collect([self.root / "sub"]).records], ["b.json"])
@@ -198,7 +198,7 @@ class TestFolders(unittest.TestCase):
         self.write("b.json", {})
         result = discovery.collect([self.root])
         self.assertEqual([(problem.code, problem.path) for problem in result.problems],
-                         [("JSON", str(self.root / "a.json") + "#")])
+                         [("JSON", str(self.root / "a.json"))])
         self.assertEqual([record.path for record in result.records], [self.root / "b.json"])
         annotation, _, problems = discovery.inherit(companion.loads((self.root / "a.json").read_text()), self.root / "a.json")
         self.assertEqual((annotation, [problem.code for problem in problems]), (None, ["JSON"]))
@@ -209,13 +209,34 @@ class TestFolders(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual([problem.code for problem in result.problems], ["SCHEMA"])
 
-    def test_arrays_and_jsonl_rows_each_inherit(self):
+    def test_jsonl_rows_each_inherit(self):
         self.write("_defaults.json", {"source": SOURCE})
-        self.write("a.json", [{"location": {"page": 1}}, {"location": {"page": 2}}])
-        self.write("b.jsonl", '{"location": {"page": 3}}\n{"location": {"page": 4}}\n', raw=True)
+        self.write("a.json", {"location": {"page": 1}})
+        self.write("b.jsonl", '{"location": {"page": 2}}\n{"location": {"page": 3}}\n', raw=True)
+        self.write("c.ndjson", '{"location": {"page": 4}}\n', raw=True)
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual([record.annotation["location"]["page"] for record in result.records], [1, 2, 3, 4])
+        self.assertTrue(all(record.annotation["source"]["uri"] == "../book.pdf" for record in result.records))
+
+    def test_normalize_gives_merged_records_one_shape(self):
+        pin = {"type": "repository", "url": "https://example.org/formal"}
+        self.write("_defaults.json", {"source": SOURCE, "target": {"pin": pin}, "status": "formalized"})
+        self.write("a.json", {"target": {"uri": "A.html"}})
+        self.write("b.json", {"target": "B.html", "status": {"value": "partial"}})
+        self.write("c.json", {"target": None})
+        result = discovery.collect([self.root])
+        self.assertEqual(result.problems, [])
+        a, b, c = (companion.normalize(record.annotation) for record in result.records)
+        self.assertEqual((a["target"], a["status"]), ({"uri": "A.html", "pin": pin}, {"value": "formalized"}))
+        # A written string replaces the inherited object, so b keeps no pin.
+        self.assertEqual((b["target"], b["status"]), ({"uri": "B.html"}, {"value": "partial"}))
+        self.assertEqual((c.get("target"), c["status"]), (None, {"value": "formalized"}))
+        self.assertEqual([companion.validate(value) for value in (a, b, c)], [[], [], []])
+        # Hence normalize after merging, not before.
+        inherited, written = {"target": {"pin": pin}}, {"target": "B.html"}
+        self.assertNotEqual(companion.merge(companion.normalize(inherited), companion.normalize(written)),
+                            companion.normalize(companion.merge(inherited, written)))
 
     def test_problems_name_the_defaults_that_were_applied(self):
         self.write("_defaults.json", {"source": {"type": "pdf"}})

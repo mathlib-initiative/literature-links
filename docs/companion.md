@@ -4,7 +4,9 @@ An annotation links one informal source, or a location in it, to one formal
 destination. The [JSON Schema](../schema/companion.schema.json) gives its
 structure, and [validation](#validation) adds two checks. The format has no
 version field; it carries the version of the release. Records valid under 1.x
-stay valid in later 1.x; a breaking change bumps the major version.
+stay valid in later 1.x; a breaking change bumps the major version. This page
+defines the format; [tools.md](tools.md) documents the checker, its Python API,
+the command line and how files are found and read.
 
 ```json
 {
@@ -37,10 +39,12 @@ the target is the thing being annotated.
 | `$schema` | No | A reference used as a tooling hint |
 
 Only `source` is required. Without `target`, the annotation records the
-informal passage alone. Other fields are invalid at the top level, in `source`,
-in `target` and `status` objects, in built-in pins and in built-in locations. Two targets or two passages need two annotations. No field is
-inherited from another record, only from [folder defaults](#folder-defaults).
-An array is not an annotation.
+informal passage alone. A string `target` says the same as an object with that
+`uri`: `"x"` and `{ "uri": "x" }` are one link. Other fields are invalid at the
+top level, in `source`, in `target` and `status` objects, in built-in pins and
+in built-in locations. Two targets or two passages need two annotations. No
+field is inherited from another record, only from
+[folder defaults](#folder-defaults). An array is not an annotation.
 
 ## Location
 
@@ -93,13 +97,13 @@ Use exactly one of these:
 - `fragment` is the decoded value of an element's `id` attribute, with no
   leading `#`, whitespace or controls; `name` attributes do not count. It is
   not percent-decoded again, so `"a%20b"` is a literal ID.
-- `css` is a nonempty CSS selector. The checker does not parse it. A selector
+- `css` is a nonempty CSS selector. Validation does not parse it. A selector
   that matches more than one element is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
   followed by them; they narrow the match and are not part of the selection.
-  The checker keeps all three as written.
+  Consumers keep all three as written.
 
 A quote matches this text layer. Take the `textContent` of the body, or of the
 document element if there is no body, without `script`, `style` and `template`
@@ -202,9 +206,9 @@ is lexical.
 A relative reference resolves against the URI of the document that carries
 the annotation: the file, or the retrieval URI of the response that delivered
 the record, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
-This holds inside arrays and JSONL files too. It never resolves against the
-source, the `id`, the repository or the working directory. Code that holds an
-annotation in memory must keep that base. Moving an annotation means keeping
+This holds inside [JSONL](#discovery) files too. It never resolves against
+the source, the `id`, the repository or the working directory. Code that holds
+an annotation in memory must keep that base. Moving an annotation means keeping
 the base or rewriting the references.
 
 Extension strings are not references. To link a Lean declaration, give
@@ -215,15 +219,15 @@ kept as part of the reference but selects nothing; in built-in modes `location`
 is the selection.
 
 A valid annotation grants no permission to open or run anything. `$schema` never
-replaces the bundled schema. The schema's `$id` and a location's `profile` are
+changes which schema applies. The schema's `$id` and a location's `profile` are
 names, not downloads.
 
 ## Folder defaults
 
 A file named `_defaults.json` holds one JSON object: members shared by every
-annotation file in its folder and in the folders below it. It is not an
-annotation. Each record read from those files is the defaults merged with the
-record as written:
+[annotation file](#discovery) in its folder and in the folders below it. It is
+not an annotation. Each record read from those files is the defaults merged
+with the record as written:
 
 - A member the record leaves out is inherited.
 - Where both hold an object, the two merge member by member, at any depth.
@@ -234,7 +238,9 @@ record as written:
 This is [JSON Merge Patch](https://www.rfc-editor.org/rfc/rfc7396) with the
 record as the patch, except that a `null` with nothing to remove is kept, so a
 record read without defaults is read exactly as written. The rules name no
-member: any member can have a default, `extensions` included.
+member: any member can have a default, `extensions` included. So a string
+`target` or `status` replaces an inherited object, `pin` included; write
+`{ "uri": ... }` or `{ "value": ... }` to keep it.
 
 ```json
 { "source": { "type": "pdf", "uri": "../notes.pdf" },
@@ -249,8 +255,8 @@ Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
 wins. For local files that goes up to the root of the file system. A reader
 that fetches annotations over the web is given the collection's base URL and
-never looks above it. Arrays and JSONL files take defaults like any annotation
-file, one record at a time.
+never looks above it. A [JSONL](#discovery) file takes defaults like any
+annotation file, one record at a time.
 
 A relative reference in a defaults file resolves against the defaults file.
 A reader that merges records rewrites the inherited references in
@@ -272,56 +278,17 @@ JSON number with no fractional part counts, so `2.0` is a valid `page`, as in
 JSON Schema.
 
 JSON input must have unique keys, finite numbers and no unpaired surrogates,
-even inside opaque data. The Python reader keeps integers exact and reads other
-numbers as floats. It rejects overflow and nonzero underflow. Very large or deep
-input may be rejected. Consumers that use doubles keep integers exact only up to
+even inside opaque data. An implementation may reject very large or deeply
+nested input, a number outside the IEEE 754 double range, or a nonzero number
+that rounds to zero. Consumers that use doubles keep integers exact only up to
 2⁵³ − 1, so use strings for exact decimals and large identifiers.
 
-`companion.check` returns a `Report` whose `problems` are
-`Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
-`PDF_RECT` and `LATEX_LINES`. `companion.validate` returns them as
-`path: message` strings. `companion.loads` only parses. Nothing checks
-uniqueness across annotations. `companion.dumps` keeps key order and writes
-two-space indentation and a final newline. `companion.merge` and
-`companion.rebase` implement [folder defaults](#folder-defaults), and
-`discovery.inherit` applies them to a record read from a file.
+[The checker](tools.md#python-api) implements these rules.
 
 ## Discovery
 
-`literature-links scan` and `discovery.collect` read annotations
-from local files. This is a reader convention, not part of the schema.
-
-| File | Annotations | Origin |
-|---|---|---|
-| JSON object | One | Pointer `""` |
-| JSON array | One per member | Pointer `/0`, `/1`, ... |
-| JSONL or NDJSON | One per nonblank line | Line number, from 1 |
-
-- Files are UTF-8. A JSONL line holds an object, not an array.
-- In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
-  with only spaces and tabs is blank. Blank lines are skipped but still counted.
-- Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
-  ignoring case. A file named explicitly may have any suffix.
-- `.jsonl` and `.ndjson` files are read by line. Other files are one JSON value.
-- `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
-  are case-sensitive shell wildcards on the path relative to the root, or on
-  the file name for a file named explicitly. `*` also matches `/`, and a
-  leading `**/` also matches files in the root.
-- Hidden directories are read. Symlinks are skipped while walking and are an
-  error when named explicitly.
-- A file named `_defaults.json` holds [folder defaults](#folder-defaults), not
-  annotations. Every defaults file that covers a selected file applies,
-  whatever `--include` and `--exclude` select, and a symlinked one is an error.
-- Files are read in sorted path order, each resolved path once.
-- Unrelated or malformed JSON in a selected file is reported, not skipped. Valid
-  annotations from other files are still returned.
-- Repeated `id` values and identical annotations are kept.
-
-Scanning a repository root reads every JSON file under it, vendored and
-generated ones included, and reports each one that is not an annotation as a
-problem. Keep annotations in a directory of their own, or name them
-`*.annotations.json` and select them with `--include '*.annotations.json'`.
-
-`scan` exits 0 when it finds annotations and no problems. It exits 1 for an
-invalid annotation, file shape or defaults file. It exits 2 for a read, JSON,
-path or symlink failure, or when it finds no annotations. Status 2 wins over 1.
+An annotation file is a JSON or JSONL document, whether a file or a web
+response. A JSON document carries one annotation, an object; an array is not
+one. A JSONL document carries one annotation object on each nonblank line, and
+is how one document carries several. How the tools find and read files is in
+[tools.md](tools.md#discovery).

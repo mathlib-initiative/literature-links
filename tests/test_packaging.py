@@ -138,10 +138,12 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
 
     def test_every_example_is_valid(self):
-        examples = sorted(EXAMPLES.glob("*.json"))
-        self.assertTrue(examples)
+        examples = sorted(EXAMPLES.glob("*.json*"))
+        self.assertIn(EXAMPLES / "latex-several.jsonl", examples)
         self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
-        self.assertEqual(self.run_cli("scan", str(EXAMPLES))[0], 0)  # the folders too
+        status, out, _ = self.run_cli("scan", str(EXAMPLES))  # the folders too
+        # 12 JSON files, 2 JSONL rows and 2 files under folder-defaults/.
+        self.assertEqual((status, out), (0, "16 annotations from 15 files; 0 problems\n"))
 
     def test_a_missing_current_schema_is_reported_without_a_traceback(self):
         good = EXAMPLES / "pdf.json"
@@ -159,7 +161,26 @@ class TestEntryPoints(unittest.TestCase):
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md")
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
+#: The section anchors of docs/companion.md at 1.0.0, plus its current title. Other repositories may link to them.
+SPEC_ANCHORS = ("literature-links-specification", "fields", "location", "pdf", "latex", "html", "generic", "pins",
+                "facts", "extensions", "references", "folder-defaults", "validation", "discovery")
+
+
+def prose(text: str) -> str:
+    """Markdown without its fenced code blocks."""
+    return re.sub(r"(?ms)^```.*?^```[ \t]*$", "", text)
+
+
+def anchors(text: str) -> set[str]:
+    """GitHub's heading anchors: lowercase, punctuation dropped, spaces as hyphens, repeats numbered."""
+    result: set[str] = set()
+    counts: dict[str, int] = {}
+    for heading in re.findall(r"(?m)^#{1,6}[ \t]+(.+?)[ \t]*$", prose(text)):
+        slug = re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
+        counts[slug] = counts.get(slug, 0) + 1
+        result.add(slug if counts[slug] == 1 else f"{slug}-{counts[slug] - 1}")
+    return result
 
 
 class TestTheDocsCiteWhatIsHere(unittest.TestCase):
@@ -193,24 +214,40 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
             with self.subTest(doc=name):
                 self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
 
-    def test_local_markdown_link_targets_exist(self):
+    def test_local_markdown_links_reach_a_file_and_heading(self):
         for name in DOCS + ("CHANGELOG.md",):
             document = ROOT / name
-            text = document.read_text(encoding="utf-8")
-            text = re.sub(r"(?ms)^```.*?^```[ \t]*$", "", text)
+            text = prose(document.read_text(encoding="utf-8"))
             # Check inline/image links and reference definitions without a
-            # Markdown dependency or network access. Fragments stay local to
-            # their target document; remote URI schemes are outside this test.
+            # Markdown dependency or network access. A fragment into a Markdown
+            # file names one of its headings; remote URI schemes are outside this test.
             links = re.findall(r"\]\(<?([^\s)>]+)>?(?:\s+[^)]*)?\)", text)
             links += re.findall(r"(?m)^\s*\[[^]]+\]:\s*<?([^\s>]+)>?", text)
             for link in links:
                 uri = urlsplit(link)
-                if uri.scheme or uri.netloc or not uri.path:
+                if uri.scheme or uri.netloc:
                     continue
                 path = unquote(uri.path)
-                target = ROOT / path.lstrip("/") if path.startswith("/") else document.parent / path
+                target = (ROOT / path.lstrip("/") if path.startswith("/") else document.parent / path) if path else document
                 with self.subTest(doc=name, link=link):
                     self.assertTrue(target.exists(), f"{name} links to missing {link}")
+                    if uri.fragment and target.suffix == ".md":
+                        self.assertIn(unquote(uri.fragment), anchors(target.read_text(encoding="utf-8")),
+                                      f"{name} links to a missing heading: {link}")
+
+    def test_the_specification_and_the_tools_link_both_ways(self):
+        spec, tools = ((ROOT / "docs" / name).read_text(encoding="utf-8") for name in ("companion.md", "tools.md"))
+        self.assertIn("](tools.md", spec)
+        self.assertIn("](companion.md", tools)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("](docs/companion.md)", readme)
+        self.assertIn("](docs/tools.md)", readme)
+
+    def test_the_specification_keeps_its_anchors(self):
+        found = anchors((ROOT / "docs" / "companion.md").read_text(encoding="utf-8"))
+        for anchor in SPEC_ANCHORS:
+            with self.subTest(anchor=anchor):
+                self.assertIn(anchor, found)
 
 
 if __name__ == "__main__":
