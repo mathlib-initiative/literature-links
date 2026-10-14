@@ -1,4 +1,4 @@
-# Annotation reference
+# Literature Links specification
 
 An annotation links one informal source, or a location in it, to one formal
 destination. The [JSON Schema](../schema/companion.schema.json) gives its
@@ -28,6 +28,7 @@ the target is the thing being annotated.
 | `source.uri` | Yes | A [reference](#references) to the companion's copy of the informal resource |
 | `source.pin` | No | A [pin](#pins) citing the informal resource outside the companion |
 | `target` | No | A reference to the formal destination, or an object with `uri`, `pin` and `extensions` |
+| `target.uri` | Yes, when `target` is an object | A [reference](#references) to the formal destination |
 | `location` | No | An object selecting part of the source |
 | `status` | No | A [fact](#facts): a nonempty string, or an object with `value`, `pin` and `extensions` |
 | `kind`, `label`, `note` | No | Nonempty strings: [facts](#facts) about the link |
@@ -161,7 +162,7 @@ bytes, and whether the pinned revision still exists, is for tools to check.
 ## Facts
 
 `status`, `kind`, `label` and `note` are optional facts about the link, given as
-nonempty strings. `status` says how far the informal item is formalised;
+nonempty strings. `status` says how far the informal item is formalized;
 `formalized`, `partial` and `not_formalized` are the recommended values. `kind`
 names the informal item; `definition`, `theorem`, `lemma`, `proposition`,
 `example`, `remark` and `exercise` are recommended. `label` is a short title and
@@ -206,7 +207,9 @@ source, the `id`, the repository or the working directory. Code that holds an
 annotation in memory must keep that base. Moving an annotation means keeping
 the base or rewriting the references.
 
-Extension strings are not references. A bare Lean name is a relative reference.
+Extension strings are not references. To link a Lean declaration, give
+`target.uri` a URL, such as the file at a commit, and name the declaration in
+`target.pin.declaration`; a bare name in `target` is read as a relative reference.
 Percent-encode spaces, `#` and `?` in file names. A fragment in `source.uri` is
 kept as part of the reference but selects nothing; in built-in modes `location`
 is the selection.
