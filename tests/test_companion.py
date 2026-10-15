@@ -550,7 +550,7 @@ class TestNormalize(unittest.TestCase):
 
     def test_it_is_idempotent_and_keeps_valid_records_valid(self):
         examples = discovery.collect([ROOT / "examples" / "companion"])
-        self.assertEqual((len(examples.records), examples.problems), (16, []))
+        self.assertEqual((len(examples.records), examples.problems), (17, []))
         for record in examples.records:
             with self.subTest(example=record.path.name, line=record.line):
                 once = C.normalize(record.annotation)

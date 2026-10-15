@@ -1,0 +1,34 @@
+{
+  "source": {
+    "type": "generic",
+    "uri": "data/results.csv",
+    "pin": {
+      "type": "generic",
+      "url": "https://example.org/datasets/results",
+      "dataset": "results",
+      "release": "3"
+    }
+  },
+  "location": {
+    "table": "results",
+    "row": "42"
+  },
+  "target": {
+    "uri": "https://example.org/formal/Results.lean",
+    "extensions": {
+      "org.example.build": {
+        "compiled": true
+      }
+    }
+  },
+  "status": {
+    "value": "partial",
+    "extensions": {
+      "org.example.review": {
+        "reviewed": false
+      }
+    }
+  },
+  "kind": "example",
+  "note": "A generic location without a profile, a generic pin, and extensions on the target and the status."
+}
