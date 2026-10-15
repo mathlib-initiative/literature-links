@@ -23,7 +23,7 @@ MODULES = ("schemacheck", "companion", "cli", "discovery")
 STABLE_API = {
     "cli": ("main",),
     "companion": ("SCHEMA_PATH", "LoadError", "Problem", "Report", "check", "dumps", "load_schema", "loads",
-                  "merge", "normalize", "rebase", "validate"),
+                  "merge", "rebase", "validate"),
     "discovery": ("DEFAULTS", "Collection", "Problem", "Record", "collect", "inherit"),
     "schemacheck": ("SchemaError", "Validator"),
 }
