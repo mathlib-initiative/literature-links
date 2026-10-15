@@ -1,20 +1,28 @@
 {
-  "source": {
-    "type": "latex",
-    "uri": "chapters/groups.tex",
-    "pin": {
-      "type": "paper",
-      "title": "Synthetic notes on finite groups",
-      "author": "A. Author",
-      "venue": "Journal of Examples",
-      "volume": "1",
-      "pages": "1-12",
-      "date": "2026-01",
-      "doi": "10.0000/example.0001"
+  "subject": [
+    {
+      "type": "latex",
+      "uri": "chapters/groups.tex",
+      "location": { "label": "thm:lagrange" },
+      "citation": {
+        "id": "author2026",
+        "type": "article-journal",
+        "title": "Synthetic notes on finite groups",
+        "author": [ { "family": "Author", "given": "A." } ],
+        "container-title": "Journal of Examples",
+        "volume": "1",
+        "page": "1-12",
+        "issued": { "date-parts": [ [ 2026, 1 ] ] },
+        "DOI": "10.0000/example.0001"
+      }
     }
-  },
-  "location": {
-    "label": "thm:lagrange"
-  },
-  "target": "https://example.org/formal/Groups.html#lagrange"
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" }
+    }
+  ]
 }

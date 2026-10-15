@@ -1,0 +1,12 @@
+{
+  "subject": [
+    { "location": { "page": 9 }, "title": "Corollary 1.6" },
+    { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 }, "title": "Erratum to Corollary 1.6" }
+  ],
+  "object": [
+    { "location": { "declaration": "Subgroup.index_mul_card", "module": "Mathlib.GroupTheory.Index" } }
+  ],
+  "relation": "broadMatch",
+  "kind": "theorem",
+  "note": "An errata sheet corrects the statement on page 9. Its end writes its own uri, so it takes nothing from the end template."
+}

@@ -1,34 +1,38 @@
 {
-  "source": {
-    "type": "generic",
-    "uri": "data/results.csv",
-    "pin": {
+  "subject": [
+    {
       "type": "generic",
-      "url": "https://example.org/datasets/results",
-      "dataset": "results",
-      "release": "3"
-    }
-  },
-  "location": {
-    "table": "results",
-    "row": "42"
-  },
-  "target": {
-    "uri": "https://example.org/formal/Results.lean",
-    "extensions": {
-      "org.example.build": {
-        "compiled": true
+      "uri": "data/results.csv",
+      "location": {
+        "table": "results",
+        "row": "42"
+      },
+      "citation": {
+        "id": "results-3",
+        "type": "dataset",
+        "title": "Results",
+        "version": "3",
+        "URL": "https://example.org/datasets/results"
       }
     }
-  },
-  "status": {
-    "value": "partial",
-    "extensions": {
-      "org.example.review": {
-        "reviewed": false
+  ],
+  "object": [
+    {
+      "type": "generic",
+      "uri": "https://example.org/formal/Results.lean",
+      "extensions": {
+        "org.example.build": {
+          "compiled": true
+        }
       }
     }
-  },
+  ],
+  "status": "partial",
   "kind": "example",
-  "note": "A generic location without a profile, a generic pin, and extensions on the target and the status."
+  "note": "A generic location without a profile, a CSL-JSON citation of a dataset, and extensions on an end and on the record.",
+  "extensions": {
+    "org.example.review": {
+      "reviewed": false
+    }
+  }
 }
