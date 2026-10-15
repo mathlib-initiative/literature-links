@@ -1,4 +1,8 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mathlib-initiative/literature-links/main/schema/companion.schema.json",
+  "title": "Literature Links annotation",
+  "description": "One link from an informal source, or a location in it, to a formal target, or an informal source alone. Validation also checks that a PDF rect has positive size and fits its page, and that LaTeX lines are in order.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -94,10 +98,6 @@
   "required": [
     "source"
   ],
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mathlib-initiative/literature-links/main/schema/companion.schema.json",
-  "title": "Literature Links annotation",
-  "description": "One link from an informal source, or a location in it, to a formal target, or an informal source alone. Validation also checks that a PDF rect has positive size and fits its page, and that LaTeX lines are in order.",
   "allOf": [
     {
       "if": {
