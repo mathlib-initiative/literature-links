@@ -16,6 +16,9 @@ __all__ = ["main"]
 # Problems that are not about the data: they exit 2, the others 1.
 _OPERATIONAL = {"IO", "JSON", "NO_ANNOTATIONS", "SYMLINK", "PATH"}
 
+_EXIT_STATUS = ("exit status: 0 when every annotation is valid, 1 for an invalid annotation, file shape or "
+                "defaults file, 2 for a read, JSON, path or symlink failure, no annotations, or a usage error")
+
 
 def _write_json(text: str) -> None:
     """Write UTF-8 JSON with LF line ends, whatever the terminal's encoding."""
@@ -25,6 +28,10 @@ def _write_json(text: str) -> None:
         sys.stdout.write(text)
     else:
         binary.write(text.encode("utf-8"))
+
+
+def _plural(count: int, noun: str) -> str:
+    return f"{count} {noun}{'' if count == 1 else 's'}"
 
 
 def _status(problems: list[Problem]) -> int:
@@ -98,8 +105,7 @@ def _validate(args: argparse.Namespace) -> int:
                 print(f"{path}: {problem['path']}: {problem['message']}{note} [{problem['code']}]",
                       file=sys.stderr if item_status == 2 else sys.stdout)
             if not problems:
-                count = f"{len(types)} annotation{'s' if len(types) != 1 else ''}"
-                print(f"{path}: ok ({count}, {', '.join(dict.fromkeys(types))})")
+                print(f"{path}: ok ({_plural(len(types), 'annotation')}, {', '.join(dict.fromkeys(types))})")
     return status
 
 
@@ -117,28 +123,36 @@ def _scan(args: argparse.Namespace) -> int:
         _write_json(companion.dumps(result))
     else:
         for problem in collection.problems:
-            print(f"{problem.path}: {problem.message} [{problem.code}]")
-        print(f"{len(collection.records)} annotations from {len(collection.files)} files; "
-              f"{len(collection.problems)} problems")
+            # A problem with the whole run, such as finding no annotations, has the path "$".
+            where = "" if problem.path == "$" else f"{problem.path}: "
+            print(f"{where}{problem.message} [{problem.code}]")
+        print(f"{_plural(len(collection.records), 'annotation')} from {_plural(len(collection.files), 'file')}; "
+              f"{_plural(len(collection.problems), 'problem')}")
     return status
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     # No abbreviations: a prefix that works today would break when an option is added.
-    parser = argparse.ArgumentParser(prog="literature-links", allow_abbrev=False,
+    parser = argparse.ArgumentParser(prog="literature-links", allow_abbrev=False, epilog=_EXIT_STATUS,
                                      description="Validate and scan Literature Links annotations.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    validation = subparsers.add_parser("validate", allow_abbrev=False,
+    validation = subparsers.add_parser("validate", allow_abbrev=False, epilog=_EXIT_STATUS,
                                        help="check JSON files, one annotation each, and JSONL files, one per line")
-    validation.add_argument("documents", nargs="+", type=Path)
-    validation.add_argument("--format", choices=("text", "json"), default="text", help="JSON emits one report per input")
-    scanning = subparsers.add_parser("scan", allow_abbrev=False, help="read annotations from JSON and JSONL files")
-    scanning.add_argument("paths", nargs="+", type=Path)
-    scanning.add_argument("--include", action="append", help="select root-relative file patterns (repeatable)")
-    scanning.add_argument("--exclude", action="append", default=[], help="exclude root-relative file patterns (repeatable)")
-    scanning.add_argument("--format", choices=("text", "json"), default="text")
+    validation.add_argument("documents", nargs="+", type=Path, metavar="FILE",
+                            help="a .json file holds one annotation, a .jsonl or .ndjson file one per line")
+    validation.add_argument("--format", choices=("text", "json"), default="text", help="json writes one report per file")
+    scanning = subparsers.add_parser("scan", allow_abbrev=False, epilog=_EXIT_STATUS,
+                                     help="read annotations from JSON and JSONL files and folders")
+    scanning.add_argument("paths", nargs="+", type=Path, metavar="PATH",
+                          help="a file, or a folder to walk for .json, .jsonl and .ndjson files")
+    scanning.add_argument("--include", action="append", metavar="PATTERN",
+                          help="select files by root-relative pattern instead of suffix (repeatable)")
+    scanning.add_argument("--exclude", action="append", default=[], metavar="PATTERN",
+                          help="leave out files by root-relative pattern; wins over --include (repeatable)")
+    scanning.add_argument("--format", choices=("text", "json"), default="text",
+                          help="json writes one report with the files, records and problems")
     args = parser.parse_args(argv)
     if args.format == "text" and getattr(sys.stdout, "errors", None) == "strict" and hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="backslashreplace")
