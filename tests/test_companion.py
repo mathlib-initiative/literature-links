@@ -30,7 +30,9 @@ def document(mode: str = "latex", location: dict | None = None) -> dict:
 
 VALID_LOCATIONS = {
     "pdf": [{"page": 1}, {"page": 7, "rect": [0.1, 0.2, 0.6, 0.1]},
-            {"page": 2, "rect": [0, 0, 1, 1]}, {"page": 2, "rect": [0.9, 0.9, 0.1, 0.1]}],
+            {"page": 2, "rect": [0, 0, 1, 1]}, {"page": 2, "rect": [0.9, 0.9, 0.1, 0.1]},
+            {"page": 3, "quote": {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}},
+            {"page": 1, "quote": {"exact": "x"}}],
     "latex": [{"label": "thm:α_2.1"}, {"lines": [1, 1]}, {"lines": [12, 18]}],
     "html": [{"fragment": "thm-lagrange"}, {"fragment": "thm:α%20"},
              {"css": "article > h2[data-kind='theorem']"}, {"css": "["},
@@ -307,6 +309,25 @@ class TestLocatorBounds(unittest.TestCase):
             with self.subTest(rect=rect):
                 self.assertEqual(C.validate(document("pdf", {"page": 1, "rect": rect})), [])
 
+    def test_pdf_quote_is_the_html_quote_beside_a_page_and_never_with_a_rect(self):
+        quote = {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "quote": quote})), [])
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "quote": {"exact": "α\nβ", "prefix": ""}})), [])
+        invalid = ({"page": 3, "rect": [0, 0, 1, 1], "quote": quote}, {"quote": quote},
+                   {"page": 3, "quote": {"exact": ""}}, {"page": 3, "quote": {}},
+                   {"page": 3, "quote": {"exact": "a", "position": 4}}, {"page": 3, "quote": {"exact": "a", "suffix": 3}},
+                   {"page": 3, "quote": "a finite group"}, {"page": 3, "quote": None},
+                   {"page": 3, "quote": quote, "fragment": "a"}, {"page": 3, "quote": quote, "pages": [3, 4]})
+        for location in invalid:
+            with self.subTest(location=location):
+                self.assertTrue(C.validate(document("pdf", location)))
+        # Both is a structural problem, so the rect checks never run on it.
+        report = C.check(document("pdf", {"page": 3, "rect": [0.8, 0, 0.3, 1], "quote": quote}))
+        self.assertEqual([(p.code, p.path) for p in report.problems], [("SCHEMA", "$.location")])
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "rect": [0, 0, 1, 1], "quote": quote})),
+                         ["$.location: must not have both 'rect' and 'quote'"])
+        self.assertEqual(C.check(document("pdf", {"page": 3, "quote": quote})).problems, [])
+
     def test_latex_anchor_alternatives_and_inclusive_ranges(self):
         invalid = ({"label": ""}, {"label": "a", "lines": [1, 2]}, {"lines": [2, 1]},
                    {"lines": [0, 1]}, {"lines": [1, 1.5]}, {"lines": [True, 2]},
@@ -550,7 +571,7 @@ class TestNormalize(unittest.TestCase):
 
     def test_it_is_idempotent_and_keeps_valid_records_valid(self):
         examples = discovery.collect([ROOT / "examples" / "companion"])
-        self.assertEqual((len(examples.records), examples.problems), (17, []))
+        self.assertEqual((len(examples.records), examples.problems), (18, []))
         for record in examples.records:
             with self.subTest(example=record.path.name, line=record.line):
                 once = C.normalize(record.annotation)
@@ -704,6 +725,10 @@ class TestSchema(unittest.TestCase):
         cases = [document(mode, location) for mode, locations in VALID_LOCATIONS.items() for location in locations]
         cases += [document(mode) for mode in VALID_LOCATIONS]
         cases += [{"target": "x", "location": {"page": 1}}, {"source": "a.pdf", "location": {"page": 1}}]
+        cases += [document("pdf", location) for location in (
+            {"page": 1, "rect": [0, 0, 1, 1], "quote": {"exact": "a"}}, {"quote": {"exact": "a"}},
+            {"page": 1, "quote": {"exact": ""}}, {"page": 1, "quote": {"exact": "a", "extra": 1}},
+            {"page": 1, "quote": {"exact": "a"}, "extra": 1}, {"page": 1, "quote": []})]
         cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "generic", "url": url}}} for url in (5, "a b", "a")]
         cases += [{"source": {"type": "html", "uri": uri}} for uri in ("a%20", "a%zz", "a%", "a\u202eb", "\ufeffa", "a\u200b")]
         cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "repository", "commit": commit}}}
@@ -720,7 +745,8 @@ class TestSchema(unittest.TestCase):
                   {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}},
                   {"value": "a"}, {"value": ""}, {"value": "a", "pin": {"type": "repository", "line": 1}},
                   {"value": "a", "extra": 1},
-                  {"profile": "urn:x"}, {"profile": "a b"}, {"profile": "urn:x", "page": 0}]
+                  {"profile": "urn:x"}, {"profile": "a b"}, {"profile": "urn:x", "page": 0},
+                  {"page": 1, "quote": {"exact": "a"}}, {"page": 1, "rect": [0, 0, 1, 1], "quote": {"exact": "a"}}]
         for _ in range(160):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
@@ -762,6 +788,15 @@ class TestSchemaEvaluator(unittest.TestCase):
                 Validator(schema)
         with self.assertRaises(SchemaError):
             Validator({"type": "nul"}).is_valid(1)
+
+    def test_a_banned_set_of_keys_is_named(self):
+        self.assertEqual(Validator({"not": {"required": ["a", "b", "c"]}}).errors({"a": 1, "b": 2, "c": 3}),
+                         [("$", "must not have all of 'a', 'b' and 'c'")])
+        generic = [("$", "matches a shape that is not allowed here (not)")]
+        self.assertEqual(Validator({"not": {"required": ["a", "b"]}}).errors(3), generic)
+        self.assertEqual(Validator({"not": {"required": ["a"]}}).errors({"a": 1}), generic)
+        self.assertEqual(Validator({"not": {"required": ["a", "b"], "type": "object"}}).errors({"a": 1, "b": 2}),
+                         generic)
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):

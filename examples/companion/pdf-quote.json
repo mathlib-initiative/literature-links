@@ -1,0 +1,16 @@
+{
+  "source": {
+    "type": "pdf",
+    "uri": "https://example.org/notes.pdf"
+  },
+  "location": {
+    "page": 7,
+    "quote": {
+      "exact": "the order of every subgroup of G divides the order of G",
+      "prefix": "Theorem 2.3. Let G be a finite group. Then ",
+      "suffix": "."
+    }
+  },
+  "target": "https://example.org/formal/Groups.html#lagrange",
+  "kind": "theorem"
+}
