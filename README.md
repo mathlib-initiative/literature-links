@@ -1,11 +1,12 @@
 # Literature Links
 
-A small JSON format that links a passage of informal mathematics to a formal
-declaration, such as a Lean declaration in Mathlib. One annotation is one link.
+A small JSON format that links informal mathematics to formal mathematics, such
+as a passage of a book to a Lean declaration in Mathlib. One annotation relates
+a subject, usually the passage, to an object, usually its formal counterpart.
 The annotations about one book, article, wiki or other source make a companion
 to it: a guide from the text to its formalization.
 
-Status: 1.0.0. Records valid under 1.x stay valid in later 1.x; a breaking
+Status: 2.0.0. Records valid under 2.x stay valid in later 2.x; a breaking
 change bumps the major version.
 
 This repository holds the format and its offline checker, nothing else. Viewers,
@@ -20,44 +21,40 @@ the project does not control.
 
 ```json
 {
-  "source": { "type": "latex", "uri": "chapters/groups.tex" },
-  "location": { "label": "thm:lagrange" },
-  "target": {
-    "uri": "https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/Mathlib/GroupTheory/Coset/Card.lean#L69",
-    "pin": {
-      "type": "repository",
-      "url": "https://github.com/leanprover-community/mathlib4",
-      "commit": "db584cd6d46c92f209a44c0f1c829460d327499d",
-      "path": "Mathlib/GroupTheory/Coset/Card.lean",
-      "line": 69,
-      "module": "Mathlib.GroupTheory.Coset.Card",
-      "declaration": "Subgroup.card_subgroup_dvd_card"
-    }
-  }
+  "subject": [ { "type": "latex", "uri": "chapters/groups.tex", "location": { "label": "thm:lagrange" } } ],
+  "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
+                "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+                "location": { "declaration": "Subgroup.card_subgroup_dvd_card",
+                              "module": "Mathlib.GroupTheory.Coset.Card" } } ],
+  "relation": "broadMatch"
 }
 ```
 
-Only `source` is required. Without `location`, the annotation links the whole
-source; without `target`, it records the passage alone. A typed `pin` on either
-end cites the resource outside the companion, like a bibliography entry.
-Optional `status`, `kind`, `label` and `note` describe the link, and `id` and
-`extensions` hold application data.
+`subject` and `object` are lists of ends, and both are required. An end names
+a document with a `type` and a `uri`, and its `location` selects part of it;
+without one, the end is the whole document. An empty `object` records a passage
+that nobody has linked. `relation` says how the sides relate. Here
+`broadMatch` says that Mathlib's statement is more general than the passage,
+which is about finite groups. Without a `relation`, a record claims only that
+its sides correspond. Optional `status`, `kind`, `id` and `note` describe the
+record, and an end may carry a `version`, a `sha256`, a CSL-JSON `citation`,
+`identifiers`, a `title` and a `role`. `extensions` holds application data.
 
-| `source.type` | `location` selects |
+| `type` | `location` selects |
 |---|---|
 | `pdf` | A page, optionally with a rectangle or a quotation |
-| `latex` | A label or an inclusive line range |
+| `latex` | A label, a line or an inclusive line range |
 | `html` | An element ID, a CSS selector or a quotation |
+| `lean` | A declaration or a module, optionally narrowed to lines |
 | `generic` | Any JSON object the application defines |
 
 Relative references resolve against the file that holds the annotation. A
 `_defaults.json` file gives every annotation in its folder and below the members
-they share, such as `source`; see [folder defaults](docs/companion.md#folder-defaults).
-A link records that someone related the passage to the target, nothing more:
-it does not claim that the formal statement is equivalent to the passage, that
-anyone reviewed it, or that the target exists. Validation checks structure, PDF
-rectangles and LaTeX line order. It does not fetch resources or check
-mathematics.
+they share, such as the document that each subject end is in; see
+[folder defaults](docs/companion.md#folder-defaults). An annotation records its
+producer's claim, nothing more: it does not show that the relation holds, that
+anyone reviewed it, or that its ends exist. Validation checks structure, PDF
+rectangles and line order. It does not fetch resources or check mathematics.
 
 ## Use
 
