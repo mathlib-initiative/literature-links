@@ -1,14 +1,12 @@
 # Literature Links
 
-A small JSON format that links informal mathematics to formal declarations, such
-as Lean declarations in Mathlib. One annotation is one link. A set of annotations
-makes a companion to a book, article, wiki or other source.
+A small JSON format that links a passage of informal mathematics to a formal
+declaration, such as a Lean declaration in Mathlib. One annotation is one link.
+The annotations about one book, article, wiki or other source make a companion
+to it: a guide from the text to its formalization.
 
 Status: 1.0.0. Records valid under 1.x stay valid in later 1.x; a breaking
 change bumps the major version.
-
-Used by [formal-companion](https://github.com/mathlib-initiative/formal-companion),
-whose PDF overlay reads these annotations.
 
 This repository holds the format and its offline checker, nothing else. Viewers,
 overlays and the companions built from annotations live in their own repositories.
@@ -55,14 +53,19 @@ Optional `status`, `kind`, `label` and `note` describe the link, and `id` and
 Relative references resolve against the file that holds the annotation. A
 `_defaults.json` file gives every annotation in its folder and below the members
 they share, such as `source`; see [folder defaults](docs/companion.md#folder-defaults).
-Validation checks structure, PDF rectangles and LaTeX line order. It does not
-fetch resources or check mathematics.
+A link records that someone related the passage to the target, nothing more:
+it does not claim that the formal statement is equivalent to the passage, that
+anyone reviewed it, or that the target exists. Validation checks structure, PDF
+rectangles and LaTeX line order. It does not fetch resources or check
+mathematics.
 
 ## Use
 
 The tools need Python 3.11 or newer and nothing else.
 
 ```sh
+git clone https://github.com/mathlib-initiative/literature-links
+cd literature-links
 python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install .
