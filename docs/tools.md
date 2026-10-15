@@ -21,12 +21,12 @@ the command line and how files are found and read.
   Infinity, unpaired surrogates, overflow and nonzero underflow.
 - `dumps(value)` keeps key order and writes two-space indentation and a final
   newline.
-- `merge(inherited, written)` and `rebase(value, base)` implement
-  [folder defaults](companion.md#folder-defaults).
-- `normalize(annotation)` copies a record with a string `target` as
-  `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
-  one shape. It raises `TypeError` unless `annotation` is a dict, and otherwise
-  does not validate. It belongs after folder defaults are applied.
+- `merge(inherited, written, *, defaults=False)` and `rebase(value, base)`
+  implement [folder defaults](companion.md#folder-defaults). `merge` reads
+  `written` as a record, so a side it leaves out gets the end template alone.
+  With `defaults=True`, `written` is another defaults file, and end templates
+  stay objects. `rebase` rewrites `$schema` and each end's `uri` and
+  `location.profile`, in end templates and lists of ends.
 - `load_schema()` reads the bundled schema at `SCHEMA_PATH`.
 
 Nothing checks uniqueness across annotations.

@@ -142,7 +142,7 @@ def _apply(annotation: dict[str, Any], path: Path,
     merged: dict[str, Any] = {}
     for file, value in chain:
         depth = len(path.parent.relative_to(file.parent).parts)
-        merged = companion.merge(merged, companion.rebase(value, "../" * depth + DEFAULTS))
+        merged = companion.merge(merged, companion.rebase(value, "../" * depth + DEFAULTS), defaults=True)
     return companion.merge(merged, annotation)
 
 
