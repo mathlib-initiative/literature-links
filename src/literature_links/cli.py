@@ -50,8 +50,8 @@ def _check_row(value: Any, line: int | None, path: Path) -> tuple[dict[str, Any]
     return merged, applied, companion.check(merged).problems
 
 
-def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[str]]:
-    """Check each annotation in ``path``: the problems, the defaults files applied and the source types."""
+def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[str]]]:
+    """Check each annotation in ``path``: the problems, the defaults files applied and each valid one's end types."""
     if path.name == discovery.DEFAULTS:
         return [Problem("DEFAULTS", "$", "a defaults file is not an annotation")], (), []
     rows = discovery._rows(path, path.read_bytes().decode("utf-8"))
@@ -60,7 +60,7 @@ def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[str]]
     problems: list[Problem] = []
     reported: set[Problem] = set()
     applied: tuple[Path, ...] = ()
-    types: list[str] = []
+    types: list[list[str]] = []
     for line, row in rows:
         try:
             merged, files, found = _check_row(companion.loads(row), line, path)
@@ -68,7 +68,7 @@ def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[str]]
             merged, files, found = None, (), [Problem("JSON", "$", str(exc))]
         applied = files or applied
         if merged is not None and not found:
-            types.append(merged["source"]["type"])
+            types.append([end["type"] for side in ("subject", "object") for end in merged[side]])
         for problem in found:
             if not problem.path.startswith("$"):
                 # A defaults file's problem names that file: report it once, not for every row.
@@ -86,7 +86,7 @@ def _validate(args: argparse.Namespace) -> int:
     status = 0
     for path in args.documents:
         applied: tuple[Path, ...] = ()
-        types: list[str] = []
+        types: list[list[str]] = []
         try:
             found, applied, types = _check_file(path)
         except (OSError, ValueError, RecursionError) as exc:
@@ -105,7 +105,8 @@ def _validate(args: argparse.Namespace) -> int:
                 print(f"{path}: {problem['path']}: {problem['message']}{note} [{problem['code']}]",
                       file=sys.stderr if item_status == 2 else sys.stdout)
             if not problems:
-                print(f"{path}: ok ({_plural(len(types), 'annotation')}, {', '.join(dict.fromkeys(types))})")
+                names = dict.fromkeys(name for record in types for name in record)
+                print(f"{path}: ok ({_plural(len(types), 'annotation')}, {', '.join(names)})")
     return status
 
 

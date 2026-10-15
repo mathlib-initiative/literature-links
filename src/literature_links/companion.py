@@ -21,6 +21,9 @@ _SOURCE_CHECKOUT = _HERE.parent.name == "src" and (_HERE.parent.parent / "pyproj
 SCHEMA_PATH = (_HERE.parent.parent / "schema" / "companion.schema.json"
                if not _PACKAGE_SCHEMA.is_file() and _SOURCE_CHECKOUT else _PACKAGE_SCHEMA)
 
+# The two sides of a record, each a list of ends.
+_SIDES = ("subject", "object")
+
 
 class LoadError(ValueError):
     """The input is not an unambiguous, finite JSON value."""
@@ -164,7 +167,8 @@ def check(document: Any) -> Report:
     """Check one annotation without changing it.
 
     Problem codes are ``JSON`` (not a JSON value), ``SCHEMA``, ``PDF_RECT`` and
-    ``LATEX_LINES``.
+    ``LINES``. The last two are checked in each end, subject first, whose
+    location has no ``profile``, and only when the schema finds nothing.
     """
     report = Report(problems=_json_problems(document))
     if report.problems:
@@ -178,24 +182,26 @@ def check(document: Any) -> Report:
     if report.problems:
         return report
 
-    mode = document["source"]["type"]
-    location = document.get("location")
-    if location is None or "profile" in location:
-        return report
-    if mode == "pdf" and "rect" in location:
-        x, y, width, height = location["rect"]
-        if width <= 0 or height <= 0:
-            report.problems.append(Problem("PDF_RECT", "$.location.rect",
-                                           "width and height must be positive"))
-        # Double sums, as the specification says: every language computes the same answer.
-        if float(x) + float(width) > 1 or float(y) + float(height) > 1:
-            report.problems.append(Problem("PDF_RECT", "$.location.rect",
-                                           "rectangle must stay within the page"))
-    elif mode == "latex" and "lines" in location:
-        start, end = location["lines"]
-        if end < start:
-            report.problems.append(Problem("LATEX_LINES", "$.location.lines",
-                                           "end must be greater than or equal to start"))
+    for side in _SIDES:
+        for index, end in enumerate(document[side]):
+            location = end.get("location")
+            if location is None or "profile" in location:
+                continue
+            path = f"$.{side}[{index}].location"
+            if end["type"] == "pdf" and "rect" in location:
+                x, y, width, height = location["rect"]
+                if width <= 0 or height <= 0:
+                    report.problems.append(Problem("PDF_RECT", path + ".rect",
+                                                   "width and height must be positive"))
+                # Double sums, as the specification says: every language computes the same answer.
+                if float(x) + float(width) > 1 or float(y) + float(height) > 1:
+                    report.problems.append(Problem("PDF_RECT", path + ".rect",
+                                                   "rectangle must stay within the page"))
+            elif end["type"] in ("latex", "lean") and len(location.get("lines", ())) == 2:
+                start, last = location["lines"]
+                if last < start:
+                    report.problems.append(Problem("LINES", path + ".lines",
+                                                   "end must be greater than or equal to start"))
     return report
 
 
