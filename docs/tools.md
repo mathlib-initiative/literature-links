@@ -83,8 +83,10 @@ For both, status 2 wins over 1, and a usage error exits 2. `--format json`
 writes machine-readable output: one report per input for `validate`, and one
 report with the files, the records with their origins, and the problems for
 `scan`. A problem's path in `scan` is the file, then `(line N)` for a JSONL
-line, then the place in the annotation, such as `$.location`. `validate` names
-the file first and gives a JSONL line as `line N`.
+line, then the place in the annotation, such as `$.location`; a problem with
+the whole run, such as finding no annotations, has the path `$`, which the text
+output leaves out. `validate` names the file first and gives a JSONL line as
+`line N`. `--help` lists the options and the exit statuses.
 
 ## Discovery
 

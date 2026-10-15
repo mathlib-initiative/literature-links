@@ -125,7 +125,7 @@ class TestEntryPoints(unittest.TestCase):
         status, out, err = self.run_cli("validate")
         self.assertEqual(status, 2)
         self.assertIn("literature-links validate: error: the following arguments are required: "
-                      "documents", err)
+                      "FILE", err)
         status, out, _ = self.run_cli("--help")
         self.assertEqual(status, 0)
         self.assertTrue(out.startswith("usage: literature-links "), out)

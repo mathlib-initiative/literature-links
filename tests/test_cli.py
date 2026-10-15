@@ -253,6 +253,24 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, err), (2, ""))
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
 
+    def test_scan_text_summary_counts_in_words_and_a_run_problem_has_no_path(self):
+        self.write("one.json", current_annotation())
+        status, out, err = self.run_command("scan", str(self.directory))
+        self.assertEqual((status, out, err), (0, "1 annotation from 1 file; 0 problems\n", ""))
+        status, out, err = self.run_command("scan", str(self.directory), "--exclude", "*")
+        self.assertEqual((status, err), (2, ""))
+        self.assertEqual(out, "no annotations were found in the selected inputs [NO_ANNOTATIONS]\n"
+                              "0 annotations from 0 files; 1 problem\n")
+
+    def test_help_names_the_arguments_and_the_exit_statuses(self):
+        for command, metavars in (("validate", ("FILE",)), ("scan", ("PATH", "PATTERN"))):
+            status, out, _ = self.run_command(command, "--help")
+            with self.subTest(command=command):
+                self.assertEqual(status, 0)
+                for metavar in metavars:
+                    self.assertIn(metavar, out)
+                self.assertIn("exit status: 0", out)
+
     def test_scan_read_path_and_symlink_failures_exit_two(self):
         unreadable = self.directory / "unreadable.json"
         unreadable.write_bytes(b"\xff")
