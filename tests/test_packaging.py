@@ -164,7 +164,7 @@ REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproj
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
 #: The section anchors of docs/companion.md. Other repositories may link to them.
 SPEC_ANCHORS = ("literature-links-specification", "fields", "location", "pdf", "latex", "html", "generic", "pins",
-                "facts", "extensions", "references", "folder-defaults", "validation", "discovery")
+                "status-kind-label-and-note", "extensions", "references", "folder-defaults", "validation", "discovery")
 
 
 def prose(text: str) -> str:
