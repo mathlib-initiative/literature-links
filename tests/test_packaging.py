@@ -162,7 +162,7 @@ REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
-#: The section anchors of docs/companion.md at 1.0.0, plus its current title. Other repositories may link to them.
+#: The section anchors of docs/companion.md. Other repositories may link to them.
 SPEC_ANCHORS = ("literature-links-specification", "fields", "location", "pdf", "latex", "html", "generic", "pins",
                 "facts", "extensions", "references", "folder-defaults", "validation", "discovery")
 

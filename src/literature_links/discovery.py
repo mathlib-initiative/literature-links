@@ -19,7 +19,7 @@ DEFAULTS = "_defaults.json"
 # Files read one annotation per line; other files hold one JSON value.
 _LINES = (".jsonl", ".ndjson")
 
-# Before 2.0 an array in a JSON file was read as several annotations, so name it.
+# The SHAPE message for a JSON file that holds an array.
 _ONE_PER_FILE = "a JSON file holds one annotation, an object, not an array"
 
 
