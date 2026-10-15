@@ -171,15 +171,17 @@ which chooses its keys. Every other key is optional, and a pin with only a
 | `generic` | Any keys the application defines; a `url` is still a reference |
 
 Other keys are invalid in the built-in types; put them in `identifiers` or use
-`generic`. Values are nonempty strings, except that `author` is a string or an
-array of strings, `line` is a positive integer, `identifiers` maps names such
-as `wikidata`, `zbl` or `oldid` to strings, and `sha256` is 64 lowercase hex
-digits: the SHA-256 of the bytes that the `uri` next to the pin points at. A
-status pin has no `uri` next to it, so there `sha256` is the SHA-256 of the file
-the pin names. `date` and `retrieved` are
+`generic`. In the built-in types, values are nonempty strings, except that
+`author` is a string or a nonempty array of strings, `line` is a positive
+integer, `identifiers` maps names such as `wikidata`, `zbl` or `oldid`, under
+the rule for [extension](#extensions) keys, to strings, and `sha256` is 64
+lowercase hex digits: the SHA-256 of the bytes that the `uri` next to the pin
+points at. A status pin has no `uri` next to it, so there `sha256` is the
+SHA-256 of the file the pin names. `commit` is a full Git object ID: 40
+lowercase hex digits, or 64 in a SHA-256 repository. `date` and `retrieved` are
 strings; ISO 8601 is recommended but not checked. `revision` is a site's own
-revision identifier and `commit` a full Git object ID. `url` is a
-[reference](#references).
+revision identifier, and `url` is a [reference](#references). A generic pin
+checks only `url`.
 
 ```json
 "pin": { "type": "website", "title": "C*-algebra", "owner": "Wikipedia",
@@ -226,8 +228,8 @@ is merely unlinked.
 
 ## Extensions
 
-`extensions` maps nonempty keys without whitespace or controls to any JSON
-values. Namespaced keys such as `org.example.tool` are recommended. Annotation,
+`extensions` maps nonempty keys to any JSON values. A key contains none of the
+characters that a [reference](#references) excludes. Namespaced keys such as `org.example.tool` are recommended. Annotation,
 source, target and status extensions never merge with each other. Consumers keep
 unknown values unchanged and never fetch or run them. An extension is not a
 trusted claim.
@@ -235,9 +237,13 @@ trusted claim.
 ## References
 
 `source.uri`, `target` or `target.uri`, a pin's `url`, a location's `profile`
-and `$schema` are nonempty URI or IRI references without `White_Space` or C0/C1 controls (U+0000–001F,
-U+007F–009F). Relative, absolute and opaque references are allowed. The check
-is lexical.
+and `$schema` are nonempty URI or IRI references. They contain no `White_Space`,
+no C0 or C1 control (U+0000–001F, U+007F–009F), no bidirectional formatting or
+zero-width character (U+200B–200F, U+202A–202E, U+2066–2069, U+FEFF) and
+neither U+FFFE nor U+FFFF, so a link cannot display as another; and each `%`
+starts a percent-encoding such as `%20`. Relative and absolute references are
+allowed, including names such as `urn:isbn:9780000000000`. The check is
+lexical: it does not parse the reference, so `http://[x` passes.
 
 A relative reference resolves against the URI of the document that carries
 the annotation: the file, or the retrieval URI of the response that delivered
@@ -250,7 +256,7 @@ the base or rewriting the references.
 Extension strings are not references. To link a Lean declaration, give
 `target.uri` a URL, such as the file at a commit, and name the declaration in
 `target.pin.declaration`; a bare name in `target` is read as a relative reference.
-Percent-encode spaces, `#` and `?` in file names. A fragment in `source.uri` is
+Percent-encode `%`, spaces, `#` and `?` in file names. A fragment in `source.uri` is
 kept as part of the reference but selects nothing; in built-in modes `location`
 is the selection.
 

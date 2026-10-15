@@ -206,16 +206,16 @@
     "reference": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+(?![\\s\\S])",
-      "description": "A URI or IRI reference without White_Space or controls. A relative one resolves against the file that holds it: the annotation file, or the folder defaults file it came from."
+      "pattern": "^(?:[^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200f\\u2028-\\u202f\\u205f\\u2066-\\u2069\\u3000\\ufeff\\ufffe\\uffff%]|%[0-9A-Fa-f]{2})+(?![\\s\\S])",
+      "description": "A URI or IRI reference without White_Space, controls, bidirectional formatting or zero-width characters, U+FFFE or U+FFFF, in which each % starts a percent-encoding. A relative one resolves against the file that holds it: the annotation file, or the folder defaults file it came from."
     },
     "extensions": {
       "type": "object",
       "patternProperties": {
-        "^[^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]+(?![\\s\\S])": true
+        "^[^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200f\\u2028-\\u202f\\u205f\\u2066-\\u2069\\u3000\\ufeff\\ufffe\\uffff]+(?![\\s\\S])": true
       },
       "additionalProperties": false,
-      "description": "Application data under keys without White_Space or controls. Namespaced keys are recommended."
+      "description": "Application data under nonempty keys without the characters a reference excludes. Namespaced keys are recommended."
     },
     "source": {
       "type": "object",
@@ -313,17 +313,9 @@
       "type": "object",
       "properties": {
         "fragment": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/reference"
-            },
-            {
-              "not": {
-                "pattern": "^#"
-              }
-            }
-          ],
-          "description": "A decoded element ID without a leading #."
+          "type": "string",
+          "pattern": "^[^#\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000][^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]*(?![\\s\\S])",
+          "description": "A decoded element ID that does not start with # and has no White_Space or controls."
         },
         "css": {
           "type": "string",
@@ -430,10 +422,11 @@
         "array"
       ],
       "minLength": 1,
+      "minItems": 1,
       "items": {
         "$ref": "#/$defs/text"
       },
-      "description": "One author, or an array of authors."
+      "description": "One author, or a nonempty array of authors."
     },
     "sha256": {
       "type": "string",
@@ -442,10 +435,18 @@
     },
     "identifiers": {
       "type": "object",
-      "additionalProperties": {
-        "$ref": "#/$defs/text"
+      "patternProperties": {
+        "^[^\\u0000-\\u0020\\u007f-\\u00a0\\u1680\\u2000-\\u200f\\u2028-\\u202f\\u205f\\u2066-\\u2069\\u3000\\ufeff\\ufffe\\uffff]+(?![\\s\\S])": {
+          "$ref": "#/$defs/text"
+        }
       },
-      "description": "Other identifiers by name, such as wikidata, zbl or oldid."
+      "additionalProperties": false,
+      "description": "Other identifiers by name, such as wikidata, zbl or oldid. Names follow the rule for extension keys."
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?(?![\\s\\S])",
+      "description": "A full Git object ID: 40 lowercase hex digits, or 64 in a SHA-256 repository."
     },
     "line": {
       "type": "integer",
@@ -594,7 +595,7 @@
           "$ref": "#/$defs/reference"
         },
         "commit": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/commit"
         },
         "path": {
           "$ref": "#/$defs/text"
