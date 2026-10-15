@@ -179,6 +179,39 @@ class TestReferencesAndExtensions(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertTrue(C.validate(doc))
 
+    def test_references_and_keys_exclude_invisible_formatting_characters(self):
+        # Bidirectional formatting, zero-width characters and U+FFFE/U+FFFF can make a link display as another.
+        forbidden = "\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069\ufeff\ufffe\uffff"
+        for char in forbidden:
+            for value in ("https://example.org/" + char + "gpj.exe", char + "x"):
+                with self.subTest(codepoint=hex(ord(char)), value=value):
+                    doc = document()
+                    doc["target"] = value
+                    self.assertTrue(C.validate(doc))
+                    doc = document()
+                    doc["extensions"] = {value: None}
+                    self.assertTrue(C.validate(doc))
+                    doc["extensions"] = {}
+                    doc["source"]["pin"] = {"type": "website", "identifiers": {value: "x"}}
+                    self.assertTrue(C.validate(doc))
+
+    def test_a_percent_sign_in_a_reference_starts_a_percent_encoding(self):
+        for value in ("a%20b", "%C3%A9", "x%2f%2F", "https://example.org/100%25"):
+            doc = document()
+            doc["target"] = value
+            with self.subTest(value=value):
+                self.assertEqual(C.validate(doc), [])
+        for value in ("%", "a%", "a%2", "%zz", "100%", "a%g0"):
+            doc = document()
+            doc["target"] = value
+            with self.subTest(value=value):
+                self.assertTrue(C.validate(doc))
+        # Extension keys, identifier names and fragments are not references.
+        doc = document("html", {"fragment": "100%"})
+        doc["extensions"] = {"100%": None}
+        doc["source"]["pin"] = {"type": "website", "identifiers": {"100%": "x"}}
+        self.assertEqual(C.validate(doc), [])
+
     def test_extensions_require_objects(self):
         for value in (None, "extension", [1], True):
             doc = document()
@@ -200,7 +233,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
                     doc["target"] = "urn:valid"
                     doc["extensions"] = {value: None}
                     self.assertTrue(C.validate(doc))
-        for char in ("\u180e", "\ufeff", "😀"):
+        for char in ("\u180e", "\u2060", "😀"):
             doc = document()
             doc["target"] = "urn:" + char
             doc["extensions"] = {"tool" + char: None}
@@ -434,7 +467,8 @@ class TestPinsAndFacts(unittest.TestCase):
 
     def test_pin_value_shapes(self):
         doc = document()
-        valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]), ("book", "author", []),
+        valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]),
+                 ("repository", "commit", "9e6b3aac" * 5), ("repository", "commit", "0123456789abcdef" * 4),
                  ("repository", "line", 1), ("repository", "line", 38.0), ("website", "sha256", "0" * 64),
                  ("paper", "identifiers", {}), ("paper", "identifiers", {"doi": "10.0000/x", "arxiv": "0000.00000"}),
                  ("website", "url", "urn:example:site"), ("website", "revision", "1374776629"),
@@ -443,7 +477,11 @@ class TestPinsAndFacts(unittest.TestCase):
             doc["source"]["pin"] = {"type": kind, key: value}
             with self.subTest(kind=kind, key=key, value=value):
                 self.assertEqual(C.validate(doc), [])
-        invalid = [("book", "author", ""), ("book", "author", ["A", ""]), ("book", "author", [1]), ("book", "author", None),
+        invalid = [("book", "author", ""), ("book", "author", []), ("book", "author", ["A", ""]),
+                   ("repository", "commit", "main"), ("repository", "commit", "9e6b3aac"),
+                   ("repository", "commit", "9E6B3AAC" * 5), ("repository", "commit", "9e6b3aac" * 5 + "\n"),
+                   ("repository", "commit", "0" * 41), ("paper", "identifiers", {"": "x"}),
+                   ("paper", "identifiers", {" ": "x"}), ("paper", "identifiers", {"a b": "x"}), ("book", "author", [1]), ("book", "author", None),
                    ("repository", "line", 0), ("repository", "line", "38"), ("repository", "line", 1.5),
                    ("website", "sha256", "0" * 63), ("website", "sha256", "A" * 64), ("website", "sha256", "0" * 64 + "\n"),
                    ("paper", "identifiers", {"doi": 1}), ("paper", "identifiers", {"doi": ""}), ("paper", "identifiers", []),
@@ -467,7 +505,7 @@ class TestPinsAndFacts(unittest.TestCase):
     def test_pins_and_facts_are_not_verified(self):
         doc = document()
         doc["source"]["pin"] = {"type": "website", "url": "https://unreachable.invalid/", "sha256": "0" * 64}
-        doc["target"] = {"uri": "urn:nothing", "pin": {"type": "repository", "commit": "not-a-commit", "line": 99999}}
+        doc["target"] = {"uri": "urn:nothing", "pin": {"type": "repository", "commit": "0" * 40, "line": 99999}}
         doc["status"] = "formalized"
         with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
             self.assertEqual(C.validate(doc), [])
@@ -667,6 +705,12 @@ class TestSchema(unittest.TestCase):
         cases += [document(mode) for mode in VALID_LOCATIONS]
         cases += [{"target": "x", "location": {"page": 1}}, {"source": "a.pdf", "location": {"page": 1}}]
         cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "generic", "url": url}}} for url in (5, "a b", "a")]
+        cases += [{"source": {"type": "html", "uri": uri}} for uri in ("a%20", "a%zz", "a%", "a\u202eb", "\ufeffa", "a\u200b")]
+        cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "repository", "commit": commit}}}
+                  for commit in ("main", "0" * 40, "0" * 64, "0" * 40 + "\n", "A" * 40)]
+        cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "paper", "identifiers": {name: "x"}}}}
+                  for name in ("doi", "", "a b", "a\u2066", "100%")]
+        cases += [document("html", {"fragment": fragment}) for fragment in ("100%", "#a", "a#", "a\u3000b", "a\n")]
         randomizer = random.Random(917)
         values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1],
                   {"type": "website"}, {"type": "book", "author": ["x", "y"]}, {"type": "book", "author": [1]},
