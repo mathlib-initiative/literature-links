@@ -22,18 +22,35 @@ The format is inspired by the
 not a serialization of it. Here `target` is the formal side; in the W3C model
 the target is the thing being annotated.
 
+## Terms
+
+An *annotation*, or record, is one JSON object in this format, and an
+*annotation file* is a JSON or JSONL document that carries annotations
+([Discovery](#discovery)). A *companion* is the set of annotations about one
+informal source, such as a book, article or wiki, with any files they keep
+beside them, such as a copy of the source. A *producer* writes annotations, a
+*reader* turns annotation files into records and applies
+[folder defaults](#folder-defaults), a *consumer*, such as a viewer, uses the
+records, and a *validator* checks them.
+
+Here "must", "must not", "should" and "may" state requirements, in the sense of
+RFC 2119, though they are not capitalized. An annotation is invalid exactly
+when it breaks a rule in [Validation](#validation): the JSON rules, the JSON
+Schema or one of the two checks. The other requirements bind producers, readers
+and consumers, and no validator can check them.
+
 ## Fields
 
 | Field | Required | Meaning |
 |---|---|---|
 | `source.type` | Yes | `pdf`, `latex`, `html` or `generic` |
-| `source.uri` | Yes | A [reference](#references) to the companion's copy of the informal resource |
+| `source.uri` | Yes | A [reference](#references) to the informal resource, usually the companion's copy |
 | `source.pin` | No | A [pin](#pins) citing the informal resource outside the companion |
 | `target` | No | A reference to the formal destination, or an object with `uri`, `pin` and `extensions` |
 | `target.uri` | Yes, when `target` is an object | A [reference](#references) to the formal destination |
 | `location` | No | An object selecting part of the source |
-| `status` | No | A [fact](#facts): a nonempty string, or an object with `value`, `pin` and `extensions` |
-| `kind`, `label`, `note` | No | Nonempty strings: [facts](#facts) about the link |
+| `status` | No | How far the passage is [formalized](#status-kind-label-and-note): a nonempty string, or an object with `value`, `pin` and `extensions` |
+| `kind`, `label`, `note` | No | Nonempty strings that [describe](#status-kind-label-and-note) the link |
 | `id` | No | A nonempty string label, not necessarily unique |
 | `extensions`, `source.extensions`, `target.extensions`, `status.extensions` | No | Objects of [application data](#extensions) |
 | `$schema` | No | A reference used as a tooling hint |
@@ -64,9 +81,10 @@ built-in form fits, rather than declaring the source `generic`.
 ```
 
 A consumer must not treat an unresolved, ambiguous or unsupported location as
-the whole source. A location whose `profile` it does not know is unsupported. It
-keeps the location and reports its status. It reports missing or ambiguous
-matches, such as duplicate labels or IDs, and never picks the first one.
+the whole source. A location whose `profile` it does not know is unsupported.
+The consumer keeps the location and reports why it is unresolved. It reports
+missing or ambiguous matches, such as duplicate labels or IDs, and never picks
+the first one.
 
 ### PDF
 
@@ -74,9 +92,10 @@ matches, such as duplicate labels or IDs, and never picks the first one.
 
 `page` counts physical pages from 1, ignoring page labels. Without `rect` it
 selects the whole page. `rect` is `[x, y, width, height]` as fractions of the
-displayed page box: the CropBox, or the MediaBox when there is none, after the
-page's `Rotate` entry is applied. The origin is the top-left corner and y grows
-down. The values are in [0, 1], width and height are positive, and x + width and
+displayed page box after the page's rotation. As in ISO 32000, that box is the
+CropBox clipped to the MediaBox, or the MediaBox when there is no CropBox, and
+a page inherits either box and its `Rotate` entry from the page tree when it
+does not set them. The origin is the top-left corner and y grows down. The values are in [0, 1], width and height are positive, and x + width and
 y + height are at most 1. The sums are taken in IEEE 754 double arithmetic, so a
 width computed as 1 − x always fits.
 
@@ -85,32 +104,45 @@ width computed as 1 − x always fits.
 Use exactly one of `{ "label": "thm:lagrange" }` or `{ "lines": [12, 18] }`.
 
 `label` is the literal argument of a `\label` command. It is looked up in the
-document rooted at `source.uri`, including the files that document inputs;
-macro expansion and generated labels are the application's concern. `lines` is
-an inclusive range of positive integers, with end at least start. Lines count
-from 1 in the file decoded as UTF-8, and CRLF, CR and LF each end a line.
+document rooted at `source.uri` and in the files it reads with `\input` and
+`\include`, at any depth; other inclusion commands, macro expansion and
+generated labels are the application's concern. `lines` is an inclusive range
+of positive integers, with end at least start, in the file at `source.uri`.
+Lines count from 1, and the bytes CRLF, CR and LF each end a line, so the count
+is the same whether the file is UTF-8, Latin-1 or another ASCII-compatible
+encoding.
 
 ### HTML
 
 Use exactly one of these:
 
-- `fragment` is the decoded value of an element's `id` attribute, with no
-  leading `#`, whitespace or controls; `name` attributes do not count. It is
-  not percent-decoded again, so `"a%20b"` is a literal ID.
+- `fragment` is the decoded value of an element's `id` attribute. It does not
+  start with `#` and contains no `White_Space` or control character; use `css`
+  for an ID that does. `name` attributes do not count. It is not
+  percent-decoded again, so `"a%20b"` is a literal ID.
 - `css` is a nonempty CSS selector. Validation does not parse it. A selector
   that matches more than one element is an ambiguous match.
 - `quote` is `{ "exact": "...", "prefix": "...", "suffix": "..." }`. `exact` is
   nonempty. The optional `prefix` and `suffix` are the text just before and
   after the match. When given, a match must be immediately preceded and
   followed by them; they narrow the match and are not part of the selection.
-  Consumers keep all three as written.
+  Consumers keep all three as written and compare them as written with the
+  text layer below, so write them with single spaces and no other
+  `White_Space`. Each matching position counts, overlapping or not: an `exact`
+  of `aa` matches the text `aaa` at two positions, which is ambiguous.
 
-A quote matches this text layer. Take the `textContent` of the body, or of the
-document element if there is no body, without `script`, `style` and `template`
-elements. Replace each run of `White_Space` with one space and trim both ends.
-Do not change case, normalize Unicode or add spaces between elements, so
-`<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text counts. Shadow
-DOM and iframes do not. `White_Space` means U+0009–000D, U+0020, U+0085,
+A quote matches this text layer. Parse the resource with the HTML parsing
+algorithm, scripting disabled, and run no scripts: the layer never depends on
+what a script would add or change, and `noscript` content is ordinary text.
+Take the `textContent` of the body, or of the document element if there is no
+body, without `script`, `style` and `template` elements in any namespace, SVG
+and MathML included. Replace each run of `White_Space` with one space and trim
+both ends. Do not change case, normalize Unicode or add spaces between
+elements, so `<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text
+counts, including MathML `annotation` and `annotation-xml` content such as the
+TeX copy some sites keep beside each formula; for a passage that runs through
+formulas, `css` or `fragment` is often the more robust choice. Shadow DOM and
+iframes do not count. `White_Space` means U+0009–000D, U+0020, U+0085,
 U+00A0, U+1680, U+2000–200A, U+2028–2029, U+202F, U+205F and U+3000. Other text
 conventions need a `profile`.
 
@@ -123,11 +155,12 @@ Text offsets need a unit defined by the application.
 
 ## Pins
 
-`uri` is the local pin: where the companion keeps its copy of the resource,
-usually a relative path. A `pin` is the global pin: a citation that identifies
-the resource outside the companion, the way a bibliography entry does. A pin
-has a `type`, which chooses its keys. Every other key is optional, and a pin
-with only a `type` is valid.
+`uri` is the local pin: the reference a consumer opens, usually a relative
+path to the companion's own copy of the resource, though any reference is
+valid. A `pin` is the global pin: a citation that identifies the resource
+outside the companion, the way a bibliography entry does. A pin has a `type`,
+which chooses its keys. Every other key is optional, and a pin with only a
+`type` is valid.
 
 | `type` | Keys |
 |---|---|
@@ -163,15 +196,18 @@ revision identifier and `commit` a full Git object ID. `url` is a
 A pin describes; it does not verify. Whether the local copy matches the pinned
 bytes, and whether the pinned revision still exists, is for tools to check.
 
-## Facts
+## Status, kind, label and note
 
-`status`, `kind`, `label` and `note` are optional facts about the link, given as
-nonempty strings. `status` says how far the informal item is formalized;
-`formalized`, `partial` and `not_formalized` are the recommended values. `kind`
-names the informal item; `definition`, `theorem`, `lemma`, `proposition`,
-`example`, `remark` and `exercise` are recommended. `label` is a short title and
-`note` is free text. Any nonempty string is valid, and applications agree on
-values among themselves.
+`status`, `kind`, `label` and `note` are optional nonempty strings that describe
+the link. They are the producer's claims, and the format verifies none of them.
+`status` says how far the producer judges the informal item to be formalized:
+in what `status.pin` cites when there is one, and otherwise in the formal
+library the producer had in mind. `formalized`, `partial` and `not_formalized`
+are the recommended values. Even `formalized` next to a `target` is a judgment,
+not a checked equivalence. `kind` names the informal item; `definition`,
+`theorem`, `lemma`, `proposition`, `example`, `remark` and `exercise` are
+recommended. `label` is a short title and `note` is free text. Any nonempty
+string is valid, and applications agree on values among themselves.
 
 `status` may also be an object with `value`, `pin` and `extensions`. `value` is
 the string above, so `"partial"` and `{ "value": "partial" }` say the same thing.
@@ -184,9 +220,9 @@ commit. Every key is optional, so `{}` is valid and says nothing.
                      "commit": "<40 hex digits>" } }
 ```
 
-A record with no `target` and a `not_formalized` status records a checked
+A record with no `target` and a `not_formalized` status claims a checked
 absence, and the status `pin` says where it was checked. A record with neither
-is merely unlinked. The format verifies none of these claims.
+is merely unlinked.
 
 ## Extensions
 
@@ -253,10 +289,13 @@ below needs only what is its own, such as a `location` and a `target.uri`.
 
 Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
-wins. For local files that goes up to the root of the file system. A reader
-that fetches annotations over the web is given the collection's base URL and
-never looks above it. A [JSONL](#discovery) file takes defaults like any
-annotation file, one record at a time.
+wins. Each defaults file merges over the ones above it by the rules above, so a
+`null` in a defaults file removes an outer default, and one with nothing above
+it to remove is kept and reaches every record below. For local files that goes
+up to the root of the file system. A reader that fetches annotations over the
+web is given a base URL, the root of the companion, and never looks above it;
+given none, it applies no defaults. A [JSONL](#discovery) file takes defaults
+like any annotation file, one record at a time.
 
 A relative reference in a defaults file resolves against the defaults file.
 A reader that merges records rewrites the inherited references in
@@ -270,12 +309,12 @@ read.
 
 ## Validation
 
-Validation is the JSON Schema plus two checks: a PDF `rect` has positive size
-and fits the page, and LaTeX `lines` are in order. Neither applies to a location
-with a `profile`. Validation never resolves locations,
-fetches resources or judges mathematics. Where the schema asks for an integer, a
-JSON number with no fractional part counts, so `2.0` is a valid `page`, as in
-JSON Schema.
+Validation checks the JSON rules below, the JSON Schema, and two things the
+schema cannot express: a PDF `rect` has positive size and fits the page, and
+LaTeX `lines` are in order. Neither of the two applies to a location with a
+`profile`. Validation never resolves locations, fetches resources or judges
+mathematics. Where the schema asks for an integer, a JSON number with no
+fractional part counts, so `2.0` is a valid `page`, as in JSON Schema.
 
 JSON input must have unique keys, finite numbers and no unpaired surrogates,
 even inside opaque data. An implementation may reject very large or deeply
@@ -290,5 +329,9 @@ that rounds to zero. Consumers that use doubles keep integers exact only up to
 An annotation file is a JSON or JSONL document, whether a file or a web
 response. A JSON document carries one annotation, an object; an array is not
 one. A JSONL document carries one annotation object on each nonblank line, and
-is how one document carries several. How the tools find and read files is in
-[tools.md](tools.md#discovery).
+is how one document carries several. A document is JSONL when its file name or
+URL path ends in `.jsonl` or `.ndjson`, ignoring case, or when a web response
+declares the media type `application/jsonl` or `application/x-ndjson`;
+otherwise it is JSON. Annotation files are UTF-8, and a reader may reject a
+byte order mark, as [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259#section-8.1)
+allows. How the tools find and read files is in [tools.md](tools.md#discovery).

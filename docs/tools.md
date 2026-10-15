@@ -98,10 +98,12 @@ carry; the rest is a reader convention.
 | JSON | One object | The file |
 | JSONL or NDJSON | One object per nonblank line | Line number, from 1 |
 
-- Files are UTF-8. A JSON file holds one annotation, an object. A JSON file
+- Files are UTF-8. A byte order mark is a `JSON` problem. A JSON file holds
+  one annotation, an object. A JSON file
   that holds an array is a `SHAPE` problem: put several annotations in a
   `.jsonl` file. A JSONL line holds an object, not an array.
-- In JSONL, CRLF, CR and LF each end a line. U+2028 and U+2029 do not. A line
+- In JSONL, CRLF, CR and LF each end a line; JSON Lines ends lines at LF
+  only. U+2028 and U+2029 do not end a line. A line
   with only spaces and tabs is blank. Blank lines are skipped but still counted.
 - Directories are walked recursively for `.json`, `.jsonl` and `.ndjson` files,
   ignoring case. A file named explicitly may have any suffix.

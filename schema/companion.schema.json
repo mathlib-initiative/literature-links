@@ -75,7 +75,7 @@
           }
         }
       ],
-      "description": "How far the informal item is formalised: a value, or an object with value, pin and extensions. formalized, partial and not_formalized are recommended values."
+      "description": "How far the producer judges the informal item to be formalized, in what status.pin cites when given: a value, or an object with value, pin and extensions. formalized, partial and not_formalized are recommended values. Nothing checks the claim."
     },
     "kind": {
       "$ref": "#/$defs/text",
@@ -266,7 +266,7 @@
             "minimum": 0,
             "maximum": 1
           },
-          "description": "[x, y, width, height] as fractions of the displayed CropBox after the page's rotation, from the top-left. It has positive size and fits the page (checked outside this schema)."
+          "description": "[x, y, width, height] as fractions of the displayed page box (the CropBox clipped to the MediaBox) after the page's rotation, from the top-left. It has positive size and fits the page (checked outside this schema)."
         }
       },
       "additionalProperties": false,
