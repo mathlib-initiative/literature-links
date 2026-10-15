@@ -21,8 +21,9 @@ MODULES = ("schemacheck", "companion", "cli", "discovery")
 
 # Names other tools import. Removing or renaming one breaks them.
 STABLE_API = {
+    "cli": ("main",),
     "companion": ("SCHEMA_PATH", "LoadError", "Problem", "Report", "check", "dumps", "load_schema", "loads",
-                  "merge", "rebase", "validate"),
+                  "merge", "normalize", "rebase", "validate"),
     "discovery": ("DEFAULTS", "Collection", "Problem", "Record", "collect", "inherit"),
     "schemacheck": ("SchemaError", "Validator"),
 }
