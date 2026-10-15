@@ -1,19 +1,23 @@
 {
-  "source": {
-    "type": "generic",
-    "uri": "notes/groups.md",
-    "extensions": {
-      "org.example.markdown": {
-        "mediaType": "text/markdown"
+  "subject": [
+    {
+      "type": "generic",
+      "uri": "notes/groups.md",
+      "location": {
+        "profile": "https://example.org/profiles/markdown-block/v1",
+        "block": "^lagrange"
+      },
+      "extensions": {
+        "org.example.markdown": {
+          "mediaType": "text/markdown"
+        }
       }
     }
-  },
+  ],
+  "object": [
+    { "type": "html", "uri": "formal/Groups.html", "location": { "fragment": "lagrange" } }
+  ],
   "id": "groups-claim-1",
-  "location": {
-    "profile": "https://example.org/profiles/markdown-block/v1",
-    "block": "^lagrange"
-  },
-  "target": "formal/Groups.html#lagrange",
   "extensions": {
     "org.example.roadmap": {
       "status": "draft",

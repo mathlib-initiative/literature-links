@@ -1,40 +1,34 @@
 {
-  "id": "d1f0dc66926c",
-  "kind": "definition",
-  "label": "C*-algebra",
+  "subject": [
+    {
+      "type": "html",
+      "uri": "sources/C-algebra.html",
+      "version": "1374776629",
+      "location": { "css": "#mw-content-text .mw-parser-output > p:nth-of-type(1)" },
+      "title": "Definition of a C*-algebra",
+      "citation": {
+        "id": "wikipedia-c-star-algebra",
+        "type": "entry-encyclopedia",
+        "title": "C*-algebra",
+        "container-title": "Wikipedia",
+        "URL": "https://en.wikipedia.org/w/index.php?title=C*-algebra&oldid=1374776629",
+        "accessed": { "date-parts": [ [ 2026, 10, 1 ] ] }
+      },
+      "identifiers": { "wikidata": "Q263809" }
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "NonUnitalCStarAlgebra", "module": "Mathlib.Analysis.CStarAlgebra.Classes" }
+    }
+  ],
   "status": "formalized",
-  "source": {
-    "type": "html",
-    "uri": "sources/C-algebra.html",
-    "pin": {
-      "type": "website",
-      "title": "C*-algebra",
-      "owner": "Wikipedia",
-      "url": "https://en.wikipedia.org/w/index.php?title=C*-algebra&oldid=1374776629",
-      "revision": "1374776629",
-      "retrieved": "2026-10-01",
-      "identifiers": {
-        "wikidata": "Q263809"
-      }
-    }
-  },
-  "location": {
-    "css": "#mw-content-text .mw-parser-output > p:nth-of-type(1)"
-  },
-  "target": {
-    "uri": "https://raw.githubusercontent.com/leanprover-community/mathlib4/9e6b3aac99b624d10c84653ab9c5357283b9b3b8/Mathlib/Analysis/CStarAlgebra/Classes.lean",
-    "pin": {
-      "type": "repository",
-      "url": "https://github.com/leanprover-community/mathlib4",
-      "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8",
-      "path": "Mathlib/Analysis/CStarAlgebra/Classes.lean",
-      "line": 30,
-      "module": "Mathlib.Analysis.CStarAlgebra.Classes",
-      "declaration": "NonUnitalCStarAlgebra",
-      "sha256": "4c4df77d40d71b3b3e0058720dce489e704789582f0ebb4ce464b3d5d4cfae6b"
-    }
-  },
-  "note": "Illustrative record of a formalized definition, not a reviewed claim about Mathlib: the passage defines a C*-algebra without a unit, as NonUnitalCStarAlgebra does; CStarAlgebra is the unital class.",
+  "kind": "definition",
+  "id": "d1f0dc66926c",
+  "note": "Illustrative record of a formalized definition, not a reviewed claim about Mathlib: the passage defines a C*-algebra without a unit, as NonUnitalCStarAlgebra does; CStarAlgebra is the unital class. The subject opens a local copy of the article and names its revision.",
   "extensions": {
     "org.example.curation": {
       "reviewed": false

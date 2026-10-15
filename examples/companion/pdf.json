@@ -1,10 +1,13 @@
 {
-  "source": {
-    "type": "pdf",
-    "uri": "https://example.org/notes.pdf"
-  },
-  "location": {
-    "page": 7
-  },
-  "target": "https://example.org/formal/Groups.html#lagrange"
+  "subject": [
+    { "type": "pdf", "uri": "https://example.org/notes.pdf", "location": { "page": 7 } }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "Subgroup.card_subgroup_dvd_card" }
+    }
+  ]
 }

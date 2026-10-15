@@ -31,9 +31,6 @@ PACKAGE = Path(literature_links.__file__).resolve().parent
 IMPORT_ROOT = PACKAGE.parent
 EXAMPLES = ROOT / "examples" / "companion"
 FIXTURE = HERE / "fixtures" / "companion"
-# examples/companion still holds 1.x records. Until they are converted, the 2.0
-# test fixture stands in for them where every example must be valid.
-VALID_EXAMPLES = FIXTURE
 ANNOTATION_SUFFIXES = (".json", ".jsonl", ".ndjson")
 EXPECT_INSTALLED = os.environ.get("LITERATURE_LINKS_TEST_INSTALLED") == "1"
 
@@ -147,16 +144,16 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
 
     def test_every_example_is_valid(self):
-        files = sorted(path for path in VALID_EXAMPLES.rglob("*")
+        files = sorted(path for path in EXAMPLES.rglob("*")
                        if path.suffix.lower() in ANNOTATION_SUFFIXES and path.name != "_defaults.json")
         # The examples include JSONL and folder defaults, so validate and scan read both.
         self.assertTrue(any(path.suffix.lower() != ".json" for path in files))
-        self.assertTrue(any(VALID_EXAMPLES.rglob("_defaults.json")))
+        self.assertTrue(any(EXAMPLES.rglob("_defaults.json")))
         self.assertEqual(self.run_cli("validate", *map(str, files))[0], 0)
         count = sum(1 if path.suffix.lower() == ".json" else
                     sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip(" \t"))
                     for path in files)
-        status, out, _ = self.run_cli("scan", str(VALID_EXAMPLES))
+        status, out, _ = self.run_cli("scan", str(EXAMPLES))
         summary = f"{count} annotation{'s' * (count != 1)} from {len(files)} file{'s' * (len(files) != 1)}"
         self.assertEqual((status, out), (0, f"{summary}; 0 problems\n"))
 

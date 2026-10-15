@@ -1,15 +1,24 @@
 {
-  "source": {
-    "type": "html",
-    "uri": "notes/groups.html"
-  },
-  "location": {
-    "quote": {
-      "exact": "the order of a subgroup divides the order of the group",
-      "prefix": "Lagrange's theorem says that ",
-      "suffix": "."
+  "subject": [
+    {
+      "type": "html",
+      "uri": "notes/groups.html",
+      "location": {
+        "quote": {
+          "exact": "the order of a subgroup divides the order of the group",
+          "prefix": "Lagrange's theorem says that ",
+          "suffix": "."
+        }
+      }
     }
-  },
-  "target": "https://example.org/formal/Groups.html#lagrange",
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" }
+    }
+  ],
   "kind": "theorem"
 }

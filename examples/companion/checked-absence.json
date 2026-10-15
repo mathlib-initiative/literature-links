@@ -1,0 +1,28 @@
+{
+  "subject": [
+    {
+      "type": "html",
+      "uri": "https://en.wikipedia.org/wiki/C*-algebra",
+      "version": "1374776629",
+      "location": { "fragment": "Quotients_and_approximate_identities" },
+      "title": "Sequential approximate identity"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d"
+    }
+  ],
+  "relation": "noMatch",
+  "status": "not_formalized",
+  "kind": "proposition",
+  "id": "21b2af87df95",
+  "note": "Illustrative record of a checked absence, not a reviewed claim about Mathlib. It says that Mathlib at this commit was searched and holds nothing that matches the passage. A record with an empty object would say only that nobody has linked the passage.",
+  "extensions": {
+    "org.example.curation": {
+      "reviewed": false
+    }
+  }
+}

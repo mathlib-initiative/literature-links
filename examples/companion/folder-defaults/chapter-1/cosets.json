@@ -1,7 +1,7 @@
 {
-  "kind": "remark",
-  "label": "Remark 1.5",
-  "location": { "page": 8 },
-  "status": "not_formalized",
-  "target": null
+  "subject": [
+    { "location": { "page": 8 }, "title": "Remark 1.5" }
+  ],
+  "object": [],
+  "kind": "remark"
 }

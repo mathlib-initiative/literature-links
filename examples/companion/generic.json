@@ -1,7 +1,4 @@
 {
-  "source": {
-    "type": "generic",
-    "uri": "urn:example:informal-record:17"
-  },
-  "target": "urn:example:formal-record:42"
+  "subject": [ { "type": "generic", "uri": "urn:example:informal-record:17" } ],
+  "object": [ { "type": "generic", "uri": "urn:example:formal-record:42" } ]
 }
