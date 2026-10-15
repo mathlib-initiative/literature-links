@@ -134,7 +134,7 @@ class Validator:
         return self._is_valid(instance, self.root)
 
     def errors(self, instance: Any) -> list[tuple[str, str]]:
-        """Every violation as a ``(path, message)`` pair, with paths such as ``$.source.type``; empty if valid."""
+        """Every violation as a ``(path, message)`` pair, with paths such as ``$.subject[0].type``; empty if valid."""
         return list(self._eval(instance, self.root, "$"))
 
     def _is_valid(self, instance: Any, schema: Any) -> bool:
