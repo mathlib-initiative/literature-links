@@ -22,23 +22,22 @@
     "css": "#mw-content-text .mw-parser-output > p:nth-of-type(1)"
   },
   "target": {
-    "uri": "Mathlib/Analysis/CStarAlgebra/Classes.lean#CStarAlgebra",
+    "uri": "https://raw.githubusercontent.com/leanprover-community/mathlib4/9e6b3aac99b624d10c84653ab9c5357283b9b3b8/Mathlib/Analysis/CStarAlgebra/Classes.lean",
     "pin": {
       "type": "repository",
       "url": "https://github.com/leanprover-community/mathlib4",
       "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8",
       "path": "Mathlib/Analysis/CStarAlgebra/Classes.lean",
-      "line": 38,
+      "line": 30,
       "module": "Mathlib.Analysis.CStarAlgebra.Classes",
-      "declaration": "CStarAlgebra",
+      "declaration": "NonUnitalCStarAlgebra",
       "sha256": "4c4df77d40d71b3b3e0058720dce489e704789582f0ebb4ce464b3d5d4cfae6b"
     }
   },
-  "note": "A complex Banach algebra with an isometric involution satisfying the C*-identity; NonUnitalCStarAlgebra covers the non-unital case.",
+  "note": "Illustrative record of a formalized definition, not a reviewed claim about Mathlib: the passage defines a C*-algebra without a unit, as NonUnitalCStarAlgebra does; CStarAlgebra is the unital class.",
   "extensions": {
-    "org.example.wiki": {
-      "provenance": "ai",
-      "match_kind": "exact"
+    "org.example.curation": {
+      "reviewed": false
     }
   }
 }

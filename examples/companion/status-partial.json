@@ -22,7 +22,7 @@
     "fragment": "Abstract_characterization"
   },
   "target": {
-    "uri": "Mathlib/Analysis/CStarAlgebra/Hom.lean#NonUnitalStarAlgHom.norm_map",
+    "uri": "https://raw.githubusercontent.com/leanprover-community/mathlib4/9e6b3aac99b624d10c84653ab9c5357283b9b3b8/Mathlib/Analysis/CStarAlgebra/Hom.lean",
     "pin": {
       "type": "repository",
       "url": "https://github.com/leanprover-community/mathlib4",
@@ -36,8 +36,8 @@
   },
   "note": "Illustrative record of a partial status: the target states that an injective star algebra homomorphism of complex C*-algebras is isometric, from which uniqueness of the C*-norm follows. Not a reviewed claim about Mathlib.",
   "extensions": {
-    "org.example.wiki": {
-      "provenance": "ai"
+    "org.example.curation": {
+      "reviewed": false
     }
   }
 }
