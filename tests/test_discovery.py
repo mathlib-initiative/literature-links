@@ -19,8 +19,12 @@ from literature_links import companion, discovery
 
 
 def annotation(page: int = 1) -> dict:
-    return {"source": {"type": "pdf", "uri": "../source/book.pdf"},
-            "target": "../site/Module.html#result", "location": {"page": page}}
+    return {"subject": [{"type": "pdf", "uri": "../source/book.pdf", "location": {"page": page}}],
+            "object": [{"type": "html", "uri": "../site/Module.html#result"}]}
+
+
+def first_page(record: discovery.Record) -> int:
+    return record.annotation["subject"][0]["location"]["page"]
 
 
 class TestDiscovery(unittest.TestCase):
@@ -59,7 +63,7 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [single, nested, jsonl, ndjson])
-        self.assertEqual([r.annotation["location"]["page"] for r in result.records], list(range(1, 6)))
+        self.assertEqual([first_page(r) for r in result.records], list(range(1, 6)))
         self.assertEqual([r.line for r in result.records], [None, None, 2, 4, 1])
 
     def test_every_record_uses_its_carrier_as_reference_base(self):
@@ -69,8 +73,8 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual([r.base_uri for r in result.records],
                          [first.as_uri(), first.as_uri(), second.as_uri()])
-        self.assertEqual(result.records[0].annotation["source"]["uri"], "../source/book.pdf")
-        self.assertEqual(result.records[0].annotation["target"], "../site/Module.html#result")
+        self.assertEqual(result.records[0].annotation["subject"][0]["uri"], "../source/book.pdf")
+        self.assertEqual(result.records[0].annotation["object"][0]["uri"], "../site/Module.html#result")
 
     def test_captured_carrier_base_does_not_follow_later_filesystem_changes(self):
         carrier = self.write("original/link.json", annotation())
@@ -84,7 +88,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(record.base_uri, captured)
         self.assertEqual(record.base_uri, carrier.as_uri())
 
-    def test_repeated_ids_equal_records_and_equal_targets_are_preserved(self):
+    def test_repeated_ids_equal_records_and_equal_objects_are_preserved(self):
         first = annotation()
         first["id"] = "optional-id"
         second = annotation(2)
@@ -160,7 +164,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_bad_jsonl_rows_report_their_line_and_keep_other_valid_records(self):
         bad = annotation()
-        bad["location"]["page"] = 0
+        bad["subject"][0]["location"]["page"] = 0
         path = self.raw("links.jsonl", "\n".join(map(json.dumps, [annotation(), bad, None, annotation(3)])))
         result = discovery.collect([path])
         self.assertEqual([r.line for r in result.records], [1, 4])
@@ -200,14 +204,14 @@ class TestDiscovery(unittest.TestCase):
                 self.assertEqual([p.code for p in result.problems], ["JSON"])
 
     def test_generic_locations_and_extension_values_are_opaque(self):
-        value = {"source": {"type": "generic", "uri": "urn:example:record"},
-                 "target": "urn:example:formal", "location": {"z": [3, 2, 1], "a": {}},
+        value = {"subject": [{"type": "generic", "uri": "urn:example:record", "location": {"z": [3, 2, 1], "a": {}}}],
+                 "object": [{"type": "generic", "uri": "urn:example:formal"}],
                  "extensions": {"example": {"large": 2 ** 100, "order": [False, None, "a"]}}}
         path = self.write("link.json", value)
         result = discovery.collect([path])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.records[0].annotation, value)
-        self.assertEqual(list(result.records[0].annotation["location"]), ["z", "a"])
+        self.assertEqual(list(result.records[0].annotation["subject"][0]["location"]), ["z", "a"])
 
     def test_missing_path_and_invalid_utf8_are_reported_with_other_results(self):
         good = self.write("good.json", annotation())
@@ -287,7 +291,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_discovery_performs_no_network_access(self):
         value = annotation()
-        value["source"]["uri"] = "https://example.invalid/book.pdf"
+        value["subject"][0]["uri"] = "https://example.invalid/book.pdf"
         path = self.write("link.json", value)
         with patch("socket.create_connection", side_effect=AssertionError("network forbidden")), \
              patch("urllib.request.urlopen", side_effect=AssertionError("network forbidden")):

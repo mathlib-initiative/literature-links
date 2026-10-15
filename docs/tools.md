@@ -11,7 +11,9 @@ the command line and how files are found and read.
 
 - `check(document)` returns a `Report` whose `problems` are
   `Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
-  `PDF_RECT` and `LATEX_LINES`. Any problem makes the annotation invalid.
+  `PDF_RECT` and `LINES`. Any problem makes the annotation invalid.
+  `PDF_RECT` and `LINES` are checked in each end, subject first, only when the
+  schema finds nothing, and name the end, as in `$.subject[1].location.rect`.
   `warnings` is always empty.
 - `validate(document)` returns the problems as `path: message` strings.
 - `loads(text)` only parses. It keeps integers exact and reads other numbers as
@@ -55,7 +57,7 @@ command line and returns its exit status.
 
 ```python
 from literature_links import companion, discovery
-problems = companion.validate({"source": {"type": "generic", "uri": "a"}, "target": "b"})
+problems = companion.validate({"subject": [{"type": "generic", "uri": "a"}], "object": []})
 collection = discovery.collect(["examples/companion"])  # check .problems before .records
 ```
 
@@ -83,10 +85,10 @@ For both, status 2 wins over 1, and a usage error exits 2. `--format json`
 writes machine-readable output: one report per input for `validate`, and one
 report with the files, the records with their origins, and the problems for
 `scan`. A problem's path in `scan` is the file, then `(line N)` for a JSONL
-line, then the place in the annotation, such as `$.location`; a problem with
-the whole run, such as finding no annotations, has the path `$`, which the text
-output leaves out. `validate` names the file first and gives a JSONL line as
-`line N`. `--help` lists the options and the exit statuses.
+line, then the place in the annotation, such as `$.subject[0].location`; a
+problem with the whole run, such as finding no annotations, has the path `$`,
+which the text output leaves out. `validate` names the file first and gives a
+JSONL line as `line N`. `--help` lists the options and the exit statuses.
 
 ## Discovery
 

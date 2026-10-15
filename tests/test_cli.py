@@ -22,9 +22,9 @@ from literature_links import cli, companion
 
 
 def current_annotation() -> dict:
-    return {"source": {"type": "generic", "uri": "../source.json"},
-            "id": "z", "target": "urn:formal:first",
-            "location": {"custom": {"z": 2**100, "a": [3, 2, 1]}},
+    return {"subject": [{"type": "generic", "uri": "../source.json",
+                         "location": {"custom": {"z": 2**100, "a": [3, 2, 1]}}}],
+            "id": "z", "object": [{"type": "generic", "uri": "urn:formal:first"}],
             "extensions": {"tool": {"z": "α", "a": None}, "owner.example": {"unrecognized": True}}}
 
 
@@ -71,7 +71,8 @@ class TestValidationCommands(CommandCase):
         status, out, err = self.run_command("validate", str(first), str(second))
         self.assertEqual(status, 1)
         self.assertIn(f"{first}: ok", out)
-        self.assertIn(f"{second}: $: is missing required key 'source' [SCHEMA]", out)
+        self.assertIn(f"{second}: $: is missing required key 'subject' [SCHEMA]", out)
+        self.assertIn(f"{second}: $: is missing required key 'object' [SCHEMA]", out)
         self.assertEqual(err, "")
 
     def test_invalid_json_and_missing_files_exit_two_without_tracebacks(self):
@@ -170,13 +171,12 @@ class TestSingleAnnotationDiscovery(CommandCase):
                         encoding="utf-8", newline="")
         self.assertEqual(self.run_command("validate", str(rows)), (0, f"{rows}: ok (2 annotations, generic)\n", ""))
         bad = self.directory / "bad.ndjson"
-        bad.write_text("\n".join([json.dumps(current_annotation()), '{"source": {}}', "[]", json.dumps(current_annotation())]),
-                       encoding="utf-8")
+        bad.write_text("\n".join([json.dumps(current_annotation()), '{"subject": {}}', "[]",
+                                  json.dumps(current_annotation())]), encoding="utf-8")
         status, out, err = self.run_command("validate", str(bad), "--format", "json")
         self.assertEqual((status, err), (1, ""))
         self.assertEqual([(problem["code"], problem["path"]) for problem in json.loads(out)["problems"]],
-                         [("SCHEMA", "line 2 $.source"), ("SCHEMA", "line 2 $.source"),
-                          ("SHAPE", "line 3 $")])
+                         [("SCHEMA", "line 2 $"), ("SCHEMA", "line 2 $.subject"), ("SHAPE", "line 3 $")])
         broken = self.directory / "broken.jsonl"
         broken.write_text(json.dumps(current_annotation()) + "\n{\n[]\n", encoding="utf-8")
         status, out, err = self.run_command("validate", str(broken))
@@ -187,6 +187,17 @@ class TestSingleAnnotationDiscovery(CommandCase):
         empty.write_text(" \n\t\n", encoding="utf-8")
         self.assertEqual(self.run_command("validate", str(empty)),
                          (2, "", f"{empty}: $: the file holds no annotations [NO_ANNOTATIONS]\n"))
+
+    def test_validate_names_the_types_of_every_end_once_subject_first(self):
+        mathlib = {"type": "lean", "uri": "https://github.com/leanprover-community/mathlib4"}
+        rows = self.directory / "rows.jsonl"
+        rows.write_text("\n".join(json.dumps(row) for row in (
+            {"subject": [{"type": "pdf", "uri": "a.pdf"}], "object": [mathlib]},
+            {"subject": [{"type": "html", "uri": "a.html"}, {"type": "pdf", "uri": "b.pdf"}], "object": []},
+            {"subject": [{"type": "latex", "uri": "a.tex"}], "object": [{"type": "generic", "uri": "x"}, mathlib]})),
+            encoding="utf-8")
+        self.assertEqual(self.run_command("validate", str(rows)),
+                         (0, f"{rows}: ok (3 annotations, pdf, lean, html, latex, generic)\n", ""))
 
     def test_validate_reports_a_broken_defaults_file_once_per_jsonl_file(self):
         (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
