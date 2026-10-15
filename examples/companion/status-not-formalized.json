@@ -30,8 +30,8 @@
   },
   "note": "Illustrative record of a checked absence; not a reviewed claim about Mathlib.",
   "extensions": {
-    "org.example.wiki": {
-      "provenance": "ai"
+    "org.example.curation": {
+      "reviewed": false
     }
   }
 }
