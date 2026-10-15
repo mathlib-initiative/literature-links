@@ -22,14 +22,20 @@ the command line and how files are found and read.
 - `dumps(value)` keeps key order and writes two-space indentation and a final
   newline.
 - `merge(inherited, written, *, defaults=False)` and `rebase(value, base)`
-  implement [folder defaults](companion.md#folder-defaults). `merge` reads
-  `written` as a record, so a side it leaves out gets the end template alone.
-  With `defaults=True`, `written` is another defaults file, and end templates
-  stay objects. `rebase` rewrites `$schema` and each end's `uri` and
-  `location.profile`, in end templates and lists of ends.
+  implement [folder defaults](companion.md#folder-defaults). Where `inherited`
+  holds an end template and `written` a list of ends, `merge` merges the
+  template into each end that has no `uri` member, and a `location` on the end
+  replaces the template's whole. Ends with their own `uri` and items that are
+  not objects are kept as written. `merge` reads `written` as a record, so a
+  side it leaves out gets the end template alone. With `defaults=True`,
+  `written` is another defaults file, and end templates stay objects. `rebase`
+  rewrites `$schema` and each end's `uri` and `location.profile`, in end
+  templates and lists of ends; `citation` and `extensions` are left as they
+  are.
 - `load_schema()` reads the bundled schema at `SCHEMA_PATH`.
 
-Nothing checks uniqueness across annotations.
+Every record has one shape, so 2.0 has no `normalize`. Nothing checks
+uniqueness across annotations.
 
 `discovery` reads annotations from files and folders, as in
 [Discovery](#discovery):
@@ -80,6 +86,12 @@ problem: it is not an annotation.
 It exits 0 when it finds annotations and no problems. It exits 1 for an invalid
 annotation, file shape or defaults file. It exits 2 for a read, JSON, path or
 symlink failure, or when it finds no annotations.
+
+In text, `validate` prints a line for each valid file that counts its
+annotations and lists each type of end once, subject ends first, such as
+`latex.json: ok (1 annotation, latex, lean)`, and a line for each problem.
+`scan` prints each problem and then a summary, such as
+`3 annotations from 2 files; 0 problems`.
 
 For both, status 2 wins over 1, and a usage error exits 2. `--format json`
 writes machine-readable output: one report per input for `validate`, and one

@@ -1,10 +1,10 @@
 # Literature Links
 
-A small JSON format that links informal mathematics to formal mathematics, such
-as a passage of a book to a Lean declaration in Mathlib. One annotation relates
-a subject, usually the passage, to an object, usually its formal counterpart.
-The annotations about one book, article, wiki or other source make a companion
-to it: a guide from the text to its formalization.
+A small JSON format that links informal mathematics to formal mathematics. An
+annotation records a correspondence between two documents, or parts of them,
+such as a passage of a book and a Lean declaration in Mathlib. The annotations
+about one book, article, wiki or other source make a companion to it: a guide
+from the text to its formalization.
 
 Status: 2.0.0. Records valid under 2.x stay valid in later 2.x; a breaking
 change bumps the major version.
@@ -30,31 +30,40 @@ the project does not control.
 }
 ```
 
-`subject` and `object` are lists of ends, and both are required. An end names
-a document with a `type` and a `uri`, and its `location` selects part of it;
-without one, the end is the whole document. An empty `object` records a passage
-that nobody has linked. `relation` says how the sides relate. Here
-`broadMatch` says that Mathlib's statement is more general than the passage,
-which is about finite groups. Without a `relation`, a record claims only that
-its sides correspond. Optional `status`, `kind`, `id` and `note` describe the
-record, and an end may carry a `version`, a `sha256`, a CSL-JSON `citation`,
-`identifiers`, a `title` and a `role`. `extensions` holds application data.
+An annotation relates its `subject`, usually the passage, to its `object`,
+usually the formal counterpart. Both are lists of ends, and both are required.
+An end names a document with a `type` and a `uri`, and its `location` selects
+part of it; without one, the end is the whole document. A `lean` end's `uri`
+is the project, its `version` the commit, and its `location` a declaration or a
+module. The ends on one side are taken together, so a theorem that runs over a
+page break is one subject with two ends.
+
+`relation` says how the sides relate. Here `broadMatch` says that Mathlib's
+statement is more general than the passage, which is about finite groups.
+Without a `relation`, an annotation claims only that its sides correspond. An
+empty `object` records a passage that nobody has linked, while `noMatch` over a
+project at a commit records that someone searched the project and found no
+counterpart. An optional `status` says how far the subject is formalized, and
+`kind`, `id` and `note` describe the annotation. An end may carry a `version`,
+a `sha256`, a CSL-JSON `citation`, `identifiers`, a `title` and a `role`.
+`extensions` holds application data.
 
 | `type` | `location` selects |
 |---|---|
 | `pdf` | A page, optionally with a rectangle or a quotation |
-| `latex` | A label, a line or an inclusive line range |
+| `latex` | A label, or lines: the item that starts on a line, or an inclusive range |
 | `html` | An element ID, a CSS selector or a quotation |
 | `lean` | A declaration or a module, optionally narrowed to lines |
 | `generic` | Any JSON object the application defines |
 
 Relative references resolve against the file that holds the annotation. A
 `_defaults.json` file gives every annotation in its folder and below the members
-they share, such as the document that each subject end is in; see
-[folder defaults](docs/companion.md#folder-defaults). An annotation records its
-producer's claim, nothing more: it does not show that the relation holds, that
-anyone reviewed it, or that its ends exist. Validation checks structure, PDF
-rectangles and line order. It does not fetch resources or check mathematics.
+they share, such as an end template that names the document each subject end is
+in; see [folder defaults](docs/companion.md#folder-defaults). An annotation
+records its producer's claim, nothing more: it does not show that the relation
+holds, that anyone reviewed it, or that its ends exist. Validation checks
+structure, PDF rectangles and line order. It does not fetch resources or check
+mathematics.
 
 ## Use
 
@@ -82,7 +91,7 @@ the Python API.
 - [`docs/companion.md`](docs/companion.md): the specification.
 - [`docs/tools.md`](docs/tools.md): the checker, its Python API and the command line.
 - [`schema/companion.schema.json`](schema/companion.schema.json): the JSON Schema.
-- [`examples/companion/`](examples/companion/): valid examples.
+- [`examples/companion/`](examples/companion/): valid examples of each location form and field.
 - [`src/literature_links/`](src/literature_links/): the checker. `companion`
   checks one annotation, `discovery` reads files and applies folder defaults,
   and `cli` runs `validate` and `scan`.
