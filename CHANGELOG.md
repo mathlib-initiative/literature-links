@@ -7,6 +7,9 @@ First public release.
 - One annotation links one informal `source`, optionally narrowed by a
   `location`, to one formal `target`. Sources are PDF, LaTeX, HTML or generic.
   Without `target`, an annotation records the passage alone.
+- A PDF location selects a page, optionally narrowed by a `rect` or a `quote`,
+  not both. The `quote` is the HTML quote object, matched against the
+  extracted text of that one page.
 - A location with a `profile` key is application-defined under every source
   type, so a location no built-in form fits does not force a `generic` source.
 - Optional typed pins on `source`, `target` and `status`: `website`, `book`,
