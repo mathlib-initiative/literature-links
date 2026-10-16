@@ -215,13 +215,14 @@ class TestEndTemplates(unittest.TestCase):
         defaults = {"subject": {"type": "pdf", "uri": "../notes.pdf", "sha256": SHA256}, "object": OBJECT}
         record = {"subject": [{"location": {"page": 7}, "title": "Theorem 1.4 (Lagrange)"},
                               {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
-                  "object": [{"location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                  "relation": "exactMatch", "junk": JUNK}
+                  "object": [{"location": {"declaration": "Subgroup.card_subgroup_dvd_card"}, "junk": JUNK}],
+                  "relation": "exactMatch"}
         expected = {"subject": [{"type": "pdf", "uri": "../notes.pdf", "sha256": SHA256, "location": {"page": 7},
                                  "title": "Theorem 1.4 (Lagrange)"},
                                 {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
-                    "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                    "relation": "exactMatch", "junk": JUNK}
+                    "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"},
+                                "junk": JUNK}],
+                    "relation": "exactMatch"}
         merged = companion.merge(companion.merge({}, defaults, defaults=True), record)
         self.assertEqual(json.dumps(merged), json.dumps(expected))
 
@@ -525,8 +526,8 @@ class TestFixture(unittest.TestCase):
             ("chapter-1/lagrange.json", None, (chapter,), {
                 "subject": [{**notes, "location": {"page": 7}, "title": "Theorem 1.4 (Lagrange)"},
                             {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
-                "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                "relation": "exactMatch", "junk": JUNK}),
+                "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}, "junk": JUNK}],
+                "relation": "exactMatch"}),
             ("chapter-1/proofs/steps.jsonl", 1, (chapter, chapter / "proofs"), {
                 "subject": [{**deeper, "location": {"page": 9, "rect": [0.12, 0.4, 0.76, 0.06]},
                              "title": "Proof of Corollary 1.7, first step"}],

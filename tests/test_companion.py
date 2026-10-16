@@ -75,6 +75,7 @@ END_FIELDS = {
     "identifiers": {"wikidata": "Q263809", "arxiv": "0000.00000", "zbmath": "0000.00001", "doi": "10.0000/example"},
     "title": "Theorem 1.4 (Lagrange)",
     "role": "states",
+    "junk": ["Nat.card of an infinite type is 0"],
     "extensions": {"org.example": {"line": 38}},
 }
 
@@ -221,22 +222,6 @@ class TestRecordFields(unittest.TestCase):
             del doc[key]
         self.assertEqual(C.validate(doc), [])
 
-    def test_junk_is_an_optional_list_of_nonempty_strings_on_the_record(self):
-        doc = {**document(), "relation": "exactMatch"}
-        for junk in (["Nat.card of an infinite type is 0"], ["x / 0 = 0", "Real.log 0 = 0"], [" "], ["a", "a"]):
-            doc["junk"] = junk
-            self.assertEqual(C.validate(doc), [], junk)
-        for junk in ([], [""], [1], [None], [["a"]], "x / 0 = 0", {"x / 0": "0"}, None, True):
-            doc["junk"] = junk
-            with self.subTest(junk=junk):
-                self.assertTrue(C.validate(doc))
-        del doc["junk"]
-        for side in ("subject", "object"):
-            end_with_junk = copy.deepcopy(doc)
-            end_with_junk[side][0]["junk"] = ["x / 0 = 0"]
-            with self.subTest(side=side):
-                self.assertTrue(C.validate(end_with_junk))
-
     def test_status_objects_and_pins_are_gone(self):
         mathlib = {"type": "repository", "url": MATHLIB, "commit": COMMIT}
         for status in ({}, {"value": "not_formalized"}, {"pin": mathlib},
@@ -297,6 +282,28 @@ class TestEnds(unittest.TestCase):
             doc["object"][0][key] = value
             with self.subTest(key=key, value=value):
                 self.assertTrue(C.validate(doc))
+
+    def test_junk_is_an_optional_list_of_nonempty_strings_on_an_end(self):
+        doc = {**document(), "relation": "exactMatch"}
+        doc["object"].append({**doc["object"][0], "location": {"declaration": "Subgroup.index_dvd_card"}})
+        for junk in (["Nat.card of an infinite type is 0"], ["x / 0 = 0", "Real.log 0 = 0"], [" "], ["a", "a"]):
+            for side, index in (("subject", 0), ("object", 0), ("object", 1)):
+                end_with_junk = copy.deepcopy(doc)
+                end_with_junk[side][index]["junk"] = junk
+                self.assertEqual(C.validate(end_with_junk), [], (side, index, junk))
+        # Each object end lists its own.
+        doc["object"][0]["junk"] = ["Nat.card of an infinite type is 0"]
+        doc["object"][1]["junk"] = ["Nat.card of an infinite type is 0", "Subgroup.index of an infinite index is 0"]
+        self.assertEqual(C.validate(doc), [])
+        for junk in ([], [""], [1], [None], [["a"]], "x / 0 = 0", {"x / 0": "0"}, None, True):
+            doc["object"][1]["junk"] = junk
+            with self.subTest(junk=junk):
+                self.assertTrue(C.validate(doc))
+        del doc["object"][1]["junk"]
+        self.assertEqual(C.validate(doc), [])
+        # junk is not a record field.
+        doc["junk"] = doc["object"][0].pop("junk")
+        self.assertEqual([problem.code for problem in C.check(doc).problems], ["SCHEMA"])
 
     def test_every_optional_end_key_is_typed(self):
         for key in END_FIELDS:
@@ -852,7 +859,7 @@ class TestSchema(unittest.TestCase):
                 (doc, "target"), (first, "junk"), (first, "type"), (first, "uri"), (first, "location"),
                 (first, "version"), (first, "sha256"), (first, "citation"), (first, "identifiers"), (first, "title"),
                 (first, "role"), (first, "extensions"), (first, "pin"),
-                (last, "type"), (last, "location"), (last, "citation")])
+                (last, "type"), (last, "location"), (last, "citation"), (last, "junk")])
             node[key] = copy.deepcopy(randomizer.choice(values))
             cases.append(doc)
         for doc in cases:
