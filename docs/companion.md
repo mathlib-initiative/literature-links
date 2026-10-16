@@ -1,14 +1,14 @@
 # Literature Links specification
 
-An annotation records a correspondence between two documents, or parts of
-them, such as a passage of a book and a Lean declaration. Its `subject` and
-`object` each list the ends on one side, and its `relation` may say how the
-sides relate. The [JSON Schema](../schema/companion.schema.json) gives its
-structure, and [validation](#validation) adds two checks. The format has no
-version field; it carries the version of the release. Records valid under 2.x
-stay valid in later 2.x; a breaking change bumps the major version. This page
-defines the format; [tools.md](tools.md) documents the checker, its Python API,
-the command line and how files are found and read.
+An annotation records a correspondence between two documents, or parts of them,
+such as a passage of a book and a Lean declaration. Its `subject` and `object`
+each list the ends on one side, and its `relation` may say how the sides relate.
+The [JSON Schema](../schema/companion.schema.json) gives its structure, and
+[validation](#validation) adds two checks. The format has no version field; it
+carries the version of the release. Annotations valid under 2.x stay valid in
+later 2.x; a breaking change bumps the major version. This page defines the
+format; [tools.md](tools.md) documents the checker, its Python API, the command
+line and how files are found and read.
 
 ```json
 {
@@ -19,21 +19,21 @@ the command line and how files are found and read.
 }
 ```
 
-Without a `relation`, a record claims only that its sides correspond, not
-equivalence, proof or review. No record claims that its ends exist.
+Without a `relation`, an annotation claims only that its sides correspond, not
+equivalence, proof or review. No annotation claims that its ends exist.
 
 ## Terms
 
-An *annotation*, or record, is one JSON object in this format, and an
+An *annotation* is one JSON object in this format, and an
 *annotation file* is a JSON or JSONL document that carries annotations
 ([Discovery](#discovery)). An *end* is a document, or a part of one: an object
 with a `type`, a `uri` and optionally a `location`. A *side* is the list of
 ends in `subject` or in `object`. A *companion* is the set of annotations about
 one informal source, such as a book, article or wiki, with any files they keep
 beside them, such as a copy of the source. A *producer* writes annotations, a
-*reader* turns annotation files into records and applies
+*reader* reads annotation files and applies
 [folder defaults](#folder-defaults), a *consumer*, such as a viewer, uses the
-records, and a *validator* checks them.
+annotations, and a *validator* checks them.
 
 Here "must", "must not", "should" and "may" state requirements, in the sense of
 RFC 2119, though they are not capitalized. An annotation is invalid exactly
@@ -53,7 +53,7 @@ agree on its meaning among themselves.
 | `relation` | No | How the subject [relates](#relation) to the object |
 | `status` | No | How far the subject is [formalized](#status-kind-id-and-note) |
 | `kind` | No | What the subject is, such as `theorem` |
-| `id` | No | A name for the subject, shared by the records about it |
+| `id` | No | A name for the subject, shared by the annotations about it |
 | `note` | No | Free text |
 | `extensions` | No | An object of [application data](#extensions) |
 | `$schema` | No | A [reference](#references) used as a tooling hint |
@@ -70,20 +70,20 @@ Each end is an object:
 | `citation` | No | A CSL-JSON item describing the work |
 | `identifiers` | No | Identifiers in other registries, by name |
 | `title` | No | A readable name for the part, such as "Theorem 1.4 (Lagrange)" |
-| `role` | No | How the end takes part in the record |
+| `role` | No | How the end takes part in the annotation |
 | `junk` | No | A list of one or more of the end's [junk values](#relation) |
 | `extensions` | No | An object of application data |
 
-Every string field in these tables is nonempty. Other fields are invalid in a
-record, in an end and in a built-in location.
+Every string field in these tables is nonempty. Other fields are invalid in an
+annotation, in an end and in a built-in location.
 
-The ends on one side are taken jointly. A theorem that runs over a page break
-is one subject with two PDF ends, and a statement split over two declarations
-is one object with two Lean ends. The record relates the two sides as wholes,
+The ends on one side are taken jointly. A theorem that runs over a page break is
+one subject with two PDF ends, and a statement split over two declarations is
+one object with two Lean ends. The annotation relates the two sides as wholes,
 and the order of the ends carries no meaning. Independent links stay separate
-records: a passage that two declarations each state is two records. No field is
-inherited from another record, only from [folder defaults](#folder-defaults).
-An array is not an annotation.
+annotations: a passage that two declarations each state is two annotations. No
+field is inherited from another annotation, only from
+[folder defaults](#folder-defaults). An array is not an annotation.
 
 ## Relation
 
@@ -105,17 +105,17 @@ The first five are the
 Wikidata's [P4390](https://www.wikidata.org/wiki/Property:P4390) also uses, read
 in the same direction: in SKOS too, `broadMatch` says that the object is the
 broader side. For example, Mathlib's `isCyclic_subgroup_units` says that a
-finite subgroup of the units of an integral domain is cyclic. A record whose
-subject says this of the multiplicative group of a field, and whose object is
-that declaration, is a `broadMatch`: every field is an integral domain.
+finite subgroup of the units of an integral domain is cyclic. An annotation
+whose subject says this of the multiplicative group of a field, and whose object
+is that declaration, is a `broadMatch`: every field is an integral domain.
 
 `hasPart`, like `noMatch`, is not a SKOS value. It has the direction of Dublin
 Core's [`hasPart`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/hasPart/)
 and Wikidata's [has part(s)](https://www.wikidata.org/wiki/Property:P527).
 
-The relation holds between the sides as wholes. Exporting a record pairwise,
-one statement for each pair of a subject end and an object end, as SKOS, SSSOM
-and Wikidata expect, is faithful only when each side has one end.
+The relation holds between the sides as wholes. Exporting an annotation
+pairwise, one statement for each pair of a subject end and an object end, as
+SKOS, SSSOM and Wikidata expect, is faithful only when each side has one end.
 
 Mathlib often makes a function total by giving it a fixed value where the
 informal notion is undefined, such as `x / 0 = 0`, `Real.log 0 = 0`, or 0 as
@@ -123,24 +123,24 @@ the `Nat.card` of an infinite type. These are *junk values*. An object that
 agrees with the subject wherever the subject is defined, and differs only
 through junk values, is an `exactMatch`.
 
-An end's optional `junk` field lists the junk values that the end assigns
-where the other side is undefined or says nothing. It usually sits on an object
-end, and with several object ends, each lists its own. Each item is a nonempty
+An end's optional `junk` field lists the junk values that the end assigns where
+the other side is undefined or says nothing. It usually sits on an object end,
+and with several object ends, each lists its own. Each item is a nonempty
 string, in plain words or Lean notation. `junk` never changes the relation, and
 an absent `junk` claims nothing: it does not say there are none. Mathlib's
 `Subgroup.card_subgroup_dvd_card` states Lagrange's theorem with `Nat.card`, so
-an infinite group satisfies it only through a junk value. A record that links
-it to the theorem for finite groups is an `exactMatch`, and its object end may
-list `"junk": ["Nat.card of an infinite type is 0"]`.
+an infinite group satisfies it only through a junk value. An annotation that
+links it to the theorem for finite groups is an `exactMatch`, and its object end
+may list `"junk": ["Nat.card of an infinite type is 0"]`.
 
 ### Unlinked passages and checked absences
 
-A record with `"object": []` records its subject, a passage that nobody has
+An annotation with `"object": []` records its subject, a passage that nobody has
 linked yet. Its empty object claims nothing about whether a counterpart exists.
 A *checked absence* claims more: the producer extracted the statement, searched
 a formal library at a version, and found no counterpart. It is a `noMatch`
-record whose object is the library at that version, usually a `lean` end with
-no location:
+annotation whose object is the library at that version, usually a `lean` end
+with no location:
 
 ```json
 { "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 8 }, "title": "Remark 1.5" } ],
@@ -155,8 +155,8 @@ no location:
 ```
 
 The first says the remark is not linked. The second says that Mathlib at that
-commit was searched and holds nothing that matches it. With an empty object, a
-record has nothing to relate, so it should have no `relation`.
+commit was searched and holds nothing that matches it. With an empty object, an
+annotation has nothing to relate, so it should have no `relation`.
 
 A `noMatch` object end should have a `version`. A producer that does not know
 the version it searched writes `"object": []` with `"status": "not_formalized"`
@@ -167,16 +167,16 @@ instead.
 `status`, `kind`, `id` and `note` are optional nonempty strings. `status` says
 how far the producer judges the subject to be formalized, in the formal library
 the producer has in mind. `formalized`, `partial` and `not_formalized` are the
-recommended values. It describes the subject, not the link, so records about
-one subject should agree, and a folder of records can set it in
+recommended values. It describes the subject, not the link, so annotations about
+one subject should agree, and a folder of annotations can set it in
 [folder defaults](#folder-defaults). Even `formalized` next to an object is a
 judgment, not a checked equivalence, and `not_formalized` does not say where
 anyone looked; a [checked absence](#unlinked-passages-and-checked-absences)
 does. `kind` names what the subject is; `definition`, `theorem`, `lemma`,
 `proposition`, `example`, `remark`, `exercise`, `proof` and `proof_step` are
-recommended. `id` names the subject. Records about one subject should share it,
-so a consumer can group them; it need not be unique across subjects. `note` is
-free text.
+recommended. `id` names the subject. Annotations about one subject should share
+it, so a consumer can group them; it need not be unique across subjects. `note`
+is free text.
 
 ## Ends
 
@@ -200,7 +200,7 @@ exists, is for tools to check.
 `citation` describes the work as a
 [CSL-JSON](https://github.com/citation-style-language/schema) item, the
 bibliography format that Zotero, Pandoc and citeproc read. Its `id` and `type`
-are required nonempty strings. Its other keys are CSL's, and validation does
+are required nonempty strings. Its other fields are CSL's, and validation does
 not check them. A work's DOI goes in `citation`, as CSL's `DOI`. `identifiers`
 maps the names of registries that CSL has no field for, such as `wikidata`,
 `arxiv` or `zbmath`, to nonempty strings, and its keys follow the rule for
@@ -214,10 +214,9 @@ arXiv ID, or what the end selects, such as the Wikidata item of a theorem.
                 "author": [ { "family": "Author", "given": "A." } ], "issued": { "date-parts": [ [2026] ] } } }
 ```
 
-`title` is a readable name for the part that the end selects;
-`citation.title` names the work. `role` says how the end takes part in the
-record, such as `states`, `defines`, `uses` or `supports`. Applications define
-its values.
+`title` is a readable name for the part that the end selects; `citation.title`
+names the work. `role` says how the end takes part in the annotation, such as
+`states`, `defines`, `uses` or `supports`. Applications define its values.
 
 ## Location
 
@@ -226,9 +225,9 @@ invalid. Under `generic` any object is valid, including `{}`. Under the other
 types `location` must take one of the forms below, so `{}` is invalid. An empty
 generic location is not the same as an absent one.
 
-A location with a `profile` key is application-defined under every type.
+A location with a `profile` field is application-defined under every type.
 `profile` is a [reference](#references) that names the convention, and the
-convention gives the other keys their meaning. Only `profile` is checked. Use
+convention gives the other fields their meaning. Only `profile` is checked. Use
 it when no built-in form fits, rather than declaring the document `generic`.
 
 ```json
@@ -346,14 +345,14 @@ that holds the annotations:
 ```
 
 Beside a declaration, `lines` narrows it to the part on those lines, such as a
-proof step. A record that means the whole declaration leaves `lines` out. Lines
-outside the declaration, or in a module that does not hold it, are unresolved.
-Line numbers mean something only at the end's `version`.
+proof step. An annotation that means the whole declaration leaves `lines` out.
+Lines outside the declaration, or in a module that does not hold it, are
+unresolved. Line numbers mean something only at the end's `version`.
 
 At the commit below, `Subgroup.card_dvd_of_injective` proves its claim with a
 `calc` block of two steps. The first starts on line 82 and counts the group as
 the range of `f`; the second starts on line 83 and applies Lagrange's theorem.
-This record links the first step of a proof in the notes to the first `calc`
+This annotation links the first step of a proof in the notes to the first `calc`
 step:
 
 ```json
@@ -382,18 +381,19 @@ is UTF-8, Latin-1 or another ASCII-compatible encoding.
 
 ### Generic
 
-A generic location is any JSON object, such as `{ "table": "results", "row": "42" }`.
-Its producer and consumer define it. A `profile` key names the convention, as in
-every type. A kind of document with no type of its own, such as Markdown, is
-`generic`. Text offsets need a unit defined by the application.
+A generic location is any JSON object, such as
+`{ "table": "results", "row": "42" }`. Its producer and consumer define it. A
+`profile` field names the convention, as in every type. A kind of document with
+no type of its own, such as Markdown, is `generic`. Text offsets need a unit
+defined by the application.
 
 ## Extensions
 
-`extensions`, on the record and on each end, maps nonempty keys to any JSON
+`extensions`, on the annotation and on each end, maps nonempty keys to any JSON
 values. A key contains none of the characters that a [reference](#references)
 excludes. Namespaced keys such as `org.example.tool` are recommended. The
-record's extensions and each end's never merge with each other. Consumers keep
-unknown values unchanged and never fetch or run them. An extension is not a
+annotation's extensions and each end's never merge with each other. Consumers
+keep unknown values unchanged and never fetch or run them. An extension is not a
 trusted claim.
 
 ## References
@@ -407,9 +407,9 @@ such as `%20`. Relative and absolute references are allowed, including names
 such as `urn:isbn:9780000000000`. The check is lexical: it does not parse the
 reference, so `http://[x` passes.
 
-A relative reference resolves against the URI of the document that carries
-the annotation: the file, or the retrieval URI of the response that delivered
-the record, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
+A relative reference resolves against the URI of the document that carries the
+annotation: the file, or the retrieval URI of the response that delivered the
+annotation, as in [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-5).
 This holds inside [JSONL](#discovery) files too. It never resolves against
 another end, the `id`, the repository or the working directory. Code that holds
 an annotation in memory must keep that base. Moving an annotation means keeping
@@ -429,26 +429,26 @@ names, not downloads.
 
 ## Folder defaults
 
-A file named `_defaults.json` holds one JSON object: members shared by every
+A file named `_defaults.json` holds one JSON object: fields shared by every
 [annotation file](#discovery) in its folder and in the folders below it. It is
-not an annotation. Each record read from those files is the defaults merged
-with the record as written:
+not an annotation. Each annotation read from those files is the defaults merged
+with the annotation as written:
 
-- A member the record leaves out is inherited.
+- A member the annotation leaves out is inherited.
 - Where both hold an object, the two merge member by member, at any depth.
-- Otherwise the record's value wins. Arrays are replaced, not merged, except
+- Otherwise the annotation's value wins. Arrays are replaced, not merged, except
   for the ends below.
 - A `null` removes the inherited member. Where nothing is inherited, the
-  record's value is kept as written.
+  annotation's value is kept as written.
 
 This is [JSON Merge Patch](https://www.rfc-editor.org/rfc/rfc7396) with the
-record as the patch, except that a `null` with nothing to remove is kept, so a
-record read without defaults is read exactly as written.
+annotation as the patch, except that a `null` with nothing to remove is kept, so
+an annotation read without defaults is read exactly as written.
 
 One more rule covers ends. In a defaults file, `subject` or `object` may be an
-object, an *end template*: the members that the ends on that side share. Where
-the inherited side is a template and the side written over it, in a record or
-in another defaults file, is a list:
+object, an *end template*: the fields that the ends on that side share. Where
+the inherited side is a template and the side written over it, in an annotation
+or in another defaults file, is a list:
 
 - Each end that has no `uri` member merges over the template by the rules
   above: its own members win, and a `null` removes a template member.
@@ -457,12 +457,12 @@ in another defaults file, is a list:
 - An item that is not an object is kept as written.
 
 A `location` is never merged: one written over a template's, in an end or in
-another template, replaces it whole. A record that leaves a side out gets a
-list holding the template alone, and `"object": []` stays empty. A record that
-writes a side as an object merges with the template member by member, and the
-result is invalid, since a side is a list. The rule applies only to `subject`
-and `object` at the top level; `citation`, `extensions` and every other member
-merge as above.
+another template, replaces it whole. An annotation that leaves a side out gets a
+list holding the template alone, and `"object": []` stays empty. An annotation
+that writes a side as an object merges with the template member by member, and
+the result is invalid, since a side is a list. The rule applies only to
+`subject` and `object` at the top level; `citation`, `extensions` and every
+other member merge as above.
 
 With this file as `chapter-1/_defaults.json`:
 
@@ -473,7 +473,7 @@ With this file as `chapter-1/_defaults.json`:
               "version": "db584cd6d46c92f209a44c0f1c829460d327499d" } }
 ```
 
-this record in `chapter-1/`, whose statement on page 7 is corrected by an
+this annotation in `chapter-1/`, whose statement on page 7 is corrected by an
 errata sheet:
 
 ```json
@@ -499,7 +499,7 @@ reads as:
 ```
 
 The errata end names its own file, so it does not take the hash of
-`notes.pdf`. A record in the same folder that writes
+`notes.pdf`. An annotation in the same folder that writes
 `{ "subject": [ { "location": { "page": 9 } } ], "relation": "noMatch" }`
 leaves `object` out, so its object is the template alone: a checked absence in
 Mathlib at that commit. One that writes `"object": []` instead is merely
@@ -511,26 +511,26 @@ file's folder and in each folder above it, outermost first, so the nearest one
 wins. Each defaults file merges over the ones above it by the rules above. Two
 templates merge member by member, so an outer template may leave a member such
 as `uri` for an inner one to give. A list in a defaults file is completed from
-the template above it, as a record's is, and then replaces that template for
-every record below. A record there that writes its own list gets nothing from
-either, so keep the side a template if records below write ends without a
-`uri`. A `null` in a defaults file removes an outer default; one with nothing
-above it to remove is kept and reaches every record below. For local files that
-goes up to the root of the file system. A reader that fetches annotations over
-the web is given a base URL, the root of the companion, and never looks above
-it; given none, it applies no defaults. A [JSONL](#discovery) file takes
-defaults like any annotation file, one record at a time.
+the template above it, as an annotation's is, and then replaces that template
+for every annotation below. An annotation there that writes its own list gets
+nothing from either, so keep the side a template if annotations below write ends
+without a `uri`. A `null` in a defaults file removes an outer default; one with
+nothing above it to remove is kept and reaches every annotation below. For local
+files that goes up to the root of the file system. A reader that fetches
+annotations over the web is given a base URL, the root of the companion, and
+never looks above it; given none, it applies no defaults. A [JSONL](#discovery)
+file takes defaults like any annotation file, one annotation at a time.
 
 A relative reference in a defaults file resolves against the defaults file.
-A reader that merges records rewrites the inherited references in
+A reader that merges annotations rewrites the inherited references in
 [References](#references), in templates and in lists of ends alike, so that
 they resolve the same way from the annotation's file; strings in `citation`
 and `extensions` are copied unchanged.
 
-Validation applies to the merged record, so a record may leave out `subject` or
-`object` when a defaults file supplies it. A defaults file that is not a JSON
-object, or that a reader cannot read, is a problem, and the records below it
-are not read.
+Validation applies to the merged annotation, so an annotation may leave out
+`subject` or `object` when a defaults file supplies it. A defaults file that is
+not a JSON object, or that a reader cannot read, is a problem, and the
+annotations below it are not read.
 
 ## Validation
 
@@ -557,7 +557,7 @@ response. A JSON document carries one annotation, an object; an array is not
 one. A JSONL document carries one annotation object on each nonblank line, and
 is how one document carries several. A document is JSONL when its file name or
 URL path ends in `.jsonl` or `.ndjson`, ignoring case, or when a web response
-declares the media type `application/jsonl` or `application/x-ndjson`;
-otherwise it is JSON. Annotation files are UTF-8, and a reader may reject a
-byte order mark, as [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259#section-8.1)
-allows. How the tools find and read files is in [tools.md](tools.md#discovery).
+declares the media type `application/jsonl` or `application/x-ndjson`; otherwise
+it is JSON. Annotation files are UTF-8, and a reader may reject a byte order
+mark, as [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259#section-8.1) allows.
+How the tools find and read files is in [tools.md](tools.md#discovery).

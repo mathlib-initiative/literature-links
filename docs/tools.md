@@ -21,7 +21,7 @@ the command line and how files are found and read.
   Infinity, unpaired surrogates, overflow and nonzero underflow.
 - `dumps(value)` keeps key order and writes two-space indentation and a final
   newline.
-- `merge(inherited, written, *, defaults=False)` merges a record, or with
+- `merge(inherited, written, *, defaults=False)` merges an annotation, or with
   `defaults=True` another defaults file, over inherited defaults.
   `rebase(value, base)` rewrites the relative references listed in
   [References](companion.md#references). Both follow
@@ -34,16 +34,16 @@ Nothing checks uniqueness across annotations.
 [Discovery](#discovery):
 
 - `collect(paths, *, include=None, exclude=())` returns a `Collection` of
-  `records`, `problems` and the `files` read. Valid records are kept when other
-  files fail, so check `problems` first. Each argument is a list: one string
-  raises `TypeError`.
-- A `Record(annotation, path, *, line=None, defaults=())` holds the
-  `annotation` with its folder defaults applied, its file `path`, its `line` in
-  a JSONL file (None in a JSON file), the `defaults` files applied, outermost
-  first, and the `base_uri` that its relative references resolve against.
+  `records`, `problems` and the `files` read. Valid annotations are kept when
+  other files fail, so check `problems` first. Each argument is a list: one
+  string raises `TypeError`.
+- A `Record(annotation, path, *, line=None, defaults=())` holds the `annotation`
+  with its folder defaults applied, its file `path`, its `line` in a JSONL file
+  (None in a JSON file), the `defaults` files applied, outermost first, and the
+  `base_uri` that its relative references resolve against.
 - `inherit(annotation, path)` applies the folder defaults that cover the file
-  `path` to a record read from it. It returns the merged annotation or None,
-  the defaults files applied, and the problems.
+  `path` to an annotation read from it. It returns the merged annotation or
+  None, the defaults files applied, and the problems.
 - `DEFAULTS` is the file name of folder defaults, `_defaults.json`.
 - Reading adds the codes `IO`, `JSON`, `PATH`, `SYMLINK`, `SHAPE`, `DEFAULTS`
   and `NO_ANNOTATIONS` to those of `check`.
@@ -89,7 +89,7 @@ appear, each annotation's subject ends before its object ends, such as
 
 For both, status 2 wins over 1, and a usage error exits 2. `--format json`
 writes machine-readable output: one report per input for `validate`, and one
-report with the files, the records with their origins, and the problems for
+report with the files, the annotations with their origins, and the problems for
 `scan`. A problem's path in `scan` is the file, then `(line N)` for a JSONL
 line, then the place in the annotation, such as `$.subject[0].location`; a
 problem with the whole run, such as finding no annotations, has the path `$`,
