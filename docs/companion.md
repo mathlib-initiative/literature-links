@@ -145,6 +145,10 @@ The first says the remark is not linked. The second says that Mathlib at that
 commit was searched and holds nothing that matches it. With an empty object, a
 record has nothing to relate, so it should have no `relation`.
 
+A `noMatch` object end should have a `version`, the commit or revision that was
+searched. A producer that does not know it writes `"object": []` with
+`"status": "not_formalized"` instead.
+
 ## Status, kind, id and note
 
 `status`, `kind`, `id` and `note` are optional nonempty strings. `status` says
