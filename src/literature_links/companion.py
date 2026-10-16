@@ -157,7 +157,8 @@ def dumps(value: Any) -> str:
 
 def load_schema() -> dict[str, Any]:
     """Read the bundled schema."""
-    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    schema: dict[str, Any] = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    return schema
 
 
 # Where the schema keeps a pattern for a rule of the specification, and the rule in words.
