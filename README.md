@@ -81,8 +81,6 @@ A `.json` file holds one annotation, and a `.jsonl` file one per line.
 `validate` checks the files it is given, and `scan` also walks directories.
 Point `scan` at the annotation folder, not a project root: it reads every JSON
 file below, hidden folders such as `.lake` included.
-[`docs/tools.md`](docs/tools.md) documents both commands, their exit codes and
-the Python API.
 
 ## Repository
 
