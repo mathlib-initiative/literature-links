@@ -65,11 +65,9 @@ literature-links scan PATH... [--include PATTERN]... [--exclude PATTERN]... [--f
 literature-links --version
 ```
 
-`validate` checks each file with its folder defaults applied: a JSONL file one
-annotation per line, as in [Discovery](#discovery), and any other file as one
-annotation. A `_defaults.json` named directly is a problem: it is not an
-annotation. `scan` reads annotations from files and folders, as in
-[Discovery](#discovery).
+`validate` checks each file with its folder defaults applied. A
+`_defaults.json` named directly is a problem: it is not an annotation. `scan`
+also walks folders.
 
 Both exit 0 when they find no problem. They exit 2 for a read, write, JSON,
 path or symlink failure, or for no annotations: in `validate`, a JSONL file
