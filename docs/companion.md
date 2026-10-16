@@ -94,7 +94,7 @@ are recommended:
 |---|---|
 | `exactMatch` | The sides state the same definition or claim, up to notation and junk values |
 | `closeMatch` | The sides state nearly the same thing, with differences a reader should know, such as whether 0 is a natural number, whether an interval is closed, or a normalization constant |
-| `broadMatch` | The object is more general: for a definition, a larger class; for a theorem, the object states the claim with no stronger hypotheses and no weaker conclusion |
+| `broadMatch` | The object is more general, not only through junk values: for a definition, a larger class; for a theorem, the object states the claim with no stronger hypotheses and no weaker conclusion |
 | `narrowMatch` | The subject is more general, in the same sense |
 | `relatedMatch` | The sides are related in another way, such as a lemma the proof uses |
 | `hasPart` | The object states one part of the subject, such as one of several claims of a theorem or one clause of a definition |
@@ -121,9 +121,7 @@ Mathlib often makes a function total by giving it a fixed value where the
 informal notion is undefined, such as `x / 0 = 0`, `Real.log 0 = 0`, or 0 as
 the `Nat.card` of an infinite type. These are *junk values*. An object that
 agrees with the subject wherever the subject is defined, and differs only
-through junk values, is an `exactMatch`. Cases that the object reaches only
-through junk values never make it broader: `broadMatch` needs real generality
-within the subject's meaning, such as weaker hypotheses or a larger class.
+through junk values, is an `exactMatch`.
 
 The optional `junk` field lists the junk values that the object assigns where
 the subject is undefined or says nothing. Each item is a nonempty string, in
