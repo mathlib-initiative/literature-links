@@ -24,6 +24,8 @@ modules check annotations offline.
   `declaration` or a `module` location, optionally narrowed to `lines`.
 - `relation` says how the sides relate. `noMatch` over a project at a commit
   records a checked absence.
+- `junk` lists the object's junk values, such as `x / 0 = 0`. An object that
+  differs from the subject only through them is an `exactMatch`.
 - `status` is a string that describes the subject. The status object is gone.
 - `id` names the subject, and records about one subject share it.
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
