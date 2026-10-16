@@ -85,6 +85,12 @@ class TestStandalone(unittest.TestCase):
         oldest = changelog[changelog.rindex("\n## "):].split("\n", 2)[2]
         self.assertTrue(oldest.lstrip().startswith("First public release."), oldest[:80])
 
+    def test_the_schema_id_names_the_release_tag(self):
+        # The $id names this release's tag, so a later schema never claims an earlier release.
+        expected = (f"https://raw.githubusercontent.com/mathlib-initiative/literature-links/"
+                    f"v{literature_links.__version__}/schema/companion.schema.json")
+        self.assertEqual(C.load_schema()["$id"], expected)
+
     def test_the_schema_ships_as_package_data(self):
         setuptools = pyproject()["tool"]["setuptools"]
         data = setuptools["package-data"]["literature_links.schema"]
