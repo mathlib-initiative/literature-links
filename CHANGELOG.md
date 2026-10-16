@@ -4,36 +4,30 @@
 
 First public release.
 
-An annotation records a correspondence between two documents, or parts of
-them, such as a passage of a book and a Lean declaration. Its `subject` and
-`object` are lists of ends. An end names a document by `type` (`pdf`, `latex`,
-`html`, `lean` or `generic`) and `uri`, and an optional `location` selects part
-of it. An optional `relation` says how the sides relate; SKOS's mapping
-relations, `hasPart` and `noMatch` are recommended. A JSON file holds one
-annotation and a JSONL file one per line, and a `_defaults.json` file gives the
-annotations below it shared members, including end templates. The
-`literature-links` command and the `companion`, `discovery` and `schemacheck`
-modules check annotations offline.
+An annotation relates a `subject` and an `object`, each a list of ends, such as
+a passage of a book and a Lean declaration. An end names a document by `type`
+(`pdf`, `latex`, `html`, `lean` or `generic`) and `uri`, and its optional
+`location` selects part of it. An optional `relation`, such as `exactMatch` or
+`noMatch`, says how the sides relate. A JSON file holds one annotation and a
+JSONL file one per line, and a `_defaults.json` file gives the annotations
+below it shared fields. The `literature-links` command and the
+`literature_links` Python package check annotations offline.
 
 ### Changes from 1.x
 
-- An annotation relates `subject` and `object`, lists of ends, in place of
-  `source`, `location` and `target`. The ends on a side are taken jointly, and
-  `"object": []` records an unlinked passage.
-- `lean` ends: the project in `uri`, the commit in `version`, and a
-  `declaration` or a `module` location, optionally narrowed to `lines`.
-- `relation` says how the sides relate. `noMatch` over a project at a commit
-  records a checked absence.
-- An end's `junk` lists the junk values it assigns, such as `x / 0 = 0`. An
-  object that differs from the subject only through them is an `exactMatch`.
-- `status` is a string that describes the subject. The status object is gone.
-- `id` names the subject, and annotations about one subject share it.
+- `subject` and `object`, lists of ends taken jointly, replace `source`,
+  `location` and `target`. `"object": []` records an unlinked passage.
+- `relation` is new. `noMatch` records a checked absence.
+- A `lean` end names the project in `uri` and the commit in `version`, and its
+  `location` a `declaration` or a `module`, optionally with `lines`.
+- An end may list its `junk` values and give a `role`. Its `title` replaces the
+  annotation's `label`.
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
   `sha256` and `identifiers`.
-- An end's `title` replaces `label`, and an end may have a `role`.
-- LaTeX `lines` may be `[n]`: the item that starts on line n.
-- Folder defaults may hold an end template for each side. `merge` takes
-  `defaults=True` to merge one defaults file over another.
-- `normalize` is removed: every annotation has one shape.
-- The `LINES` code replaces `LATEX_LINES` and also covers Lean locations.
-- `validate` lists the types of all ends in its summary.
+- `status` is a string about the subject, not an object. `id` names the
+  subject, and annotations about one subject share it.
+- LaTeX `lines` may be `[n]`, the item that starts on line n.
+- Folder defaults may hold an end template for each side.
+- `normalize` is removed, and `merge` takes `defaults=True`.
+- The `LINES` problem code replaces `LATEX_LINES` and covers Lean locations.
+  `validate` lists the types of all ends.
