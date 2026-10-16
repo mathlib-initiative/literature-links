@@ -228,6 +228,52 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
             with self.subTest(block=block[:40]):
                 self.assertEqual(C.validate(C.loads(block)), [])
 
+    def test_the_specification_examples_are_valid(self):
+        spec = (ROOT / "docs" / "companion.md").read_text(encoding="utf-8")
+        # A block holds an annotation, an end or a "location" member, or belongs to the folder defaults
+        # example: a defaults file, an annotation written beside it, and that annotation as read.
+        blocks = [C.loads(block if block.startswith("{") else "{" + block + "}")
+                  for block in re.findall(r"(?ms)^```json\n(.*?)^```", spec)]
+        first = next(index for index, block in enumerate(blocks) if isinstance(block.get("subject"), dict))
+        defaults, written, read = blocks[first:first + 3]
+        inherited = C.merge({}, defaults, defaults=True)
+        self.assertEqual(C.merge(inherited, written), read)
+        for block in blocks[:first] + blocks[first + 2:]:
+            if "subject" in block:
+                annotations = [block]
+            elif "type" in block:
+                annotations = [{"subject": [block], "object": []}]
+            else:
+                annotations = [{"subject": [{"type": mode, "uri": "a", **block}], "object": []}
+                               for mode in ("pdf", "latex", "html", "lean", "generic")]
+            for annotation in annotations:
+                with self.subTest(annotation=annotation):
+                    self.assertEqual(C.validate(annotation), [])
+        # The checked absence written in prose leaves its object to the template.
+        absence, = (C.loads(span) for span in re.findall(r"`(\{[^`]*\"noMatch\"[^`]*\})`", prose(spec)))
+        merged = C.merge(inherited, absence)
+        self.assertEqual((merged["object"], C.validate(merged)), ([defaults["object"]], []))
+        # In the section of each type, an object in prose is a location of that type.
+        found, section = set(), ""
+        for line in prose(spec).splitlines():
+            if line.startswith("#"):
+                section = line.lstrip("#").strip().lower()
+            elif section in ("pdf", "latex", "lean", "generic"):
+                for span in re.findall(r"`(\{[^`]*\})`", line):
+                    found.add(section)
+                    with self.subTest(section=section, location=span):
+                        location = C.loads(span)
+                        self.assertEqual(C.validate({"subject": [{"type": section, "uri": "a", "location": location}],
+                                                     "object": []}), [])
+        self.assertEqual(found, {"pdf", "latex", "lean", "generic"})
+
+    def test_the_tools_example_runs(self):
+        example, = re.findall(r"(?ms)^```python\n(.*?)^```", (ROOT / "docs" / "tools.md").read_text(encoding="utf-8"))
+        check = "assert problems == [] and collection.problems == [] and collection.records, (problems, collection)\n"
+        child = subprocess.run([sys.executable, "-c", example + check], capture_output=True, text=True,
+                               env=subprocess_env(), cwd=ROOT, check=False)
+        self.assertEqual((child.returncode, child.stderr), (0, ""))
+
     def test_no_em_dash_in_the_docs(self):
         for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
