@@ -833,8 +833,8 @@ class TestSchema(unittest.TestCase):
                   for lines in ([1], [1, 2], [], [0], [1, 2, 3], [1.0], [True])]
         randomizer = random.Random(917)
         values = [None, False, 0, 1, 1.5, "", "a", "a\n", "a b", "0" * 64, {}, [], [1], [1, 2], [2, 1], [0, 0, 1, 1],
-                  [{}], ["a"], ["a", "b"], [""], {"type": "pdf", "uri": "a"}, [{"type": "pdf", "uri": "a"}], {"uri": "a"},
-                  {"type": "pdf"},
+                  [{}], ["a"], ["a", "b"], [""], {"type": "pdf", "uri": "a"}, [{"type": "pdf", "uri": "a"}],
+                  {"uri": "a"}, {"type": "pdf"},
                   [{"type": "lean", "uri": "a", "location": {"module": "M", "lines": [1]}}],
                   {"id": "a", "type": "book"}, {"id": "a"}, {"wikidata": "Q1"}, {"doi": 1}, {"a b": "x"},
                   {"value": "a"}, {"pin": {"type": "book"}}, {"type": "book", "title": "Notes"},
@@ -848,10 +848,11 @@ class TestSchema(unittest.TestCase):
             first, last = doc["subject"][0], doc["object"][0]
             node, key = randomizer.choice([
                 (doc, "subject"), (doc, "object"), (doc, "relation"), (doc, "status"), (doc, "kind"), (doc, "id"),
-                (doc, "note"), (doc, "junk"), (doc, "extensions"), (doc, "$schema"), (doc, "version"),
-                (doc, "source"), (doc, "target"), (first, "junk"), (first, "type"), (first, "uri"), (first, "location"), (first, "version"),
-                (first, "sha256"), (first, "citation"), (first, "identifiers"), (first, "title"), (first, "role"),
-                (first, "extensions"), (first, "pin"), (last, "type"), (last, "location"), (last, "citation")])
+                (doc, "note"), (doc, "junk"), (doc, "extensions"), (doc, "$schema"), (doc, "version"), (doc, "source"),
+                (doc, "target"), (first, "junk"), (first, "type"), (first, "uri"), (first, "location"),
+                (first, "version"), (first, "sha256"), (first, "citation"), (first, "identifiers"), (first, "title"),
+                (first, "role"), (first, "extensions"), (first, "pin"),
+                (last, "type"), (last, "location"), (last, "citation")])
             node[key] = copy.deepcopy(randomizer.choice(values))
             cases.append(doc)
         for doc in cases:
