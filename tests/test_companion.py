@@ -221,6 +221,22 @@ class TestRecordFields(unittest.TestCase):
             del doc[key]
         self.assertEqual(C.validate(doc), [])
 
+    def test_junk_is_an_optional_list_of_nonempty_strings_on_the_record(self):
+        doc = {**document(), "relation": "exactMatch"}
+        for junk in (["Nat.card of an infinite type is 0"], ["x / 0 = 0", "Real.log 0 = 0"], [" "], ["a", "a"]):
+            doc["junk"] = junk
+            self.assertEqual(C.validate(doc), [], junk)
+        for junk in ([], [""], [1], [None], [["a"]], "x / 0 = 0", {"x / 0": "0"}, None, True):
+            doc["junk"] = junk
+            with self.subTest(junk=junk):
+                self.assertTrue(C.validate(doc))
+        del doc["junk"]
+        for side in ("subject", "object"):
+            end_with_junk = copy.deepcopy(doc)
+            end_with_junk[side][0]["junk"] = ["x / 0 = 0"]
+            with self.subTest(side=side):
+                self.assertTrue(C.validate(end_with_junk))
+
     def test_status_objects_and_pins_are_gone(self):
         mathlib = {"type": "repository", "url": MATHLIB, "commit": COMMIT}
         for status in ({}, {"value": "not_formalized"}, {"pin": mathlib},
@@ -817,7 +833,7 @@ class TestSchema(unittest.TestCase):
                   for lines in ([1], [1, 2], [], [0], [1, 2, 3], [1.0], [True])]
         randomizer = random.Random(917)
         values = [None, False, 0, 1, 1.5, "", "a", "a\n", "a b", "0" * 64, {}, [], [1], [1, 2], [2, 1], [0, 0, 1, 1],
-                  [{}], ["a"], {"type": "pdf", "uri": "a"}, [{"type": "pdf", "uri": "a"}], {"uri": "a"},
+                  [{}], ["a"], ["a", "b"], [""], {"type": "pdf", "uri": "a"}, [{"type": "pdf", "uri": "a"}], {"uri": "a"},
                   {"type": "pdf"},
                   [{"type": "lean", "uri": "a", "location": {"module": "M", "lines": [1]}}],
                   {"id": "a", "type": "book"}, {"id": "a"}, {"wikidata": "Q1"}, {"doi": 1}, {"a b": "x"},
@@ -832,8 +848,8 @@ class TestSchema(unittest.TestCase):
             first, last = doc["subject"][0], doc["object"][0]
             node, key = randomizer.choice([
                 (doc, "subject"), (doc, "object"), (doc, "relation"), (doc, "status"), (doc, "kind"), (doc, "id"),
-                (doc, "note"), (doc, "extensions"), (doc, "$schema"), (doc, "version"), (doc, "source"),
-                (doc, "target"), (first, "type"), (first, "uri"), (first, "location"), (first, "version"),
+                (doc, "note"), (doc, "junk"), (doc, "extensions"), (doc, "$schema"), (doc, "version"),
+                (doc, "source"), (doc, "target"), (first, "junk"), (first, "type"), (first, "uri"), (first, "location"), (first, "version"),
                 (first, "sha256"), (first, "citation"), (first, "identifiers"), (first, "title"), (first, "role"),
                 (first, "extensions"), (first, "pin"), (last, "type"), (last, "location"), (last, "citation")])
             node[key] = copy.deepcopy(randomizer.choice(values))

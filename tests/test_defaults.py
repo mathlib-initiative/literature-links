@@ -215,12 +215,12 @@ class TestEndTemplates(unittest.TestCase):
         record = {"subject": [{"location": {"page": 7}, "title": "Theorem 1.4 (Lagrange)"},
                               {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
                   "object": [{"location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                  "relation": "broadMatch"}
+                  "relation": "exactMatch"}
         expected = {"subject": [{"type": "pdf", "uri": "../notes.pdf", "sha256": SHA256, "location": {"page": 7},
                                  "title": "Theorem 1.4 (Lagrange)"},
                                 {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
                     "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                    "relation": "broadMatch"}
+                    "relation": "exactMatch"}
         merged = companion.merge(companion.merge({}, defaults, defaults=True), record)
         self.assertEqual(json.dumps(merged), json.dumps(expected))
 

@@ -51,6 +51,7 @@ agree on its meaning among themselves.
 | `subject` | Yes | A list of one or more ends: by convention the side being annotated, which is the informal side when there is one |
 | `object` | Yes | A list of ends, possibly [empty](#unlinked-passages-and-checked-absences): the other side |
 | `relation` | No | How the subject [relates](#relation) to the object |
+| `junk` | No | A list of one or more of the object's [junk values](#relation) |
 | `status` | No | How far the subject is [formalized](#status-kind-id-and-note) |
 | `kind` | No | What the subject is, such as `theorem` |
 | `id` | No | A name for the subject, shared by the records about it |
@@ -91,8 +92,8 @@ are recommended:
 
 | `relation` | Reading |
 |---|---|
-| `exactMatch` | The sides state the same definition or claim, up to notation |
-| `closeMatch` | The sides state nearly the same thing, with differences a reader should know, such as conventions |
+| `exactMatch` | The sides state the same definition or claim, up to notation and junk values |
+| `closeMatch` | The sides state nearly the same thing, with differences a reader should know, such as whether 0 is a natural number, whether an interval is closed, or a normalization constant |
 | `broadMatch` | The object is more general: for a definition, a larger class; for a theorem, the object states the claim with no stronger hypotheses and no weaker conclusion |
 | `narrowMatch` | The subject is more general, in the same sense |
 | `relatedMatch` | The sides are related in another way, such as a lemma the proof uses |
@@ -103,14 +104,10 @@ The first five are the
 [SKOS mapping relations](https://www.w3.org/TR/skos-reference/#mapping), which
 Wikidata's [P4390](https://www.wikidata.org/wiki/Property:P4390) also uses, read
 in the same direction: in SKOS too, `broadMatch` says that the object is the
-broader side. For example, Mathlib's `Subgroup.card_subgroup_dvd_card` is
-stated with `Nat.card`, which is 0 for an infinite type, so it also covers
-infinite groups. A record whose subject is Lagrange's theorem for finite groups
-and whose object is that declaration is a `broadMatch`. So is a record whose
-object agrees with the subject on the subject's cases and covers more, even by
-a convention for the new cases. `Subgroup.index` is 0 when a subgroup has
-infinitely many cosets, so it is broader than an index defined only for finite
-groups. `closeMatch` is for differences on the subject's own cases.
+broader side. For example, Mathlib's `isCyclic_subgroup_units` says that a
+finite subgroup of the units of an integral domain is cyclic. A record whose
+subject says this of the multiplicative group of a field, and whose object is
+that declaration, is a `broadMatch`: every field is an integral domain.
 
 `hasPart`, like `noMatch`, is not a SKOS value. It has the direction of Dublin
 Core's [`hasPart`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/hasPart/)
@@ -119,6 +116,24 @@ and Wikidata's [has part(s)](https://www.wikidata.org/wiki/Property:P527).
 The relation holds between the sides as wholes. Exporting a record pairwise,
 one statement for each pair of a subject end and an object end, as SKOS, SSSOM
 and Wikidata expect, is faithful only when each side has one end.
+
+Mathlib often makes a function total by giving it a fixed value where the
+informal notion is undefined, such as `x / 0 = 0`, `Real.log 0 = 0`, or 0 as
+the `Nat.card` of an infinite type. These are *junk values*. An object that
+agrees with the subject wherever the subject is defined, and differs only
+through junk values, is an `exactMatch`. Cases that the object reaches only
+through junk values never make it broader: `broadMatch` needs real generality
+within the subject's meaning, such as weaker hypotheses or a larger class.
+
+The optional `junk` field lists the junk values that the object assigns where
+the subject is undefined or says nothing. Each item is a nonempty string, in
+plain words or Lean notation. Like `relation`, it describes the correspondence,
+so with several object ends it covers the side as a whole. It never changes the
+relation, and an absent `junk` claims nothing: it does not say there are none.
+Mathlib's `Subgroup.card_subgroup_dvd_card` states Lagrange's theorem with
+`Nat.card`, so an infinite group satisfies it only through a junk value. A
+record that links it to the theorem for finite groups is an `exactMatch` with
+`"junk": ["Nat.card of an infinite type is 0"]`.
 
 ### Unlinked passages and checked absences
 
@@ -467,7 +482,7 @@ errata sheet:
 { "subject": [ { "location": { "page": 7 }, "title": "Theorem 1.4 (Lagrange)" },
                { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 } } ],
   "object": [ { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "broadMatch" }
+  "relation": "exactMatch" }
 ```
 
 reads as:
@@ -480,7 +495,7 @@ reads as:
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
                 "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "broadMatch" }
+  "relation": "exactMatch" }
 ```
 
 The errata end names its own file, so it does not take the hash of
