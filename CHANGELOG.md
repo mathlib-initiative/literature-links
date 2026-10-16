@@ -29,7 +29,7 @@ modules check annotations offline.
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
   `sha256` and `identifiers`.
 - An end's `title` replaces `label`, and an end may have a `role`.
-- LaTeX `lines` may be a single start line.
+- LaTeX `lines` may be `[n]`: the item that starts on line n.
 - Folder defaults may hold an end template for each side. `merge` takes
   `defaults=True` to merge one defaults file over another.
 - `normalize` is removed: every record has one shape.
