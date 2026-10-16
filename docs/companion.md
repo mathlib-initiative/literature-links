@@ -96,6 +96,7 @@ are recommended:
 | `broadMatch` | The object is more general: for a definition, a larger class; for a theorem, the object states the claim with no stronger hypotheses and no weaker conclusion |
 | `narrowMatch` | The subject is more general, in the same sense |
 | `relatedMatch` | The sides are related in another way, such as a lemma the proof uses |
+| `hasPart` | The object states one part of the subject, such as one of several claims of a theorem or one clause of a definition |
 | `noMatch` | A checked absence: the object, typically a whole project at a `version`, was searched and holds nothing that matches the subject |
 
 The first five are the
@@ -110,6 +111,10 @@ object agrees with the subject on the subject's cases and covers more, even by
 a convention for the new cases. `Subgroup.index` is 0 when a subgroup has
 infinitely many cosets, so it is broader than an index defined only for finite
 groups. `closeMatch` is for differences on the subject's own cases.
+
+`hasPart`, like `noMatch`, is not a SKOS value. It has the direction of Dublin
+Core's [`hasPart`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/hasPart/)
+and Wikidata's [has part(s)](https://www.wikidata.org/wiki/Property:P527).
 
 The relation holds between the sides as wholes. Exporting a record pairwise,
 one statement for each pair of a subject end and an object end, as SKOS, SSSOM

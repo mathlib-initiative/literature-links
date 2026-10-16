@@ -207,8 +207,8 @@ class TestSmallContract(unittest.TestCase):
 class TestRecordFields(unittest.TestCase):
     def test_relation_status_kind_id_and_note_are_optional_nonempty_strings(self):
         doc = document()
-        values = ("exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch", "noMatch", "formalized",
-                  "partial", "not_formalized", "proof_step", "A label with spaces", "α",
+        values = ("exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch", "hasPart", "noMatch",
+                  "formalized", "partial", "not_formalized", "proof_step", "A label with spaces", "α",
                   "anything applications agree on")
         for key in ("relation", "status", "kind", "id", "note"):
             for value in values:
