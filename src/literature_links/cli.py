@@ -106,7 +106,7 @@ def _validate(args: argparse.Namespace) -> int:
                 print(f"{path}: {problem['path']}: {problem['message']}{note} [{problem['code']}]",
                       file=sys.stderr if item_status == 2 else sys.stdout)
             if not problems:
-                names = dict.fromkeys(name for record in types for name in record)
+                names = dict.fromkeys(name for ends in types for name in ends)
                 print(f"{path}: ok ({_plural(len(types), 'annotation')}, {', '.join(names)})")
     return status
 

@@ -11,10 +11,7 @@ import json
 import re
 from typing import Any, Iterator
 
-# Only these names are public.
-__all__ = [
-    "SchemaError", "Validator",
-]
+__all__ = ["SchemaError", "Validator"]
 
 ANNOTATION_KEYWORDS = frozenset({"$schema", "$id", "$defs", "title", "description"})
 ASSERTION_KEYWORDS = frozenset({
