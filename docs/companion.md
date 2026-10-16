@@ -106,14 +106,14 @@ The first five are the
 [SKOS mapping relations](https://www.w3.org/TR/skos-reference/#mapping), which
 Wikidata's [P4390](https://www.wikidata.org/wiki/Property:P4390) also uses, in
 the same direction: there too, `broadMatch` says that the object is broader.
-`hasPart` and `noMatch` are not SKOS values. `hasPart` has the direction of
-Dublin Core's [`hasPart`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/hasPart/)
-and Wikidata's [has part(s)](https://www.wikidata.org/wiki/Property:P527).
-
 For example, Mathlib's `isCyclic_subgroup_units` says that a finite subgroup of
 the units of an integral domain is cyclic. An annotation whose subject says
 this of the multiplicative group of a field, and whose object is that
 declaration, is a `broadMatch`: every field is an integral domain.
+
+`hasPart` and `noMatch` are not SKOS values. `hasPart` has the direction of
+Dublin Core's [`hasPart`](https://www.dublincore.org/specifications/dublin-core/dcmi-terms/terms/hasPart/)
+and Wikidata's [has part(s)](https://www.wikidata.org/wiki/Property:P527).
 
 Since the relation holds between the sides as wholes, exporting an annotation
 pairwise, one statement for each pair of a subject end and an object end, as
