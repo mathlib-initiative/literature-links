@@ -5,7 +5,7 @@
   ],
   "object": [
     { "location": { "declaration": "Subgroup.index_mul_card", "module": "Mathlib.GroupTheory.Index" },
-      "junk": [ "Nat.card of an infinite type is 0" ] }
+      "junk": [ "Nat.card of an infinite type is 0", "Subgroup.index of a subgroup with infinitely many cosets is 0" ] }
   ],
   "relation": "exactMatch",
   "kind": "theorem",
