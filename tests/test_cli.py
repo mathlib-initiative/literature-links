@@ -21,7 +21,7 @@ import literature_links
 from literature_links import cli, companion
 
 
-def current_annotation() -> dict:
+def annotation() -> dict:
     return {"subject": [{"type": "generic", "uri": "../source.json",
                          "location": {"custom": {"z": 2**100, "a": [3, 2, 1]}}}],
             "id": "z", "object": [{"type": "generic", "uri": "urn:formal:first"}],
@@ -66,8 +66,8 @@ with patch.object(json, 'loads', side_effect=RecursionError('simulated JSON pars
 
 
 class TestValidationCommands(CommandCase):
-    def test_new_validate_reports_mixed_valid_and_invalid_files(self):
-        first, second = self.write("valid.json", current_annotation()), self.write("invalid.json", {"version": 3})
+    def test_validate_reports_mixed_valid_and_invalid_files(self):
+        first, second = self.write("valid.json", annotation()), self.write("invalid.json", {"version": 3})
         status, out, err = self.run_command("validate", str(first), str(second))
         self.assertEqual(status, 1)
         self.assertIn(f"{first}: ok", out)
@@ -89,7 +89,7 @@ class TestValidationCommands(CommandCase):
 
     def test_a_byte_order_mark_exits_two(self):
         path = self.directory / "bom.json"
-        path.write_bytes(b"\xef\xbb\xbf" + companion.dumps(current_annotation()).encode("utf-8"))
+        path.write_bytes(b"\xef\xbb\xbf" + companion.dumps(annotation()).encode("utf-8"))
         self.assertEqual(self.run_command("validate", str(path)),
                          (2, "", f"{path}: $: not JSON: the text starts with a byte order mark [JSON]\n"))
 
@@ -106,7 +106,7 @@ class TestValidationCommands(CommandCase):
                 self.assertNotIn("Traceback", result.stdout + result.stderr)
 
     def test_parser_failures_exit_two_in_supported_module_entry_points(self):
-        path = self.write("annotation.json", current_annotation())
+        path = self.write("annotation.json", annotation())
         for module in ("literature_links.cli", "literature_links"):
             result = self.run_module(module, "validate", str(path), parser_failure=True)
             with self.subTest(module=module):
@@ -119,7 +119,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
     def test_machine_validation_reports_every_input_and_read_error_wins(self):
         invalid = self.write("invalid.json", {"version": 3})
         missing = self.directory / "missing.json"
-        valid = self.write("valid.json", current_annotation())
+        valid = self.write("valid.json", annotation())
         status, out, err = self.run_command("validate", str(invalid), str(missing), str(valid), "--format", "json")
         reports = [json.loads(line) for line in out.splitlines()]
         self.assertEqual((status, err), (2, ""))
@@ -133,24 +133,24 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual((status, json.loads(out)["problems"][0]["code"]), (2, "IO"))
 
     def test_many_annotations_go_in_jsonl_which_scan_reads(self):
-        first = self.write("chapter.json", current_annotation())
+        first = self.write("chapter.json", annotation())
         nested = self.directory / "nested"
         nested.mkdir()
         second = nested / "generated.jsonl"
-        second.write_text("\n" + json.dumps(current_annotation()) + "\n" + json.dumps(current_annotation()) + "\n",
+        second.write_text("\n" + json.dumps(annotation()) + "\n" + json.dumps(annotation()) + "\n",
                           encoding="utf-8")
         status, out, err = self.run_command("scan", str(self.directory), str(first), "--format", "json")
         report = json.loads(out)
         self.assertEqual((status, err), (0, ""))
         self.assertEqual(len(report["files"]), 2)
         records = report["records"]
-        self.assertEqual([record["annotation"] for record in records], [current_annotation()] * 3)
+        self.assertEqual([record["annotation"] for record in records], [annotation()] * 3)
         self.assertEqual([record["origin"]["line"] for record in records], [None, 2, 3])
         self.assertEqual(records[0]["origin"]["base_uri"], first.resolve().as_uri())
         self.assertEqual(records[1]["origin"]["base_uri"], second.resolve().as_uri())
 
     def test_a_json_file_holding_an_array_exits_one(self):
-        array = self.write("chapter.json", [current_annotation(), current_annotation()])
+        array = self.write("chapter.json", [annotation(), annotation()])
         message = "a JSON file holds one annotation, an object, not an array"
         status, out, err = self.run_command("validate", str(array))
         self.assertEqual((status, out, err), (1, f"{array}: $: {message} [SHAPE]\n", ""))
@@ -173,18 +173,18 @@ class TestSingleAnnotationDiscovery(CommandCase):
 
     def test_validate_reads_jsonl_by_line(self):
         rows = self.directory / "rows.jsonl"
-        rows.write_text("\n" + json.dumps(current_annotation()) + "\r\n\n" + json.dumps(current_annotation()) + "\n",
+        rows.write_text("\n" + json.dumps(annotation()) + "\r\n\n" + json.dumps(annotation()) + "\n",
                         encoding="utf-8", newline="")
         self.assertEqual(self.run_command("validate", str(rows)), (0, f"{rows}: ok (2 annotations, generic)\n", ""))
         bad = self.directory / "bad.ndjson"
-        bad.write_text("\n".join([json.dumps(current_annotation()), '{"subject": {}}', "[]",
-                                  json.dumps(current_annotation())]), encoding="utf-8")
+        bad.write_text("\n".join([json.dumps(annotation()), '{"subject": {}}', "[]",
+                                  json.dumps(annotation())]), encoding="utf-8")
         status, out, err = self.run_command("validate", str(bad), "--format", "json")
         self.assertEqual((status, err), (1, ""))
         self.assertEqual([(problem["code"], problem["path"]) for problem in json.loads(out)["problems"]],
                          [("SCHEMA", "line 2 $"), ("SCHEMA", "line 2 $.subject"), ("SHAPE", "line 3 $")])
         broken = self.directory / "broken.jsonl"
-        broken.write_text(json.dumps(current_annotation()) + "\n{\n[]\n", encoding="utf-8")
+        broken.write_text(json.dumps(annotation()) + "\n{\n[]\n", encoding="utf-8")
         status, out, err = self.run_command("validate", str(broken))
         self.assertEqual(status, 2)
         self.assertIn(f"{broken}: line 2 $: not JSON", err)
@@ -196,8 +196,8 @@ class TestSingleAnnotationDiscovery(CommandCase):
 
     def test_validate_reads_a_file_by_its_suffix_ignoring_case(self):
         rows = self.directory / "rows.NDJSON"
-        rows.write_text((json.dumps(current_annotation()) + "\n") * 2, encoding="utf-8")
-        single = self.write("annotation.txt", current_annotation())
+        rows.write_text((json.dumps(annotation()) + "\n") * 2, encoding="utf-8")
+        single = self.write("annotation.txt", annotation())
         self.assertEqual(self.run_command("validate", str(rows), str(single)),
                          (0, f"{rows}: ok (2 annotations, generic)\n{single}: ok (1 annotation, generic)\n", ""))
 
@@ -215,16 +215,16 @@ class TestSingleAnnotationDiscovery(CommandCase):
     def test_validate_reports_a_broken_defaults_file_once_per_jsonl_file(self):
         (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
         rows = self.directory / "rows.jsonl"
-        rows.write_text((json.dumps(current_annotation()) + "\n") * 3, encoding="utf-8")
+        rows.write_text((json.dumps(annotation()) + "\n") * 3, encoding="utf-8")
         defaults = (self.directory / "_defaults.json").resolve()
         self.assertEqual(self.run_command("validate", str(rows)),
                          (1, f"{rows}: {defaults}: a defaults file must hold one JSON object [DEFAULTS]\n", ""))
 
     def test_scan_preserves_valid_records_but_reports_failure_and_exact_origins(self):
-        self.write("single.json", current_annotation())
+        self.write("single.json", annotation())
         self.write("invalid.json", {"version": 99})
         stream = self.directory / "stream.jsonl"
-        stream.write_text(json.dumps(current_annotation()) + "\n{\n" + json.dumps(current_annotation()) + "\n", encoding="utf-8")
+        stream.write_text(json.dumps(annotation()) + "\n{\n" + json.dumps(annotation()) + "\n", encoding="utf-8")
         status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
         result = json.loads(out)
         self.assertEqual((status, err), (2, ""))
@@ -236,13 +236,13 @@ class TestSingleAnnotationDiscovery(CommandCase):
                             for problem in result["problems"]))
 
     def test_the_json_reports_have_this_shape(self):
-        good = self.write("a.json", current_annotation())
-        bad = self.write("b.json", [current_annotation()])
+        good = self.write("a.json", annotation())
+        bad = self.write("b.json", [annotation()])
         status, out, err = self.run_command("scan", str(self.directory), "--format", "json")
         self.assertEqual((status, err), (1, ""))
         self.assertEqual(json.loads(out), {
             "valid": False, "status": 1, "files": [str(good.resolve()), str(bad.resolve())],
-            "records": [{"annotation": current_annotation(),
+            "records": [{"annotation": annotation(),
                          "origin": {"path": str(good.resolve()), "line": None,
                                     "base_uri": good.resolve().as_uri(), "defaults": []}}],
             "problems": [{"code": "SHAPE", "path": str(bad.resolve()),
@@ -253,21 +253,21 @@ class TestSingleAnnotationDiscovery(CommandCase):
                                            "problems": [], "warnings": []})
 
     def test_a_defaults_file_that_is_not_an_object_exits_one(self):
-        self.write("a.json", current_annotation())
+        self.write("a.json", annotation())
         (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
         status, out, _ = self.run_command("scan", str(self.directory), "--format", "json")
         self.assertEqual((status, [problem["code"] for problem in json.loads(out)["problems"]]), (1, ["DEFAULTS"]))
 
     def test_options_are_not_abbreviated(self):
-        good = self.write("a.json", current_annotation())
+        good = self.write("a.json", annotation())
         for arguments in (("scan", str(good), "--form", "json"), ("validate", str(good), "--form", "json"),
                           ("scan", str(good), "--incl", "*"), ("--vers",)):
             with self.subTest(arguments=arguments):
                 self.assertEqual(self.run_command(*arguments)[0], 2)
 
     def test_scope_patterns_leave_graph_and_reports_as_application_data(self):
-        self.write("one.annotations.json", current_annotation())
-        self.write("graph.json", {"nodes": [{"annotation": current_annotation()}]})
+        self.write("one.annotations.json", annotation())
+        self.write("graph.json", {"nodes": [{"annotation": annotation()}]})
         status, _, _ = self.run_command("scan", str(self.directory))
         self.assertEqual(status, 1)
         status, out, err = self.run_command("scan", str(self.directory), "--include", "*.annotations.json", "--format", "json")
@@ -278,7 +278,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(json.loads(out)["problems"][0]["code"], "NO_ANNOTATIONS")
 
     def test_scan_text_summary_counts_in_words_and_a_run_problem_has_no_path(self):
-        self.write("one.json", current_annotation())
+        self.write("one.json", annotation())
         status, out, err = self.run_command("scan", str(self.directory))
         self.assertEqual((status, out, err), (0, "1 annotation from 1 file; 0 problems\n", ""))
         status, out, err = self.run_command("scan", str(self.directory), "--exclude", "*")
@@ -301,7 +301,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
         cases = [unreadable, self.directory / "missing.json"]
         link = self.directory / "link.json"
         try:
-            link.symlink_to(self.write("good.json", current_annotation()))
+            link.symlink_to(self.write("good.json", annotation()))
             cases.append(link)
         except (NotImplementedError, OSError):
             pass  # Windows without symlink privilege
@@ -310,7 +310,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
                 self.assertEqual(self.run_command("scan", str(path))[0], 2)
 
     def test_scan_broken_install_exits_two_in_json_and_text(self):
-        path = self.write("one.json", current_annotation())
+        path = self.write("one.json", annotation())
         with patch.object(companion, "SCHEMA_PATH", self.directory / "missing-schema.json"):
             status, out, err = self.run_command("scan", str(path), "--format", "json")
             text_status, text_out, text_err = self.run_command("scan", str(path))
@@ -336,11 +336,11 @@ class TestJsonStdout(CommandCase):
         self.assertNotIn(b"\r\n", result.stdout)
         return companion.loads(result.stdout.decode("utf-8"))
 
-    def test_current_json_commands_write_utf8_even_when_stdout_uses_an_ansi_codepage(self):
+    def test_json_output_is_utf8_even_when_stdout_uses_an_ansi_codepage(self):
         # é is representable in cp1252 but has different bytes; α is not
         # representable at all. Both must survive a redirected JSON protocol.
         for text in ("é", "α"):
-            doc = current_annotation()
+            doc = annotation()
             doc["extensions"] = {"example": text}
             path = self.write(f"annotation-{text}.json", doc)
             for command in (("scan", str(path), "--format", "json"),
@@ -355,8 +355,8 @@ class TestJsonStdout(CommandCase):
                         self.assertEqual(output["document"], str(path))
 
     def test_text_output_escapes_what_an_ansi_stdout_cannot_encode(self):
-        path = self.write("annotation-α.json", current_annotation())
-        later = self.write("later.json", current_annotation())
+        path = self.write("annotation-α.json", annotation())
+        later = self.write("later.json", annotation())
         result = self.run_ansi("-m", "literature_links.cli", "validate", str(path), str(later))
         self.assertEqual((result.returncode, result.stderr), (0, b""))
         self.assertIn(b"annotation-\\u03b1.json: ok", result.stdout)
@@ -372,7 +372,7 @@ class TestJsonStdout(CommandCase):
         self.assertIn(b"caf\xe9.json: ", buffer.getvalue())
 
     def test_scan_machine_error_is_utf8_with_an_ansi_stdout(self):
-        path = self.write("annotation.json", current_annotation())
+        path = self.write("annotation.json", annotation())
         script = """from pathlib import Path
 import sys
 from literature_links import cli, companion
@@ -391,7 +391,7 @@ raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
     def test_a_reader_that_stops_early_ends_the_command_quietly(self):
         # Each command writes more than a pipe holds, so it writes after the reader has gone, as with `| head`.
         valid = self.directory / "valid.jsonl"
-        valid.write_text((json.dumps(current_annotation()) + "\n") * 200, encoding="utf-8")
+        valid.write_text((json.dumps(annotation()) + "\n") * 200, encoding="utf-8")
         invalid = self.directory / "invalid.jsonl"
         invalid.write_text('{"subject": []}\n' * 500, encoding="utf-8")
         package_root = str(Path(literature_links.__file__).resolve().parent.parent)

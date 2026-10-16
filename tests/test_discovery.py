@@ -55,7 +55,7 @@ class TestDiscovery(unittest.TestCase):
                 self.skipTest("this Windows user cannot create symbolic links")
             raise
 
-    def test_mixed_carriers_recurse_and_keep_deterministic_origins(self):
+    def test_json_and_jsonl_files_are_walked_in_order_with_their_origins(self):
         single = self.write("a.json", annotation(1))
         nested = self.write("chapter/b.json", annotation(2))
         jsonl = self.raw("chapter/c.jsonl", "\n" + json.dumps(annotation(3)) + "\n\n" + json.dumps(annotation(4)))
@@ -66,7 +66,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual([first_page(r) for r in result.records], list(range(1, 6)))
         self.assertEqual([r.line for r in result.records], [None, None, 2, 4, 1])
 
-    def test_every_record_uses_its_carrier_as_reference_base(self):
+    def test_every_record_uses_its_file_as_reference_base(self):
         first = self.raw("first/links.jsonl", json.dumps(annotation()) + "\n" + json.dumps(annotation(2)))
         second = self.write("second/link.json", annotation())
         result = discovery.collect([first, second])
@@ -76,17 +76,17 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.records[0].annotation["subject"][0]["uri"], "../source/book.pdf")
         self.assertEqual(result.records[0].annotation["object"][0]["uri"], "../site/Module.html#result")
 
-    def test_captured_carrier_base_does_not_follow_later_filesystem_changes(self):
-        carrier = self.write("original/link.json", annotation())
-        record = discovery.collect([carrier]).records[0]
+    def test_the_base_does_not_follow_later_file_system_changes(self):
+        file = self.write("original/link.json", annotation())
+        record = discovery.collect([file]).records[0]
         captured = record.base_uri
-        carrier.parent.rename(self.root / "moved")
+        file.parent.rename(self.root / "moved")
         replacement = self.root / "replacement"
         replacement.mkdir()
-        self.symlink(carrier.parent, replacement, directory=True)
-        self.assertEqual(record.path, carrier)
+        self.symlink(file.parent, replacement, directory=True)
+        self.assertEqual(record.path, file)
         self.assertEqual(record.base_uri, captured)
-        self.assertEqual(record.base_uri, carrier.as_uri())
+        self.assertEqual(record.base_uri, file.as_uri())
 
     def test_repeated_ids_equal_records_and_equal_objects_are_preserved(self):
         first = annotation()
@@ -187,7 +187,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual([r.line for r in result.records], [1, 2, 3])
 
-    def test_jsonl_unicode_line_separator_is_not_a_carrier_delimiter(self):
+    def test_jsonl_lines_do_not_end_at_unicode_line_separators(self):
         value = annotation()
         value["extensions"] = {"example": {"text": "first\u2028second\u2029third"}}
         path = self.raw("links.jsonl", json.dumps(value, ensure_ascii=False) + "\n")
@@ -266,7 +266,7 @@ class TestDiscovery(unittest.TestCase):
             result = discovery.collect([self.root])
         self.assertEqual([p.code for p in result.problems], ["IO"])
 
-    def test_empty_selection_and_empty_only_carriers_are_errors(self):
+    def test_an_empty_selection_and_files_without_annotations_are_errors(self):
         for paths in ([], [self.root]):
             with self.subTest(paths=paths):
                 result = discovery.collect(paths)
