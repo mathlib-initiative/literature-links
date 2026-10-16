@@ -380,5 +380,24 @@ raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
                 self.assertFalse(output["valid"])
                 self.assertIn(repr(str(missing)), output["problems"][0]["message"])
 
+    @unittest.skipIf(sys.platform == "win32", "Windows reports a closed pipe as EINVAL, not as a broken pipe")
+    def test_a_reader_that_stops_early_ends_the_command_quietly(self):
+        # Each command writes more than a pipe holds, so it writes after the reader has gone, as with `| head`.
+        valid = self.directory / "valid.jsonl"
+        valid.write_text((json.dumps(current_annotation()) + "\n") * 200, encoding="utf-8")
+        invalid = self.directory / "invalid.jsonl"
+        invalid.write_text('{"subject": []}\n' * 500, encoding="utf-8")
+        package_root = str(Path(literature_links.__file__).resolve().parent.parent)
+        environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1")
+        for arguments in (("scan", str(valid), "--format", "json"), ("validate", str(invalid))):
+            with self.subTest(command=arguments[0]):
+                child = subprocess.Popen([sys.executable, "-m", "literature_links", *arguments], cwd=self.directory,
+                                         env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                child.stdout.close()
+                with child.stderr:
+                    err = child.stderr.read()
+                self.assertEqual((child.wait(timeout=60), err), (2, b""))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any
@@ -17,7 +18,7 @@ __all__ = ["main"]
 _OPERATIONAL = {"IO", "JSON", "NO_ANNOTATIONS", "SYMLINK", "PATH"}
 
 _EXIT_STATUS = ("exit status: 0 when every annotation is valid, 1 for an invalid annotation, file shape or "
-                "defaults file, 2 for a read, JSON, path or symlink failure, no annotations, or a usage error")
+                "defaults file, 2 for a read, write, JSON, path or symlink failure, no annotations, or a usage error")
 
 
 def _write_json(text: str) -> None:
@@ -158,9 +159,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "text" and getattr(sys.stdout, "errors", None) == "strict" and hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="backslashreplace")
     try:
-        if args.command == "validate":
-            return _validate(args)
-        return _scan(args)
+        status = _validate(args) if args.command == "validate" else _scan(args)
+        sys.stdout.flush()
+        return status
+    except BrokenPipeError:
+        # The reader stopped early, as `| head` does. Say nothing more, even when Python flushes stdout at exit.
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except (OSError, ValueError):
+            pass  # a stream without a file descriptor, such as StringIO
+        return 2
     except (OSError, ValueError, RecursionError) as exc:
         if args.command == "scan" and args.format == "json":
             _write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
