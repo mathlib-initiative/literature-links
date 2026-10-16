@@ -7,4 +7,4 @@
 - A name leaves `__all__` only in a major release. Keep public callables annotated.
 - Examples may cite real resources, such as Mathlib declarations. No text from a real book may appear in this repository.
 - `python3 -m pytest` must pass offline. Install `jsonschema` to run the agreement tests.
-- Release: set `__version__` in `src/literature_links/__init__.py`, date the `CHANGELOG.md` heading, and tag `vX.Y.Z`.
+- Release: set `__version__` in `src/literature_links/__init__.py`, point the schema's `$id` at the tag, date the `CHANGELOG.md` heading, and tag `vX.Y.Z`.
