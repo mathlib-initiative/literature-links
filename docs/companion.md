@@ -123,11 +123,11 @@ and Wikidata expect, is faithful only when each side has one end.
 ### Unlinked passages and checked absences
 
 A record with `"object": []` records its subject, a passage that nobody has
-linked yet. It claims nothing about whether a counterpart exists, whatever the
-record's `status`. A *checked absence* claims more: the producer extracted the
-statement, searched a formal library at a version, and found no counterpart. It
-is a `noMatch` record whose object is the library at that version, usually a
-`lean` end with no location:
+linked yet. Its empty object claims nothing about whether a counterpart exists.
+A *checked absence* claims more: the producer extracted the statement, searched
+a formal library at a version, and found no counterpart. It is a `noMatch`
+record whose object is the library at that version, usually a `lean` end with
+no location:
 
 ```json
 { "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 8 }, "title": "Remark 1.5" } ],
