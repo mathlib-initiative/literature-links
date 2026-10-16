@@ -420,12 +420,12 @@ record read without defaults is read exactly as written.
 
 One more rule covers ends. In a defaults file, `subject` or `object` may be an
 object, an *end template*: the members that the ends on that side share. Where
-the inherited side is a template and the record's side is a list:
+the inherited side is a template and the side written over it, in a record or
+in another defaults file, is a list:
 
 - Each end that has no `uri` member merges over the template by the rules
   above: its own members win, and a `null` removes a template member. A
-  `location` on the end replaces the template's whole, so two locations never
-  merge.
+  `location` on the end replaces the template's whole.
 - An end that has its own `uri` names its own document. It is complete as
   written and takes nothing from the template.
 - An item that is not an object is kept as written.
@@ -473,16 +473,22 @@ The errata end names its own file, so it does not take the hash of
 `{ "subject": [ { "location": { "page": 9 } } ], "relation": "noMatch" }`
 leaves `object` out, so its object is the template alone: a checked absence in
 Mathlib at that commit. One that writes `"object": []` instead is merely
-unlinked.
+unlinked. Below a template that selects a declaration or gives a `role`, a
+checked absence writes its object end with its own `uri`.
 
 Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
-wins. Each defaults file merges over the ones above it by the rules above, so
-two templates merge member by member, and a `null` in a defaults file removes
-an outer default; one with nothing above it to remove is kept and reaches every
-record below. For local files that goes up to the root of the file system. A
-reader that fetches annotations over the web is given a base URL, the root of
-the companion, and never looks above it; given none, it applies no defaults. A
+wins. Each defaults file merges over the ones above it by the rules above. Two
+templates merge member by member, `location` included, so an outer template
+may leave a member such as `uri` for an inner one to give. A list in a defaults
+file is completed from the template above it, as a record's is, and then
+replaces that template for every record below. A record there that writes its
+own list gets nothing from either, so keep the side a template if records
+below write ends without a `uri`. A `null` in a defaults file removes an outer
+default; one with nothing above it to remove is kept and reaches every record
+below. For local files that goes up to the root of the file system. A reader
+that fetches annotations over the web is given a base URL, the root of the
+companion, and never looks above it; given none, it applies no defaults. A
 [JSONL](#discovery) file takes defaults like any annotation file, one record at
 a time.
 
