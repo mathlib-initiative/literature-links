@@ -126,6 +126,9 @@ def loads(text: str) -> Any:
     Integers stay exact and other numbers become floats. This does not validate;
     use :func:`check`.
     """
+    if isinstance(text, str) and text.startswith("\ufeff"):
+        # Clearer than the json module's advice to decode as utf-8-sig.
+        raise LoadError("not JSON: the text starts with a byte order mark")
     try:
         value = json.loads(text, object_pairs_hook=_pairs, parse_constant=_constant, parse_float=_float)
     except (ValueError, RecursionError) as exc:

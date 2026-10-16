@@ -745,6 +745,12 @@ class TestStrictJson(unittest.TestCase):
         self.assertEqual(C.loads('"\\ud83d\\ude00"'), "😀")
         self.assertEqual(C.loads(C.dumps("😀")), "😀")
 
+    def test_a_byte_order_mark_is_rejected_but_not_inside_a_string(self):
+        for text in ("\ufeff{}", "\ufeff\n{}"):
+            with self.subTest(text=text), self.assertRaisesRegex(C.LoadError, "^not JSON: .*byte order mark$"):
+                C.loads(text)
+        self.assertEqual(C.loads('"\ufeff"'), "\ufeff")
+
     def test_round_trip_preserves_large_integers_unicode_and_order(self):
         doc = document("generic", {"z": {"β": 2**100, "α": -2**100}, "a": [3, 2, 1]})
         text = C.dumps(doc)
