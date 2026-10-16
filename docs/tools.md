@@ -71,11 +71,11 @@ annotation. A `_defaults.json` named directly is a problem: it is not an
 annotation. `scan` reads annotations from files and folders, as in
 [Discovery](#discovery).
 
-Both exit 0 when they find no problem. They exit 2 for a read, JSON, path or
-symlink failure, or for no annotations: in `validate`, a JSONL file with none;
-in `scan`, a run that finds none. They exit 1 for any other problem, such as an
-invalid annotation, file shape or defaults file. Status 2 wins over 1, and a
-usage error exits 2. `--help` lists the options and the exit statuses.
+Both exit 0 when they find no problem. They exit 2 for a read, write, JSON,
+path or symlink failure, or for no annotations: in `validate`, a JSONL file
+with none; in `scan`, a run that finds none. They exit 1 for any other problem,
+such as an invalid annotation, file shape or defaults file. Status 2 wins over
+1, and a usage error exits 2. `--help` lists the options and the exit statuses.
 
 In text, `validate` prints a line for each problem and a line for each valid
 file that counts its annotations and lists each type of end once, in the order
