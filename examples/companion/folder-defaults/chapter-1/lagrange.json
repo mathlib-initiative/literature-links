@@ -6,5 +6,6 @@
     { "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" } }
   ],
   "relation": "broadMatch",
-  "kind": "theorem"
+  "kind": "theorem",
+  "note": "The notes state the theorem for finite groups. Mathlib states it with Nat.card, which is 0 for an infinite type, so it also covers infinite groups."
 }

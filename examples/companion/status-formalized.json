@@ -4,7 +4,7 @@
       "type": "html",
       "uri": "sources/C-algebra.html",
       "version": "1374776629",
-      "location": { "css": "#mw-content-text .mw-parser-output > p:nth-of-type(1)" },
+      "location": { "css": "#mw-content-text .mw-parser-output > section:first-of-type > p:first-of-type" },
       "title": "Definition of a C*-algebra",
       "citation": {
         "id": "wikipedia-c-star-algebra",
