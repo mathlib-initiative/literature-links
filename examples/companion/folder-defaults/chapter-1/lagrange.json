@@ -5,7 +5,8 @@
   "object": [
     { "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" } }
   ],
-  "relation": "broadMatch",
+  "relation": "exactMatch",
+  "junk": [ "Nat.card of an infinite type is 0" ],
   "kind": "theorem",
-  "note": "The notes state the theorem for finite groups. Mathlib states it with Nat.card, which is 0 for an infinite type, so it also covers infinite groups."
+  "note": "The notes state the theorem for finite groups. Mathlib states it for every group, but an infinite group satisfies it only through the junk value."
 }

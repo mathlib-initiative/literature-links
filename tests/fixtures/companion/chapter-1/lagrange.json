@@ -6,5 +6,5 @@
   "object": [
     { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } }
   ],
-  "relation": "broadMatch"
+  "relation": "exactMatch"
 }

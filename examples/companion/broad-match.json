@@ -1,0 +1,21 @@
+{
+  "subject": [
+    {
+      "type": "latex",
+      "uri": "chapters/fields.tex",
+      "location": { "label": "thm:cyclic-units" },
+      "title": "Theorem 4.2"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "isCyclic_subgroup_units", "module": "Mathlib.RingTheory.IntegralDomain" }
+    }
+  ],
+  "relation": "broadMatch",
+  "kind": "theorem",
+  "note": "The theorem says that every finite subgroup of the multiplicative group of a field is cyclic. isCyclic_subgroup_units proves it for the units of any integral domain, and every field is an integral domain."
+}
