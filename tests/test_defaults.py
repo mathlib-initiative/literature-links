@@ -27,6 +27,7 @@ SHA256 = "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f"
 SUBJECT = {"type": "pdf", "uri": "../book.pdf", "sha256": SHA256,
            "citation": {"id": "notes", "type": "book", "URL": "notes.html"}}
 OBJECT = {"type": "lean", "uri": MATHLIB, "version": COMMIT}
+JUNK = ["Nat.card of an infinite type is 0"]
 
 
 class TestMerge(unittest.TestCase):
@@ -215,12 +216,12 @@ class TestEndTemplates(unittest.TestCase):
         record = {"subject": [{"location": {"page": 7}, "title": "Theorem 1.4 (Lagrange)"},
                               {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
                   "object": [{"location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                  "relation": "exactMatch"}
+                  "relation": "exactMatch", "junk": JUNK}
         expected = {"subject": [{"type": "pdf", "uri": "../notes.pdf", "sha256": SHA256, "location": {"page": 7},
                                  "title": "Theorem 1.4 (Lagrange)"},
                                 {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
                     "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                    "relation": "exactMatch"}
+                    "relation": "exactMatch", "junk": JUNK}
         merged = companion.merge(companion.merge({}, defaults, defaults=True), record)
         self.assertEqual(json.dumps(merged), json.dumps(expected))
 
@@ -525,7 +526,7 @@ class TestFixture(unittest.TestCase):
                 "subject": [{**notes, "location": {"page": 7}, "title": "Theorem 1.4 (Lagrange)"},
                             {"type": "pdf", "uri": "../errata.pdf", "location": {"page": 1}}],
                 "object": [{**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}],
-                "relation": "exactMatch"}),
+                "relation": "exactMatch", "junk": JUNK}),
             ("chapter-1/proofs/steps.jsonl", 1, (chapter, chapter / "proofs"), {
                 "subject": [{**deeper, "location": {"page": 9, "rect": [0.12, 0.4, 0.76, 0.06]},
                              "title": "Proof of Corollary 1.7, first step"}],

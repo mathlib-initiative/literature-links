@@ -482,7 +482,7 @@ errata sheet:
 { "subject": [ { "location": { "page": 7 }, "title": "Theorem 1.4 (Lagrange)" },
                { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 } } ],
   "object": [ { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "exactMatch" }
+  "relation": "exactMatch", "junk": [ "Nat.card of an infinite type is 0" ] }
 ```
 
 reads as:
@@ -495,7 +495,7 @@ reads as:
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
                 "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "exactMatch" }
+  "relation": "exactMatch", "junk": [ "Nat.card of an infinite type is 0" ] }
 ```
 
 The errata end names its own file, so it does not take the hash of
