@@ -13,7 +13,7 @@ relations and `noMatch` are recommended. A JSON file holds one annotation and a
 JSONL file one per line, and a `_defaults.json` file gives the annotations
 below it shared members, including end templates. The `literature-links`
 command and the `companion`, `discovery` and `schemacheck` modules check
-annotations offline. Records valid under 2.x stay valid in later 2.x.
+annotations offline.
 
 ### Changes from 1.x
 

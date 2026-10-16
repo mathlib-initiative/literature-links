@@ -188,7 +188,7 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(self.run_command("validate", str(empty)),
                          (2, "", f"{empty}: $: the file holds no annotations [NO_ANNOTATIONS]\n"))
 
-    def test_validate_names_the_types_of_every_end_once_subject_first(self):
+    def test_validate_names_each_type_of_end_once_in_order_of_appearance(self):
         mathlib = {"type": "lean", "uri": "https://github.com/leanprover-community/mathlib4"}
         rows = self.directory / "rows.jsonl"
         rows.write_text("\n".join(json.dumps(row) for row in (

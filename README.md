@@ -44,9 +44,7 @@ Without a `relation`, an annotation claims only that its sides correspond. An
 empty `object` records a passage that nobody has linked, while `noMatch` over a
 project at a commit records that someone searched the project and found no
 counterpart. An optional `status` says how far the subject is formalized, and
-`kind`, `id` and `note` describe the annotation. An end may carry a `version`,
-a `sha256`, a CSL-JSON `citation`, `identifiers`, a `title` and a `role`.
-`extensions` holds application data.
+`kind` what it is.
 
 | `type` | `location` selects |
 |---|---|
