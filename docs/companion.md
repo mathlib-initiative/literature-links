@@ -180,8 +180,9 @@ and whether the revision still exists, is for tools to check.
 [CSL-JSON](https://github.com/citation-style-language/schema) item, the
 bibliography format that Zotero, Pandoc and citeproc read. Its `id` and `type`
 are required nonempty strings. Its other keys are CSL's, and validation does
-not check them. `identifiers` maps registry names, such as `wikidata`, `arxiv`,
-`zbmath` or `doi`, to nonempty strings, and its keys follow the rule for
+not check them. A work's DOI goes in `citation`, as CSL's `DOI`. `identifiers`
+maps the names of registries that CSL has no field for, such as `wikidata`,
+`arxiv` or `zbmath`, to nonempty strings, and its keys follow the rule for
 [extension](#extensions) keys. An identifier may name the work, such as an
 arXiv ID, or what the end selects, such as the Wikidata item of a theorem.
 
