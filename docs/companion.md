@@ -39,14 +39,17 @@ Here "must", "must not", "should" and "may" state requirements, in the sense of
 RFC 2119, though they are not capitalized. An annotation is invalid exactly
 when it breaks a rule in [Validation](#validation): the JSON rules, the JSON
 Schema or one of the two checks. The other requirements bind producers, readers
-and consumers, and no validator can check them.
+and consumers, and no validator can check them. Every field is its producer's
+claim: validation checks its form, never its truth. Where this page recommends
+values for a field, any other nonempty string is valid too, and applications
+agree on its meaning among themselves.
 
 ## Fields
 
 | Field | Required | Meaning |
 |---|---|---|
 | `subject` | Yes | A list of one or more ends: by convention the side being annotated, which is the informal side when there is one |
-| `object` | Yes | A list of ends, possibly empty: the other side |
+| `object` | Yes | A list of ends, possibly [empty](#unlinked-passages-and-checked-absences): the other side |
 | `relation` | No | How the subject [relates](#relation) to the object |
 | `status` | No | How far the subject is [formalized](#status-kind-id-and-note) |
 | `kind` | No | What the subject is, such as `theorem` |
@@ -71,8 +74,7 @@ Each end is an object:
 | `extensions` | No | An object of application data |
 
 Every string field in these tables is nonempty. Other fields are invalid in a
-record, in an end and in a built-in location. `"object": []` records a passage that nobody
-has linked ([below](#unlinked-passages-and-checked-absences)).
+record, in an end and in a built-in location.
 
 The ends on one side are taken jointly. A theorem that runs over a page break
 is one subject with two PDF ends, and a statement split over two declarations
@@ -107,10 +109,7 @@ and whose object is that declaration is a `broadMatch`. So is a record whose
 object agrees with the subject on the subject's cases and covers more, even by
 a convention for the new cases. `Subgroup.index` is 0 when a subgroup has
 infinitely many cosets, so it is broader than an index defined only for finite
-groups. `closeMatch` is for differences on the subject's own cases. Any other
-nonempty string is valid, and applications agree on other values among
-themselves. A relation is the producer's claim, and the format verifies none of
-it.
+groups. `closeMatch` is for differences on the subject's own cases.
 
 The relation holds between the sides as wholes. Exporting a record pairwise,
 one statement for each pair of a subject end and an object end, as SKOS, SSSOM
@@ -143,10 +142,9 @@ record has nothing to relate, so it should have no `relation`.
 
 ## Status, kind, id and note
 
-`status`, `kind`, `id` and `note` are optional nonempty strings. They are the
-producer's claims, and the format verifies none of them. `status` says how far
-the producer judges the subject to be formalized, in the formal library the
-producer has in mind. `formalized`, `partial` and `not_formalized` are the
+`status`, `kind`, `id` and `note` are optional nonempty strings. `status` says
+how far the producer judges the subject to be formalized, in the formal library
+the producer has in mind. `formalized`, `partial` and `not_formalized` are the
 recommended values. It describes the subject, not the link, so records about
 one subject should agree, and a folder of records can set it in
 [folder defaults](#folder-defaults). Even `formalized` next to an object is a
@@ -154,8 +152,7 @@ judgment, not a checked equivalence, and `not_formalized` does not say where
 anyone looked; a [checked absence](#unlinked-passages-and-checked-absences)
 does. `kind` names what the subject is; `definition`, `theorem`, `lemma`,
 `proposition`, `example`, `remark`, `exercise`, `proof` and `proof_step` are
-recommended. `id` labels the record, and `note` is free text. Any nonempty
-string is valid, and applications agree on values among themselves.
+recommended. `id` labels the record, and `note` is free text.
 
 ## Ends
 
@@ -173,8 +170,8 @@ beside it:
 For a `lean` end, `version` should be the full commit: a Git object ID of 40
 lowercase hex digits, or 64 in a SHA-256 repository, not a branch or a tag.
 `sha256` is 64 lowercase hex digits: the SHA-256 of the bytes that `uri` points
-at. Both describe; they do not verify. Whether the local copy matches `sha256`,
-and whether the revision still exists, is for tools to check.
+at. Whether the local copy matches `sha256`, and whether the revision still
+exists, is for tools to check.
 
 `citation` describes the work as a
 [CSL-JSON](https://github.com/citation-style-language/schema) item, the
