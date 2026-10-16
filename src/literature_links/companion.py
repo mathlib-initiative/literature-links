@@ -167,7 +167,7 @@ _PATTERN_RULES = (
      "is not a reference: percent-encode White_Space, controls, invisible characters and any bare %"),
     (("$defs", "sha256", "pattern"), "is not 64 lowercase hex digits"),
     (("$defs", "html_location", "properties", "fragment", "pattern"),
-     "is not a fragment: it starts with # or has White_Space or a control character; use css for such an ID"),
+     "is not a fragment: it is empty, starts with # or has White_Space or a control character; use css for such an ID"),
 )
 
 
@@ -201,8 +201,11 @@ def check(document: Any) -> Report:
         for path, message in validator.errors(document):
             # Say which rule a value breaks, not which regular expression it fails.
             value, _, pattern = message.rpartition(" does not match ")
-            report.problems.append(Problem("SCHEMA", path, f"{value} {rules[pattern]}" if value and pattern in rules
-                                           else message))
+            if value and pattern in rules:
+                if value == '""' and report.problems and report.problems[-1].path == path:
+                    continue  # minLength has already said that the value is empty
+                message = f"{value} {rules[pattern]}"
+            report.problems.append(Problem("SCHEMA", path, message))
     except (ValueError, RecursionError) as exc:
         report.problems.append(Problem("SCHEMA", "$", f"cannot validate JSON: {exc}"))
     if report.problems:
