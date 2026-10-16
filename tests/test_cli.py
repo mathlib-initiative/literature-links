@@ -87,6 +87,12 @@ class TestValidationCommands(CommandCase):
         self.assertEqual(status, 2)
         self.assertNotIn("Traceback", out + err)
 
+    def test_a_byte_order_mark_exits_two(self):
+        path = self.directory / "bom.json"
+        path.write_bytes(b"\xef\xbb\xbf" + companion.dumps(current_annotation()).encode("utf-8"))
+        self.assertEqual(self.run_command("validate", str(path)),
+                         (2, "", f"{path}: $: not JSON: the text starts with a byte order mark [JSON]\n"))
+
     def test_deep_input_fails_cleanly_in_supported_module_entry_points(self):
         path = self.directory / "too-deep.json"
         # Parser nesting limits vary between Python releases. A parser may

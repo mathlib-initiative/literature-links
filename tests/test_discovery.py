@@ -203,6 +203,15 @@ class TestDiscovery(unittest.TestCase):
                 result = discovery.collect([path])
                 self.assertEqual([p.code for p in result.problems], ["JSON"])
 
+    def test_a_byte_order_mark_is_a_json_problem(self):
+        message = "not JSON: the text starts with a byte order mark"
+        single = self.raw("a.json", "\ufeff" + json.dumps(annotation()))
+        rows = self.raw("b.jsonl", "\ufeff" + json.dumps(annotation(1)) + "\n" + json.dumps(annotation(2)) + "\n")
+        result = discovery.collect([self.root])
+        self.assertEqual([(p.code, p.path, p.message) for p in result.problems],
+                         [("JSON", str(single), message), ("JSON", f"{rows} (line 1)", message)])
+        self.assertEqual([(r.path, r.line) for r in result.records], [(rows, 2)])
+
     def test_generic_locations_and_extension_values_are_opaque(self):
         value = {"subject": [{"type": "generic", "uri": "urn:example:record", "location": {"z": [3, 2, 1], "a": {}}}],
                  "object": [{"type": "generic", "uri": "urn:example:formal"}],
