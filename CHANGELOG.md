@@ -17,8 +17,8 @@ modules check annotations offline.
 
 ### Changes from 1.x
 
-- A record relates `subject` and `object`, lists of ends, in place of `source`,
-  `location` and `target`. The ends on a side are taken jointly, and
+- An annotation relates `subject` and `object`, lists of ends, in place of
+  `source`, `location` and `target`. The ends on a side are taken jointly, and
   `"object": []` records an unlinked passage.
 - `lean` ends: the project in `uri`, the commit in `version`, and a
   `declaration` or a `module` location, optionally narrowed to `lines`.
@@ -27,13 +27,13 @@ modules check annotations offline.
 - An end's `junk` lists the junk values it assigns, such as `x / 0 = 0`. An
   object that differs from the subject only through them is an `exactMatch`.
 - `status` is a string that describes the subject. The status object is gone.
-- `id` names the subject, and records about one subject share it.
+- `id` names the subject, and annotations about one subject share it.
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
   `sha256` and `identifiers`.
 - An end's `title` replaces `label`, and an end may have a `role`.
 - LaTeX `lines` may be `[n]`: the item that starts on line n.
 - Folder defaults may hold an end template for each side. `merge` takes
   `defaults=True` to merge one defaults file over another.
-- `normalize` is removed: every record has one shape.
+- `normalize` is removed: every annotation has one shape.
 - The `LINES` code replaces `LATEX_LINES` and also covers Lean locations.
 - `validate` lists the types of all ends in its summary.

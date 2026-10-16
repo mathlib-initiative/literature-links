@@ -6,7 +6,7 @@ such as a passage of a book and a Lean declaration in Mathlib. The annotations
 about one book, article, wiki or other source make a companion to it: a guide
 from the text to its formalization.
 
-Status: 2.0.0. Records valid under 2.x stay valid in later 2.x; a breaking
+Status: 2.0.0. Annotations valid under 2.x stay valid in later 2.x; a breaking
 change bumps the major version.
 
 This repository holds the format and its offline checker, nothing else. Viewers,
@@ -35,7 +35,7 @@ usually the formal counterpart. Both are lists of ends, and both are required.
 An end names a document with a `type` and a `uri`, and its `location` selects
 part of it; without one, the end is the whole document. A `lean` end's `uri`
 is the project, its `version` the commit, and its `location` a declaration or a
-module. The ends on one side are taken together, so a theorem that runs over a
+module. The ends on one side are taken jointly, so a theorem that runs over a
 page break is one subject with two ends.
 
 `relation` says how the sides relate. Here `exactMatch` says that Mathlib states
@@ -55,7 +55,7 @@ counterpart. An optional `status` says how far the subject is formalized, and
 | `generic` | Any JSON object the application defines |
 
 Relative references resolve against the file that holds the annotation. A
-`_defaults.json` file gives every annotation in its folder and below the members
+`_defaults.json` file gives every annotation in its folder and below the fields
 they share, such as an end template that names the document each subject end is
 in; see [folder defaults](docs/companion.md#folder-defaults). An annotation
 records its producer's claim, nothing more: it does not show that the relation
