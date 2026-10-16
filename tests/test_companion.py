@@ -273,7 +273,7 @@ class TestEnds(unittest.TestCase):
                    ("citation", {"id": 1, "type": "book"}), ("citation", "Notes, 2026"), ("citation", []),
                    ("citation", None),
                    ("identifiers", {"": "x"}), ("identifiers", {" ": "x"}), ("identifiers", {"a b": "x"}),
-                   ("identifiers", {"a⁦": "x"}), ("identifiers", {"doi": 1}), ("identifiers", {"doi": ""}),
+                   ("identifiers", {"a\u2066": "x"}), ("identifiers", {"doi": 1}), ("identifiers", {"doi": ""}),
                    ("identifiers", {"doi": None}), ("identifiers", []), ("identifiers", "Q1"),
                    ("title", ""), ("title", None), ("title", 1), ("role", ""), ("role", ["states"]),
                    ("extensions", []), ("extensions", None), ("extensions", "x"), ("extensions", {"": 1})]
@@ -337,7 +337,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
                 self.assertEqual(C.validate(doc), [])
 
     def test_references_disallow_literal_whitespace_controls_and_wrong_types(self):
-        invalid = ("", " ", "a b", "url\n", "\turl", "url\x00", "url\x7f", "url\x85", "url ", None, 1, [], {})
+        invalid = ("", " ", "a b", "url\n", "\turl", "url\x00", "url\x7f", "url\x85", "url\u00a0", None, 1, [], {})
         for value in invalid:
             for place in ("subject", "object", "$schema", "profile"):
                 doc = document("generic", {"profile": "urn:x"})
@@ -377,7 +377,8 @@ class TestReferencesAndExtensions(unittest.TestCase):
 
     def test_references_and_keys_exclude_invisible_formatting_characters(self):
         # Bidirectional formatting, zero-width characters and U+FFFE/U+FFFF can make a link display as another.
-        forbidden = "​‌‍‎‏‪‫‬‭‮⁦⁧⁨⁩﻿￾￿"
+        forbidden = ("\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e"
+                     "\u2066\u2067\u2068\u2069\ufeff\ufffe\uffff")
         for char in forbidden:
             for value in ("https://example.org/" + char + "gpj.exe", char + "x"):
                 with self.subTest(codepoint=hex(ord(char)), value=value):
@@ -421,7 +422,8 @@ class TestReferencesAndExtensions(unittest.TestCase):
     def test_whitespace_definition_is_explicit_and_unicode_stable(self):
         # These cover Unicode White_Space outside ASCII, including characters
         # whose treatment differs between common regex dialects.
-        forbidden = "\u0085                 　"
+        forbidden = ("\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+                     "\u2028\u2029\u202f\u205f\u3000")
         forbidden += "".join(map(chr, range(0x21))) + "".join(map(chr, range(0x7f, 0xa0)))
         for char in forbidden:
             for value in ("x" + char + "y", "xy" + char):
@@ -432,7 +434,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
                     doc["object"][0]["uri"] = "urn:valid"
                     doc["extensions"] = {value: None}
                     self.assertTrue(C.validate(doc))
-        for char in ("᠎", "⁠", "😀"):
+        for char in ("\u180e", "\u2060", "😀"):
             doc = document()
             doc["object"][0]["uri"] = "urn:" + char
             doc["extensions"] = {"tool" + char: None}
@@ -832,10 +834,10 @@ class TestSchema(unittest.TestCase):
             {"page": 1, "quote": {"exact": ""}}, {"page": 1, "quote": {"exact": "a", "extra": 1}},
             {"page": 1, "quote": {"exact": "a"}, "extra": 1}, {"page": 1, "quote": []})]
         cases += [{"subject": [{"type": "html", "uri": uri}], "object": []}
-                  for uri in ("a%20", "a%zz", "a%", "a‮b", "﻿a", "a​")]
+                  for uri in ("a%20", "a%zz", "a%", "a\u202eb", "\ufeffa", "a\u200b")]
         cases += [{"subject": [{"type": "html", "uri": "a", "identifiers": {name: "x"}}], "object": []}
-                  for name in ("doi", "", "a b", "a⁦", "100%")]
-        cases += [document("html", {"fragment": fragment}) for fragment in ("100%", "#a", "a#", "a　b", "a\n")]
+                  for name in ("doi", "", "a b", "a\u2066", "100%")]
+        cases += [document("html", {"fragment": fragment}) for fragment in ("100%", "#a", "a#", "a\u3000b", "a\n")]
         cases += [document(mode, {"module": "M", "lines": lines}) for mode in ("lean", "latex")
                   for lines in ([1], [1, 2], [], [0], [1, 2, 3], [1.0], [True])]
         randomizer = random.Random(917)
