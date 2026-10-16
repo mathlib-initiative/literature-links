@@ -1,4 +1,5 @@
 {
+  "$schema": "../../schema/companion.schema.json",
   "subject": [
     { "type": "pdf", "uri": "https://example.org/notes.pdf", "location": { "page": 7 } }
   ],
