@@ -103,9 +103,14 @@ in the same direction: in SKOS too, `broadMatch` says that the object is the
 broader side. For example, Mathlib's `Subgroup.card_subgroup_dvd_card` is
 stated with `Nat.card`, which is 0 for an infinite type, so it also covers
 infinite groups. A record whose subject is Lagrange's theorem for finite groups
-and whose object is that declaration is a `broadMatch`. Any other nonempty
-string is valid, and applications agree on other values among themselves. A
-relation is the producer's claim, and the format verifies none of it.
+and whose object is that declaration is a `broadMatch`. So is a record whose
+object agrees with the subject on the subject's cases and covers more, even by
+a convention for the new cases. `Subgroup.index` is 0 when a subgroup has
+infinitely many cosets, so it is broader than an index defined only for finite
+groups. `closeMatch` is for differences on the subject's own cases. Any other
+nonempty string is valid, and applications agree on other values among
+themselves. A relation is the producer's claim, and the format verifies none of
+it.
 
 The relation holds between the sides as wholes. Exporting a record pairwise,
 one statement for each pair of a subject end and an object end, as SKOS, SSSOM

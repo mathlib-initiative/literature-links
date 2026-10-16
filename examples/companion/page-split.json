@@ -21,7 +21,7 @@
       "location": { "declaration": "Subgroup.index", "module": "Mathlib.GroupTheory.Index" }
     }
   ],
-  "relation": "closeMatch",
+  "relation": "broadMatch",
   "kind": "definition",
-  "note": "The definition runs over a page break, so the subject has two ends, taken together. The notes count the cosets of a subgroup of a finite group. Subgroup.index counts them in any group and is 0 when there are infinitely many."
+  "note": "The definition runs over a page break, so the subject has two ends, taken together. The notes count the cosets of a subgroup of a finite group. Subgroup.index counts them in any group and is 0 when there are infinitely many, so it is broader."
 }
