@@ -21,7 +21,8 @@
       "location": { "declaration": "Subgroup.index_dvd_card", "module": "Mathlib.GroupTheory.Index" }
     }
   ],
-  "relation": "broadMatch",
+  "relation": "exactMatch",
+  "junk": [ "Nat.card of an infinite type is 0" ],
   "kind": "theorem",
-  "note": "The theorem says that the order and the index of a subgroup of a finite group both divide the order of the group. Mathlib states the two claims in two declarations, taken together here. Both use Nat.card, so they also cover infinite groups."
+  "note": "The theorem says that the order and the index of a subgroup of a finite group both divide the order of the group. Mathlib states the two claims in two declarations, taken together here, and one junk list covers both."
 }

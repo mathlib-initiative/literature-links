@@ -26,7 +26,8 @@ the project does not control.
                 "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card",
                               "module": "Mathlib.GroupTheory.Coset.Card" } } ],
-  "relation": "broadMatch"
+  "relation": "exactMatch",
+  "junk": [ "Nat.card of an infinite type is 0" ]
 }
 ```
 
@@ -38,13 +39,13 @@ is the project, its `version` the commit, and its `location` a declaration or a
 module. The ends on one side are taken together, so a theorem that runs over a
 page break is one subject with two ends.
 
-`relation` says how the sides relate. Here `broadMatch` says that Mathlib's
-statement is more general than the passage, which is about finite groups.
-Without a `relation`, an annotation claims only that its sides correspond. An
-empty `object` records a passage that nobody has linked, while `noMatch` over a
-project at a commit records that someone searched the project and found no
-counterpart. An optional `status` says how far the subject is formalized, and
-`kind` what it is.
+`relation` says how the sides relate. Here `exactMatch` says that Mathlib states
+the passage's theorem, which is about finite groups, up to the
+[junk value](docs/companion.md#relation) in `junk`. Without a `relation`, an
+annotation claims only that its sides correspond. An empty `object` records a
+passage that nobody has linked, while `noMatch` over a project at a commit
+records that someone searched the project and found no counterpart. An optional
+`status` says how far the subject is formalized, and `kind` what it is.
 
 | `type` | `location` selects |
 |---|---|

@@ -6,7 +6,8 @@
   "object": [
     { "location": { "declaration": "Subgroup.index_mul_card", "module": "Mathlib.GroupTheory.Index" } }
   ],
-  "relation": "broadMatch",
+  "relation": "exactMatch",
+  "junk": [ "Nat.card of an infinite type is 0" ],
   "kind": "theorem",
   "note": "An errata sheet corrects the statement on page 9. Its end writes its own uri, so it takes nothing from the end template."
 }
