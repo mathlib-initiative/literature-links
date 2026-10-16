@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
+import errno
 import importlib.util
 import io
 import json
@@ -404,6 +405,36 @@ raise SystemExit(cli.main(['scan', sys.argv[2], '--format', 'json']))
                 with child.stderr:
                     err = child.stderr.read()
                 self.assertEqual((child.wait(timeout=60), err), (2, b""))
+
+    @unittest.skipIf(sys.platform == "win32", "no file size limit to set")
+    def test_a_failed_write_exits_two_with_one_message(self):
+        import resource
+
+        valid = self.directory / "valid.jsonl"
+        valid.write_text((json.dumps(annotation()) + "\n") * 200, encoding="utf-8")
+        invalid = self.directory / "invalid.jsonl"
+        invalid.write_text('{"subject": []}\n' * 500, encoding="utf-8")
+        package_root = str(Path(literature_links.__file__).resolve().parent.parent)
+        environment = dict(os.environ, PYTHONPATH=package_root, PYTHONDONTWRITEBYTECODE="1")
+        message = f"literature-links: [Errno {errno.EFBIG}] {os.strerror(errno.EFBIG)}\n".encode()
+        for arguments in (("scan", str(valid), "--format", "json"), ("scan", str(invalid)), ("validate", str(invalid))):
+            with self.subTest(command=arguments), open(self.directory / "out", "wb") as out:
+                # Each command writes more than the limit allows, as on a full disk.
+                result = subprocess.run([sys.executable, "-m", "literature_links", *arguments], cwd=self.directory,
+                                        env=environment, stdout=out, stderr=subprocess.PIPE, check=False,
+                                        preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_FSIZE, (4096, 4096)))
+                self.assertEqual((result.returncode, result.stderr), (2, message))
+
+    def test_a_stdout_closed_at_launch_writes_nothing_and_keeps_the_status(self):
+        # Python sets sys.stdout to None when stdout is closed at launch, as with `>&-`.
+        valid, invalid = self.write("valid.json", annotation()), self.write("invalid.json", {})
+        for command, path, status in (("validate", valid, 0), ("validate", invalid, 1), ("scan", valid, 0),
+                                      ("scan", invalid, 1)):
+            for form in ("text", "json"):
+                with self.subTest(command=command, path=path.name, format=form), redirect_stdout(None), \
+                        redirect_stderr(io.StringIO()) as err:
+                    self.assertEqual(cli.main([command, str(path), "--format", form]), status)
+                self.assertEqual(err.getvalue(), "")
 
 
 if __name__ == "__main__":
