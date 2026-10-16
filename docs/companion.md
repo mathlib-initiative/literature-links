@@ -361,11 +361,11 @@ step:
 `lines` in a LaTeX or Lean location is `[start, end]` or `[n]`, positive
 integers with end at least start. `[start, end]` selects those lines,
 inclusive; a producer that knows a single line writes `[n, n]`. `[n]` selects
-the item that starts on line n, and the consumer finds where it ends: in LaTeX,
-the environment whose `\begin` is there; in Lean, a declaration, `example`,
-`have`, `calc` step or tactic block. Lines count from 1, and the bytes CRLF, CR
-and LF each end a line, so the count is the same whether the file is UTF-8,
-Latin-1 or another ASCII-compatible encoding.
+the outermost item that starts on line n, and the consumer finds where it ends:
+in LaTeX, an environment whose `\begin` is there; in Lean, a declaration,
+`example`, `have`, `calc` step or tactic block. Lines count from 1, and the
+bytes CRLF, CR and LF each end a line, so the count is the same whether the file
+is UTF-8, Latin-1 or another ASCII-compatible encoding.
 
 ### Generic
 
