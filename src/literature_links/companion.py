@@ -160,10 +160,29 @@ def load_schema() -> dict[str, Any]:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+# Where the schema keeps a pattern for a rule of the specification, and the rule in words.
+_PATTERN_RULES = (
+    (("$defs", "reference", "pattern"),
+     "is not a reference: percent-encode White_Space, controls, invisible characters and any bare %"),
+    (("$defs", "sha256", "pattern"), "is not 64 lowercase hex digits"),
+    (("$defs", "html_location", "properties", "fragment", "pattern"),
+     "is not a fragment: it starts with # or has White_Space or a control character; use css for such an ID"),
+)
+
+
 @functools.cache
-def _validator(path: Path) -> Validator:
+def _validator(path: Path) -> tuple[Validator, dict[str, str]]:
+    """A validator for the schema at ``path``, and its patterns' rules in words."""
     # Keyed by path, so a swapped SCHEMA_PATH is read.
-    return Validator(json.loads(path.read_text(encoding="utf-8")))
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    rules = {}
+    for keys, words in _PATTERN_RULES:
+        node = schema
+        for key in keys:
+            node = node.get(key) if isinstance(node, dict) else None
+        if isinstance(node, str):
+            rules[node] = words
+    return Validator(schema), rules
 
 
 def check(document: Any) -> Report:
@@ -176,10 +195,13 @@ def check(document: Any) -> Report:
     report = Report(problems=_json_problems(document))
     if report.problems:
         return report
-    validator = _validator(SCHEMA_PATH)
+    validator, rules = _validator(SCHEMA_PATH)
     try:
-        report.problems.extend(Problem("SCHEMA", path, message)
-                               for path, message in validator.errors(document))
+        for path, message in validator.errors(document):
+            # Say which rule a value breaks, not which regular expression it fails.
+            value, _, pattern = message.rpartition(" does not match ")
+            report.problems.append(Problem("SCHEMA", path, f"{value} {rules[pattern]}" if value and pattern in rules
+                                           else message))
     except (ValueError, RecursionError) as exc:
         report.problems.append(Problem("SCHEMA", "$", f"cannot validate JSON: {exc}"))
     if report.problems:

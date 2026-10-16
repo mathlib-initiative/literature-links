@@ -470,6 +470,22 @@ class TestStructuredDiagnostics(unittest.TestCase):
                 self.assertIn((code, path), [(problem.code, problem.path) for problem in report.problems])
                 self.assertEqual(C.validate(doc), [str(problem) for problem in report.problems])
 
+    def test_a_pattern_of_the_specification_is_named_by_its_rule(self):
+        doc = document("html", {"fragment": "#a"})
+        doc["subject"][0]["sha256"] = "ABC"
+        doc["object"][0]["uri"] = "My Notes.pdf"
+        doc["$schema"] = "100%"
+        self.assertEqual(C.validate(doc), [
+            '$.subject[0].sha256: "ABC" is not 64 lowercase hex digits',
+            '$.subject[0].location.fragment: "#a" is not a fragment: it starts with # or has White_Space or a control '
+            "character; use css for such an ID",
+            '$.object[0].uri: "My Notes.pdf" is not a reference: percent-encode White_Space, controls, invisible '
+            "characters and any bare %",
+            '$.$schema: "100%" is not a reference: percent-encode White_Space, controls, invisible characters and '
+            "any bare %"])
+        # Other patterns are shown as they are.
+        self.assertEqual(Validator({"pattern": "^a$"}).errors("b"), [("$", '"b" does not match ^a$')])
+
     def test_a_rectangle_is_checked_in_a_second_subject_end(self):
         doc = document("pdf", {"page": 7, "rect": [0.1, 0.2, 0.6, 0.1]})
         doc["subject"].append(end("pdf", {"page": 8, "rect": [0.8, 0, 0.3, 1]}))
