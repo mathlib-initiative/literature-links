@@ -905,6 +905,26 @@ class TestSchemaEvaluator(unittest.TestCase):
         self.assertEqual(Validator({"not": {"required": ["a", "b"], "type": "object"}}).errors({"a": 1, "b": 2}),
                          generic)
 
+    def test_alternative_keys_are_named(self):
+        either = Validator({"anyOf": [{"required": ["a"]}, {"required": ["b"]}]})
+        self.assertEqual(either.errors({"c": 1}), [("$", "must have 'a' or 'b'")])
+        one = Validator({"oneOf": [{"required": ["a"]}, {"required": ["b"]}, {"required": ["c"]}]})
+        for value in ({}, {"a": 1, "c": 2}):
+            with self.subTest(value=value):
+                self.assertEqual(one.errors(value), [("$", "must have exactly one of 'a', 'b' and 'c'")])
+        # Other alternatives, and values that are not objects, keep the general messages.
+        self.assertEqual(one.errors(3), [("$", "must match exactly one alternative (oneOf), matched 3")])
+        self.assertEqual(Validator({"anyOf": [{"required": ["a"]}, {"type": "array"}]}).errors({}),
+                         [("$", "matches none of the allowed alternatives (anyOf)")])
+        self.assertEqual(Validator({"oneOf": [{"required": ["a"]}]}).errors({}),
+                         [("$", "must match exactly one alternative (oneOf), matched 0")])
+        # The location forms read this way.
+        self.assertEqual(C.validate(document("html", {})),
+                         ["$.subject[0].location: must have exactly one of 'fragment', 'css' and 'quote'"])
+        self.assertEqual(C.validate(document("latex", {"label": "a", "lines": [1]})),
+                         ["$.subject[0].location: must have exactly one of 'label' and 'lines'"])
+        self.assertEqual(C.validate(document("lean", {})), ["$.subject[0].location: must have 'declaration' or 'module'"])
+
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):
         import jsonschema
