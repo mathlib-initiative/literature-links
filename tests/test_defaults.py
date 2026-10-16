@@ -163,15 +163,35 @@ class TestEndTemplates(unittest.TestCase):
         inner = {"object": {"location": {"declaration": "Subgroup.card_subgroup_dvd_card"}, "role": "states"},
                  "kind": "theorem"}
         merged = companion.merge(outer, inner, defaults=True)
-        # Both stay templates, and two templates merge as any two objects do, location included.
+        # Both stay templates and merge member by member, except that the inner location replaces the outer one.
         self.assertEqual(merged, {"subject": SUBJECT, "kind": "theorem",
-                                  "object": {**OBJECT, "location": {"module": "Mathlib.GroupTheory.Coset.Card",
-                                                                    "declaration": "Subgroup.card_subgroup_dvd_card"},
+                                  "object": {**OBJECT, "location": {"declaration": "Subgroup.card_subgroup_dvd_card"},
                                              "role": "states"}})
         self.assertEqual(list(merged), ["subject", "object", "kind"])
         record = companion.merge(merged, {"subject": [{"location": {"page": 7}}]})
         self.assertEqual(record["object"], [merged["object"]])
         self.assertEqual(companion.validate(record), [])
+
+    def test_a_location_over_a_template_location_replaces_it_whole(self):
+        lean = {**OBJECT, "location": {"module": "Mathlib.GroupTheory.Coset.Card"}}
+        merged = companion.merge({"object": lean}, {"object": {"location": {"declaration": "Subgroup.index"}}},
+                                 defaults=True)
+        # Not {"module": ..., "declaration": "Subgroup.index"}, which would point at the wrong module.
+        self.assertEqual(merged["object"], {**OBJECT, "location": {"declaration": "Subgroup.index"}})
+        pdf = {**SUBJECT, "location": {"page": 1, "rect": [0, 0, 1, 0.5]}}
+        quote = {"page": 2, "quote": {"exact": "a"}}
+        merged = companion.merge({"subject": pdf, "object": []}, {"subject": {"location": quote}}, defaults=True)
+        record = companion.merge(merged, {})
+        self.assertEqual(record["subject"], [{**SUBJECT, "location": quote}])
+        self.assertEqual(companion.validate(record), [])
+        # A null removes the outer location, a template without one keeps it, and a record's object side
+        # replaces it too.
+        self.assertEqual(companion.merge({"subject": pdf}, {"subject": {"location": None}}, defaults=True),
+                         {"subject": SUBJECT})
+        self.assertEqual(companion.merge({"subject": pdf}, {"subject": {"title": "T"}}, defaults=True),
+                         {"subject": {**pdf, "title": "T"}})
+        self.assertEqual(companion.merge({"subject": pdf}, {"subject": {"location": quote}})["subject"],
+                         {**SUBJECT, "location": quote})
 
     def test_a_defaults_list_over_a_template_is_completed_from_it(self):
         merged = companion.merge({"subject": SUBJECT}, {"subject": [{"location": {"page": 1}}, {"uri": "x.pdf"}]},

@@ -218,13 +218,14 @@ def merge(inherited: dict[str, Any], written: dict[str, Any], *, defaults: bool 
     nothing is inherited it is kept.
 
     One rule covers ends. Where ``inherited`` holds an end template, an object,
-    as its ``subject`` or ``object`` and ``written`` a list, each object in the
-    list without a ``uri`` member merges over the template, and a ``location``
-    on it replaces the template's whole. Other items are kept as written.
-    ``written`` is a record, so a side it leaves out that is still a template
-    becomes a list holding the template alone. With ``defaults=True``,
-    ``written`` is a defaults file instead, and templates stay objects.
-    Neither argument is changed.
+    as its ``subject`` or ``object``, an object that ``written`` holds there
+    merges over it. If ``written`` holds a list there, each object in the list
+    without a ``uri`` member merges over the template, and other items are kept
+    as written. A ``location`` is never merged: one written over the
+    template's replaces it whole. ``written`` is a record, so a side it leaves
+    out that is still a template becomes a list holding the template alone.
+    With ``defaults=True``, ``written`` is a defaults file instead, and
+    templates stay objects. Neither argument is changed.
     """
     result = copy.deepcopy(inherited)
     for key, value in written.items():
@@ -232,6 +233,8 @@ def merge(inherited: dict[str, Any], written: dict[str, Any], *, defaults: bool 
         if isinstance(template, dict) and isinstance(value, list):
             result[key] = [_merged_end(template, item) if isinstance(item, dict) and "uri" not in item
                            else copy.deepcopy(item) for item in value]
+        elif isinstance(template, dict) and isinstance(value, dict):
+            result[key] = _merged_end(template, value)
         else:
             _merge_member(result, key, value)
     if not defaults:
