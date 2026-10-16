@@ -53,7 +53,7 @@ agree on its meaning among themselves.
 | `relation` | No | How the subject [relates](#relation) to the object |
 | `status` | No | How far the subject is [formalized](#status-kind-id-and-note) |
 | `kind` | No | What the subject is, such as `theorem` |
-| `id` | No | A label, not necessarily unique |
+| `id` | No | A name for the subject, shared by the records about it |
 | `note` | No | Free text |
 | `extensions` | No | An object of [application data](#extensions) |
 | `$schema` | No | A [reference](#references) used as a tooling hint |
@@ -157,7 +157,9 @@ judgment, not a checked equivalence, and `not_formalized` does not say where
 anyone looked; a [checked absence](#unlinked-passages-and-checked-absences)
 does. `kind` names what the subject is; `definition`, `theorem`, `lemma`,
 `proposition`, `example`, `remark`, `exercise`, `proof` and `proof_step` are
-recommended. `id` labels the record, and `note` is free text.
+recommended. `id` names the subject. Records about one subject should share it,
+so a consumer can group them; it need not be unique across subjects. `note` is
+free text.
 
 ## Ends
 

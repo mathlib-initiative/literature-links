@@ -25,6 +25,7 @@ modules check annotations offline.
 - `relation` says how the sides relate. `noMatch` over a project at a commit
   records a checked absence.
 - `status` is a string that describes the subject. The status object is gone.
+- `id` names the subject, and records about one subject share it.
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
   `sha256` and `identifiers`.
 - An end's `title` replaces `label`, and an end may have a `role`.
