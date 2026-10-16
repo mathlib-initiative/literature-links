@@ -83,10 +83,10 @@ the types first appear, each annotation's subject ends before its object ends,
 such as `latex.json: ok (1 annotation, latex, lean)`. `scan` prints each
 problem and then a summary, such as `3 annotations from 2 files; 0 problems`.
 
-`--format json` writes machine-readable output: one report per input for
-`validate`, and one report with the files, the annotations with their origins,
-and the problems for `scan`. A problem's path in `scan` is the file, then
-`(line N)` for a JSONL line, then the place in the annotation, such as
+`--format json` writes machine-readable output: for `validate`, a report on one
+line for each input; for `scan`, one report with the files, the annotations
+with their origins, and the problems. A problem's path in `scan` is the file,
+then `(line N)` for a JSONL line, then the place in the annotation, such as
 `$.subject[0].location`; a problem with the whole run, such as finding no
 annotations, has the path `$`, which the text output leaves out. `validate`
 names the file first and gives a JSONL line as `line N`.
