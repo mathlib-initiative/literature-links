@@ -144,7 +144,8 @@ def main(argv: list[str] | None = None) -> int:
                                        help="check JSON files, one annotation each, and JSONL files, one per line")
     validation.add_argument("documents", nargs="+", type=Path, metavar="FILE",
                             help="a .json file holds one annotation, a .jsonl or .ndjson file one per line")
-    validation.add_argument("--format", choices=("text", "json"), default="text", help="json writes one report per file")
+    validation.add_argument("--format", choices=("text", "json"), default="text",
+                            help="json writes a report on one line for each file")
     scanning = subparsers.add_parser("scan", allow_abbrev=False, epilog=_EXIT_STATUS,
                                      help="read annotations from JSON and JSONL files and folders")
     scanning.add_argument("paths", nargs="+", type=Path, metavar="PATH",
