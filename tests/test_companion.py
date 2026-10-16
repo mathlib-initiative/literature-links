@@ -477,12 +477,23 @@ class TestStructuredDiagnostics(unittest.TestCase):
         doc["$schema"] = "100%"
         self.assertEqual(C.validate(doc), [
             '$.subject[0].sha256: "ABC" is not 64 lowercase hex digits',
-            '$.subject[0].location.fragment: "#a" is not a fragment: it starts with # or has White_Space or a control '
-            "character; use css for such an ID",
+            '$.subject[0].location.fragment: "#a" is not a fragment: it is empty, starts with # or has White_Space or a '
+            "control character; use css for such an ID",
             '$.object[0].uri: "My Notes.pdf" is not a reference: percent-encode White_Space, controls, invisible '
             "characters and any bare %",
             '$.$schema: "100%" is not a reference: percent-encode White_Space, controls, invisible characters and '
             "any bare %"])
+        # An empty reference breaks minLength, which says so alone.
+        doc = document("html", {"fragment": ""})
+        doc["subject"][0]["sha256"] = ""
+        doc["object"][0]["uri"] = ""
+        doc["$schema"] = ""
+        self.assertEqual(C.validate(doc), [
+            '$.subject[0].sha256: "" is not 64 lowercase hex digits',
+            '$.subject[0].location.fragment: "" is not a fragment: it is empty, starts with # or has White_Space or a '
+            "control character; use css for such an ID",
+            "$.object[0].uri: must be at least 1 character long",
+            "$.$schema: must be at least 1 character long"])
         # Other patterns are shown as they are.
         self.assertEqual(Validator({"pattern": "^a$"}).errors("b"), [("$", '"b" does not match ^a$')])
 
