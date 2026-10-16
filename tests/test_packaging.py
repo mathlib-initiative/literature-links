@@ -26,6 +26,7 @@ if importlib.util.find_spec("literature_links") is None:
 import literature_links                                  # noqa: E402
 from literature_links import cli                         # noqa: E402
 from literature_links import companion as C              # noqa: E402
+from literature_links import discovery                   # noqa: E402
 
 PACKAGE = Path(literature_links.__file__).resolve().parent
 IMPORT_ROOT = PACKAGE.parent
@@ -163,7 +164,22 @@ class TestEntryPoints(unittest.TestCase):
         summary = f"{count} annotation{'s' * (count != 1)} from {len(files)} file{'s' * (len(files) != 1)}"
         self.assertEqual((status, out), (0, f"{summary}; 0 problems\n"))
 
-    def test_a_missing_current_schema_is_reported_without_a_traceback(self):
+    def test_the_examples_show_each_location_form_and_field(self):
+        # The README says so.
+        schema = C.load_schema()
+        records = discovery.collect([EXAMPLES]).records
+        ends = [end for record in records for side in ("subject", "object") for end in record.annotation[side]]
+        self.assertEqual({key for record in records for key in record.annotation}, set(schema["properties"]))
+        self.assertEqual({key for end in ends for key in end}, set(schema["$defs"]["end"]["properties"]))
+        for mode in schema["$defs"]["end"]["properties"]["type"]["enum"]:
+            locations = [end["location"] for end in ends if end["type"] == mode and "location" in end]
+            keys = set(schema["$defs"].get(f"{mode}_location", {}).get("properties", {}))
+            with self.subTest(type=mode):
+                self.assertTrue(locations)
+                self.assertLessEqual(keys, {key for location in locations for key in location})
+        self.assertTrue(any("profile" in end.get("location", {}) for end in ends))
+
+    def test_a_missing_schema_is_reported_without_a_traceback(self):
         good = FIXTURE / "links.jsonl"
         with tempfile.TemporaryDirectory() as tmp:
             broken = Path(tmp).resolve() / "literature_links"
