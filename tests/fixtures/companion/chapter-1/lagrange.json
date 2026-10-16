@@ -6,5 +6,6 @@
   "object": [
     { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } }
   ],
-  "relation": "exactMatch"
+  "relation": "exactMatch",
+  "junk": [ "Nat.card of an infinite type is 0" ]
 }
