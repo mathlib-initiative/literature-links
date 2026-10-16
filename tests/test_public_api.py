@@ -102,6 +102,8 @@ class TestStableApi(unittest.TestCase):
             with self.subTest(record=f"{record.__module__}.{record.__name__}"):
                 self.assertEqual([f.name for f in dataclasses.fields(record)], names)
         self.assertTrue(issubclass(companion.LoadError, ValueError))
+        self.assertTrue(issubclass(module("schemacheck").SchemaError, ValueError))
+        self.assertEqual(discovery.DEFAULTS, "_defaults.json")
         # line and defaults are keyword-only, so a positional call fails rather than shift the fields.
         with self.assertRaises(TypeError):
             discovery.Record({}, Path("a.json"), "", 1)
