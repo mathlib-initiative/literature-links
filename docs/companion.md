@@ -318,10 +318,10 @@ of a module in the project that holds the annotations:
   "location": { "module": "Notes.Groups", "lines": [12] } }
 ```
 
-With a declaration, `lines` selects the part of the declaration on those
-lines. This is how an annotation points at a proof step, such as a `have`, a
-`calc` block or a tactic block, whose informal counterpart is a step of a proof
-in the text. Lines that span the whole declaration mean the whole declaration.
+With a declaration, `lines` narrows the declaration to what the lines select.
+This is how an annotation points at a proof step, such as a `have`, a `calc`
+step or a tactic block, whose informal counterpart is a step of a proof in the
+text. Lines that span the whole declaration mean the whole declaration.
 Lines outside the declaration, or in a module that does not hold it, are
 unresolved. Line numbers mean something only at the end's `version`.
 
@@ -348,10 +348,12 @@ record links the first step of a proof in the notes to line 82:
 `lines` in a LaTeX or Lean location is `[start]` or `[start, end]`, positive
 integers with end at least start. `[start, end]` is an inclusive range.
 `[start]` selects the item that starts on that line, such as a LaTeX
-environment whose `\begin` is there, or a Lean declaration, `example`, `have`
-or `calc` block; the consumer finds where it ends. Lines count from 1, and the
-bytes CRLF, CR and LF each end a line, so the count is the same whether the
-file is UTF-8, Latin-1 or another ASCII-compatible encoding.
+environment whose `\begin` is there, or a Lean declaration, `example`, `have`,
+`calc` block, `calc` step or tactic; the consumer finds where it ends. A
+producer that knows only a line, not an item that starts there, writes a range
+of one line, such as `[82, 82]`. Lines count from 1, and the bytes CRLF, CR and
+LF each end a line, so the count is the same whether the file is UTF-8, Latin-1
+or another ASCII-compatible encoding.
 
 ### Generic
 
