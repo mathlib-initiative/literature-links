@@ -168,8 +168,9 @@ class TestDiscovery(unittest.TestCase):
         path = self.raw("links.jsonl", "\n".join(map(json.dumps, [annotation(), bad, None, annotation(3)])))
         result = discovery.collect([path])
         self.assertEqual([r.line for r in result.records], [1, 4])
-        self.assertTrue(any(p.code == "SCHEMA" and "line 2" in p.path for p in result.problems))
-        self.assertTrue(any(p.code == "SHAPE" and "line 3" in p.path for p in result.problems))
+        # The path is the file, then the line, then the place in the annotation.
+        self.assertEqual([(p.code, p.path) for p in result.problems],
+                         [("SCHEMA", f"{path} (line 2) $.subject[0].location.page"), ("SHAPE", f"{path} (line 3)")])
 
     def test_jsonl_reports_physical_line_and_disallows_array_rows(self):
         path = self.raw("links.jsonl", "\n" + json.dumps(annotation()) + "\n{broken}\n[]\n" + json.dumps(annotation(2)))

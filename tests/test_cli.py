@@ -194,6 +194,13 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(self.run_command("validate", str(empty)),
                          (2, "", f"{empty}: $: the file holds no annotations [NO_ANNOTATIONS]\n"))
 
+    def test_validate_reads_a_file_by_its_suffix_ignoring_case(self):
+        rows = self.directory / "rows.NDJSON"
+        rows.write_text((json.dumps(current_annotation()) + "\n") * 2, encoding="utf-8")
+        single = self.write("annotation.txt", current_annotation())
+        self.assertEqual(self.run_command("validate", str(rows), str(single)),
+                         (0, f"{rows}: ok (2 annotations, generic)\n{single}: ok (1 annotation, generic)\n", ""))
+
     def test_validate_names_each_type_of_end_once_in_order_of_appearance(self):
         mathlib = {"type": "lean", "uri": "https://github.com/leanprover-community/mathlib4"}
         rows = self.directory / "rows.jsonl"
