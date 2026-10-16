@@ -9,11 +9,11 @@ them, such as a passage of a book and a Lean declaration. Its `subject` and
 `object` are lists of ends. An end names a document by `type` (`pdf`, `latex`,
 `html`, `lean` or `generic`) and `uri`, and an optional `location` selects part
 of it. An optional `relation` says how the sides relate; SKOS's mapping
-relations and `noMatch` are recommended. A JSON file holds one annotation and a
-JSONL file one per line, and a `_defaults.json` file gives the annotations
-below it shared members, including end templates. The `literature-links`
-command and the `companion`, `discovery` and `schemacheck` modules check
-annotations offline.
+relations, `hasPart` and `noMatch` are recommended. A JSON file holds one
+annotation and a JSONL file one per line, and a `_defaults.json` file gives the
+annotations below it shared members, including end templates. The
+`literature-links` command and the `companion`, `discovery` and `schemacheck`
+modules check annotations offline.
 
 ### Changes from 1.x
 
