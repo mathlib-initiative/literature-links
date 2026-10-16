@@ -21,5 +21,5 @@
   ],
   "relation": "exactMatch",
   "kind": "proof_step",
-  "note": "The paragraph says that an injective homomorphism f from G to H is a bijection onto its image, a subgroup of H, so G and the image have the same order. Line 82 is the first step of the calc block in the proof of Subgroup.card_dvd_of_injective, which makes the same step."
+  "note": "The paragraph says that an injective homomorphism f from G to H is a bijection onto its image, a subgroup of H, so G and the image have the same order. The first step of the calc block in the proof of Subgroup.card_dvd_of_injective starts on line 82 and makes the same step."
 }

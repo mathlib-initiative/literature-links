@@ -322,27 +322,26 @@ selects that module's source file in the project. Beside a declaration it is a
 hint for finding the source or the documentation page. If the declaration is
 not in that module, the declaration wins.
 
-`lines` requires `module` and narrows the selection to [lines](#lines) of the
-module's file. With a module alone, it selects those lines, such as an
-`example`, which has no name. This end selects the item that starts on line 12
-of a module in the project that holds the annotations:
+`lines` requires `module` and selects [lines](#lines) of the module's file.
+With a module alone, `lines` is how an end selects an item with no name. This
+end selects the `example` that starts on line 12 of a module in the project
+that holds the annotations:
 
 ```json
 { "type": "lean", "uri": "..", "version": "<40 hex digits>",
   "location": { "module": "Notes.Groups", "lines": [12] } }
 ```
 
-With a declaration, `lines` narrows the declaration to what the lines select.
-This is how an annotation points at a proof step, such as a `have`, a `calc`
-step or a tactic block, whose informal counterpart is a step of a proof in the
-text. Lines that span the whole declaration mean the whole declaration.
-Lines outside the declaration, or in a module that does not hold it, are
-unresolved. Line numbers mean something only at the end's `version`.
+Beside a declaration, `lines` narrows it to the part on those lines, such as a
+proof step. A record that means the whole declaration leaves `lines` out. Lines
+outside the declaration, or in a module that does not hold it, are unresolved.
+Line numbers mean something only at the end's `version`.
 
 At the commit below, `Subgroup.card_dvd_of_injective` proves its claim with a
-`calc` block of two steps. Line 82 is the first, which counts the group as the
-range of `f`, and line 83 the second, which applies Lagrange's theorem. This
-record links the first step of a proof in the notes to line 82:
+`calc` block of two steps. The first starts on line 82 and counts the group as
+the range of `f`; the second starts on line 83 and applies Lagrange's theorem.
+This record links the first step of a proof in the notes to the first `calc`
+step:
 
 ```json
 {
@@ -359,15 +358,14 @@ record links the first step of a proof in the notes to line 82:
 
 ### Lines
 
-`lines` in a LaTeX or Lean location is `[start]` or `[start, end]`, positive
-integers with end at least start. `[start, end]` is an inclusive range.
-`[start]` selects the item that starts on that line, such as a LaTeX
-environment whose `\begin` is there, or a Lean declaration, `example`, `have`,
-`calc` block, `calc` step or tactic; the consumer finds where it ends. A
-producer that knows only a line, not an item that starts there, writes a range
-of one line, such as `[82, 82]`. Lines count from 1, and the bytes CRLF, CR and
-LF each end a line, so the count is the same whether the file is UTF-8, Latin-1
-or another ASCII-compatible encoding.
+`lines` in a LaTeX or Lean location is `[start, end]` or `[n]`, positive
+integers with end at least start. `[start, end]` selects those lines,
+inclusive; a producer that knows a single line writes `[n, n]`. `[n]` selects
+the item that starts on line n, and the consumer finds where it ends: in LaTeX,
+the environment whose `\begin` is there; in Lean, a declaration, `example`,
+`have`, `calc` step or tactic block. Lines count from 1, and the bytes CRLF, CR
+and LF each end a line, so the count is the same whether the file is UTF-8,
+Latin-1 or another ASCII-compatible encoding.
 
 ### Generic
 
