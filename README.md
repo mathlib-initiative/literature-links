@@ -6,11 +6,11 @@ such as a passage of a book and a Lean declaration in Mathlib. The annotations
 about one book, article, wiki or other source make a companion to it: a guide
 from the text to its formalization.
 
-Status: 2.0.0. Annotations valid under 2.x stay valid in later 2.x; a breaking
+Version 2.0.0. Annotations valid under 2.x stay valid in later 2.x; a breaking
 change bumps the major version.
 
-This repository holds the format and its offline checker, nothing else. Viewers,
-overlays and the companions built from annotations live in their own repositories.
+This repository holds the format and an offline checker. Viewers and the
+companions built from annotations live in their own repositories.
 
 Mathlib's `@[stacks]` and `@[wikidata]` attributes and its
 [1000.yaml](https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/docs/1000.yaml)
