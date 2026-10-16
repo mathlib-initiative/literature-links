@@ -21,7 +21,7 @@ _SOURCE_CHECKOUT = _HERE.parent.name == "src" and (_HERE.parent.parent / "pyproj
 SCHEMA_PATH = (_HERE.parent.parent / "schema" / "companion.schema.json"
                if not _PACKAGE_SCHEMA.is_file() and _SOURCE_CHECKOUT else _PACKAGE_SCHEMA)
 
-# The two sides of a record, each a list of ends.
+# The two sides of an annotation, each a list of ends.
 _SIDES = ("subject", "object")
 
 
@@ -162,8 +162,8 @@ def load_schema() -> dict[str, Any]:
 
 @functools.cache
 def _validator(path: Path) -> Validator:
-    # Keyed by path so a swapped SCHEMA_PATH is still read.
-    return Validator(load_schema())
+    # Keyed by path, so a swapped SCHEMA_PATH is read.
+    return Validator(json.loads(path.read_text(encoding="utf-8")))
 
 
 def check(document: Any) -> Report:
@@ -225,9 +225,9 @@ def merge(inherited: dict[str, Any], written: dict[str, Any], *, defaults: bool 
     merges over it. If ``written`` holds a list there, each object in the list
     without a ``uri`` member merges over the template, and other items are kept
     as written. A ``location`` is never merged: one written over the
-    template's replaces it whole. ``written`` is a record, so a side it leaves
-    out that is still a template becomes a list holding the template alone.
-    With ``defaults=True``, ``written`` is a defaults file instead, and
+    template's replaces it whole. ``written`` is an annotation, so a side it
+    leaves out that is still a template becomes a list holding the template
+    alone. With ``defaults=True``, ``written`` is a defaults file instead, and
     templates stay objects. Neither argument is changed.
     """
     result = copy.deepcopy(inherited)
