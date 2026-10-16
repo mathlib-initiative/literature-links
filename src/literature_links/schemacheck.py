@@ -98,7 +98,7 @@ class Validator:
 
     def __init__(self, schema: dict[str, Any]) -> None:
         self.root = schema
-        self._patterns: dict[str, re.Pattern] = {}
+        self._patterns: dict[str, re.Pattern[str]] = {}
         self._check_schema(schema, "#")
 
     # -- schema self-check -------------------------------------------------
@@ -127,7 +127,7 @@ class Validator:
             elif key == "pattern":
                 self._regex(value)
 
-    def _regex(self, pattern: str) -> re.Pattern:
+    def _regex(self, pattern: str) -> re.Pattern[str]:
         compiled = self._patterns.get(pattern)
         if compiled is None:
             compiled = self._patterns[pattern] = re.compile(pattern)
