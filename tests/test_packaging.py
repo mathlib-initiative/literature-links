@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import unicodedata
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -294,6 +295,19 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
         for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
                 self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
+
+    def test_no_file_holds_a_literal_invisible_character(self):
+        # Bidirectional, zero-width and other invisible characters make text read unlike what it holds, and
+        # GitHub flags them. Python and JSON write them as escapes.
+        paths = [*ROOT.iterdir(), *(path for root in REPO_ROOTS for path in (ROOT / root).rglob("*"))]
+        for path in sorted(paths):
+            if path.suffix not in (".py", ".md", ".json", ".jsonl", ".toml", ".yml", ".in") or not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            hidden = sorted({f"U+{ord(char):04X}" for char in text if char not in "\t\n\r " and
+                             (unicodedata.category(char) in ("Cc", "Cf", "Zs", "Zl", "Zp") or char in "\ufffe\uffff")})
+            with self.subTest(file=path.relative_to(ROOT).as_posix()):
+                self.assertEqual(hidden, [])
 
     def test_local_markdown_links_reach_a_file_and_heading(self):
         for name in DOCS + ("CHANGELOG.md",):
