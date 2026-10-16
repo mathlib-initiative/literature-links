@@ -51,7 +51,6 @@ agree on its meaning among themselves.
 | `subject` | Yes | A list of one or more ends: by convention the side being annotated, which is the informal side when there is one |
 | `object` | Yes | A list of ends, possibly [empty](#unlinked-passages-and-checked-absences): the other side |
 | `relation` | No | How the subject [relates](#relation) to the object |
-| `junk` | No | A list of one or more of the object's [junk values](#relation) |
 | `status` | No | How far the subject is [formalized](#status-kind-id-and-note) |
 | `kind` | No | What the subject is, such as `theorem` |
 | `id` | No | A name for the subject, shared by the records about it |
@@ -72,6 +71,7 @@ Each end is an object:
 | `identifiers` | No | Identifiers in other registries, by name |
 | `title` | No | A readable name for the part, such as "Theorem 1.4 (Lagrange)" |
 | `role` | No | How the end takes part in the record |
+| `junk` | No | A list of one or more of the end's [junk values](#relation) |
 | `extensions` | No | An object of application data |
 
 Every string field in these tables is nonempty. Other fields are invalid in a
@@ -123,15 +123,15 @@ the `Nat.card` of an infinite type. These are *junk values*. An object that
 agrees with the subject wherever the subject is defined, and differs only
 through junk values, is an `exactMatch`.
 
-The optional `junk` field lists the junk values that the object assigns where
-the subject is undefined or says nothing. Each item is a nonempty string, in
-plain words or Lean notation. Like `relation`, it describes the correspondence,
-so with several object ends it covers the side as a whole. It never changes the
-relation, and an absent `junk` claims nothing: it does not say there are none.
-Mathlib's `Subgroup.card_subgroup_dvd_card` states Lagrange's theorem with
-`Nat.card`, so an infinite group satisfies it only through a junk value. A
-record that links it to the theorem for finite groups is an `exactMatch` with
-`"junk": ["Nat.card of an infinite type is 0"]`.
+An end's optional `junk` field lists the junk values that the end assigns
+where the other side is undefined or says nothing. It usually sits on an object
+end, and with several object ends, each lists its own. Each item is a nonempty
+string, in plain words or Lean notation. `junk` never changes the relation, and
+an absent `junk` claims nothing: it does not say there are none. Mathlib's
+`Subgroup.card_subgroup_dvd_card` states Lagrange's theorem with `Nat.card`, so
+an infinite group satisfies it only through a junk value. A record that links
+it to the theorem for finite groups is an `exactMatch`, and its object end may
+list `"junk": ["Nat.card of an infinite type is 0"]`.
 
 ### Unlinked passages and checked absences
 
@@ -479,8 +479,9 @@ errata sheet:
 ```json
 { "subject": [ { "location": { "page": 7 }, "title": "Theorem 1.4 (Lagrange)" },
                { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 } } ],
-  "object": [ { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "exactMatch", "junk": [ "Nat.card of an infinite type is 0" ] }
+  "object": [ { "location": { "declaration": "Subgroup.card_subgroup_dvd_card" },
+                "junk": [ "Nat.card of an infinite type is 0" ] } ],
+  "relation": "exactMatch" }
 ```
 
 reads as:
@@ -492,8 +493,9 @@ reads as:
                { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 } } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
                 "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
-                "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
-  "relation": "exactMatch", "junk": [ "Nat.card of an infinite type is 0" ] }
+                "location": { "declaration": "Subgroup.card_subgroup_dvd_card" },
+                "junk": [ "Nat.card of an infinite type is 0" ] } ],
+  "relation": "exactMatch" }
 ```
 
 The errata end names its own file, so it does not take the hash of

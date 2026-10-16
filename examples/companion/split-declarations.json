@@ -12,17 +12,18 @@
       "type": "lean",
       "uri": "https://github.com/leanprover-community/mathlib4",
       "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
-      "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" }
+      "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" },
+      "junk": [ "Nat.card of an infinite type is 0" ]
     },
     {
       "type": "lean",
       "uri": "https://github.com/leanprover-community/mathlib4",
       "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
-      "location": { "declaration": "Subgroup.index_dvd_card", "module": "Mathlib.GroupTheory.Index" }
+      "location": { "declaration": "Subgroup.index_dvd_card", "module": "Mathlib.GroupTheory.Index" },
+      "junk": [ "Nat.card of an infinite type is 0" ]
     }
   ],
   "relation": "exactMatch",
-  "junk": [ "Nat.card of an infinite type is 0" ],
   "kind": "theorem",
-  "note": "The theorem says that the order and the index of a subgroup of a finite group both divide the order of the group. Mathlib states the two claims in two declarations, taken together here, and one junk list covers both."
+  "note": "The theorem says that the order and the index of a subgroup of a finite group both divide the order of the group. Mathlib states the two claims in two declarations, taken together here, and each end lists its own junk values."
 }
