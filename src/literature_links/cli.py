@@ -14,6 +14,8 @@ from .companion import Problem
 
 __all__ = ["main"]
 
+_PROG = "literature-links"
+
 # Problems that are not about the data: they exit 2, the others 1.
 _OPERATIONAL = {"IO", "JSON", "NO_ANNOTATIONS", "SYMLINK", "PATH"}
 
@@ -23,6 +25,8 @@ _EXIT_STATUS = ("exit status: 0 when every annotation is valid, 1 for an invalid
 
 def _write_json(text: str) -> None:
     """Write UTF-8 JSON with LF line ends, whatever the terminal's encoding."""
+    if sys.stdout is None:
+        return  # stdout was closed at launch: write nothing, as print() does
     binary = getattr(sys.stdout, "buffer", None)
     if binary is None:
         # Embedders and tests may supply a text-only stream such as StringIO.
@@ -112,7 +116,16 @@ def _validate(args: argparse.Namespace) -> int:
 
 
 def _scan(args: argparse.Namespace) -> int:
-    collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude)
+    try:
+        collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude)
+    except (OSError, ValueError, RecursionError) as exc:
+        # A failure that is not about one input, such as an unreadable schema.
+        if args.format == "json":
+            _write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
+                                        "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}))
+        else:
+            print(f"{_PROG}: {exc}", file=sys.stderr)
+        return 2
     status = _status(collection.problems)
     if args.format == "json":
         result = {"valid": not collection.problems, "status": status,
@@ -136,7 +149,7 @@ def _scan(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     """Run an offline command; return 0 on success, 1 on invalid data, 2 on error."""
     # No abbreviations: a prefix that works today would break when an option is added.
-    parser = argparse.ArgumentParser(prog="literature-links", allow_abbrev=False, epilog=_EXIT_STATUS,
+    parser = argparse.ArgumentParser(prog=_PROG, allow_abbrev=False, epilog=_EXIT_STATUS,
                                      description="Validate and scan Literature Links annotations.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -161,21 +174,19 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(errors="backslashreplace")
     try:
         status = _validate(args) if args.command == "validate" else _scan(args)
-        sys.stdout.flush()
+        if sys.stdout is not None:
+            sys.stdout.flush()
         return status
-    except BrokenPipeError:
-        # The reader stopped early, as `| head` does. Say nothing more, even when Python flushes stdout at exit.
+    except (OSError, ValueError) as exc:
+        # The commands report read failures themselves, so this is a failure to write, such as a full disk.
+        # A reader that stops early, as `| head` does, needs no message.
+        if not isinstance(exc, BrokenPipeError):
+            print(f"{_PROG}: {exc}", file=sys.stderr)
+        # Python flushes stdout at exit: send what is left to the null device, so that this cannot fail again.
         try:
             os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
         except (OSError, ValueError):
             pass  # a stream without a file descriptor, such as StringIO
-        return 2
-    except (OSError, ValueError, RecursionError) as exc:
-        if args.command == "scan" and args.format == "json":
-            _write_json(companion.dumps({"valid": False, "status": 2, "files": [], "records": [],
-                                        "problems": [{"code": "IO", "path": "$", "message": str(exc)}]}))
-            return 2
-        print(f"{parser.prog}: {exc}", file=sys.stderr)
         return 2
 
 
