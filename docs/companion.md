@@ -145,9 +145,9 @@ The first says the remark is not linked. The second says that Mathlib at that
 commit was searched and holds nothing that matches it. With an empty object, a
 record has nothing to relate, so it should have no `relation`.
 
-A `noMatch` object end should have a `version`, the commit or revision that was
-searched. A producer that does not know it writes `"object": []` with
-`"status": "not_formalized"` instead.
+A `noMatch` object end should have a `version`. A producer that does not know
+the version it searched writes `"object": []` with `"status": "not_formalized"`
+instead.
 
 ## Status, kind, id and note
 
@@ -489,7 +489,7 @@ The errata end names its own file, so it does not take the hash of
 leaves `object` out, so its object is the template alone: a checked absence in
 Mathlib at that commit. One that writes `"object": []` instead is merely
 unlinked. Below a template that selects a declaration or gives a `role`, a
-checked absence writes its object end with its own `uri`.
+checked absence writes its object end in full: `type`, `uri` and `version`.
 
 Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
