@@ -68,7 +68,7 @@ Each end is an object:
 | `uri` | Yes | A [reference](#references) to the document, usually the companion's copy; for `lean`, the project |
 | `location` | No | An object selecting part of the document ([Location](#location)) |
 | `version` | No | Which [revision](#ends) of the document, such as a Git commit |
-| `sha256` | No | The SHA-256 of the bytes at `uri` |
+| `sha256` | No | The SHA-256 of the file that `uri` names |
 | `citation` | No | A [CSL-JSON item](#ends) describing the work |
 | `identifiers` | No | Identifiers in other registries, by name |
 | `title` | No | A readable name for the part, such as "Theorem 1.4 (Lagrange)" |
@@ -184,8 +184,8 @@ subjects.
 ## Ends
 
 `uri` says where a copy of the document is, and that copy may be local.
-`version` says which revision it is: a Git commit, a Wikipedia `oldid` or an
-arXiv version. So an end can open the companion's own copy and still name the
+`version` names the revision: a Git commit, a Wikipedia `oldid` or an arXiv
+version. So an end can open the companion's own copy and still name the
 revision, and a Wikipedia article keeps its readable URL with the `oldid`
 beside it:
 
@@ -194,8 +194,17 @@ beside it:
   "location": { "fragment": "Abstract_characterization" }, "identifiers": { "wikidata": "Q263809" } }
 ```
 
+A `location` and `sha256` refer to the revision that `version` names or, when
+there is no `version`, to what `uri` served when the producer wrote them. When
+a consumer finds that `uri` serves another revision, as a live Wikipedia URL
+does after an edit, or bytes that do not match `sha256`, it resolves the
+location in the revision the end names or reports it unresolved, never in what
+`uri` serves now.
+
 `sha256` is 64 lowercase hex digits. Whether the local copy matches it, and
-whether the revision still exists, is for tools to check.
+whether the revision still exists, is for tools to check. It hashes the one
+file that `uri` names, for `latex` the root file alone, so a `lean` end, whose
+`uri` is a project, leaves it out and names its revision with `version`.
 
 `citation` describes the work as a
 [CSL-JSON](https://github.com/citation-style-language/schema) item, the
@@ -346,7 +355,7 @@ that holds the annotations:
 Beside a declaration, `lines` narrows it to the part on those lines, such as a
 proof step; an annotation that means the whole declaration leaves `lines` out.
 Lines outside the declaration, or in a module that does not hold it, are
-unresolved. Line numbers mean something only at the end's `version`.
+unresolved.
 
 At the commit below, `Subgroup.card_dvd_of_injective` proves its claim with a
 `calc` block whose first step starts on line 82. This annotation links the
