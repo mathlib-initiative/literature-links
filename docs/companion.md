@@ -504,11 +504,12 @@ checked absence writes its object end in full: `type`, `uri` and `version`.
 
 Defaults files nest. A reader applies the `_defaults.json` in the annotation
 file's folder and in each folder above it, outermost first, so the nearest one
-wins. For local files, that goes up to the root of the file system. A reader
-that fetches annotations over the web is given a base URL, the root of the
-companion, and never looks above it; given none, it applies no defaults. A
-[JSONL](#discovery) file takes defaults like any annotation file, one
-annotation at a time.
+wins. For local files, that goes up to the root of the file system or, when the
+reader is given the root of the companion, to that folder, and a file outside
+that folder is a problem. A reader that fetches annotations over the web is
+given a base URL, the root of the companion, and never looks above it; given
+none, it applies no defaults. A [JSONL](#discovery) file takes defaults like
+any annotation file, one annotation at a time.
 
 Each defaults file merges over the ones above it by the rules above. Two
 templates merge member by member, so an outer template may leave a member such
