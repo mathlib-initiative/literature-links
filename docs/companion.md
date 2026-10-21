@@ -363,8 +363,8 @@ Lines outside the declaration, or in a module that does not hold it, are
 unresolved.
 
 At the commit below, `Subgroup.card_dvd_of_injective` proves its claim with a
-`calc` block whose first step starts on line 82. This annotation links the
-first step of a proof in the notes to that step:
+`calc` alone on line 81, so its first step starts on line 82. This annotation
+links the first step of a proof in the notes to that step:
 
 ```json
 {
@@ -386,9 +386,12 @@ integers with end at least start. `[start, end]` selects those lines,
 inclusive; a producer that knows a single line writes `[n, n]`. `[n]` selects
 the outermost item that starts on line n, and the consumer finds where it ends:
 in LaTeX, an environment whose `\begin` is there; in Lean, a declaration,
-`example`, `have`, `calc` step or tactic block. Lines count from 1, and the
-bytes CRLF, CR and LF each end a line, so the count is the same whether the
-file is UTF-8, Latin-1 or another ASCII-compatible encoding.
+`example`, `have`, `calc`, `calc` step or tactic. A tactic is one item of a
+tactic sequence, such as the body of a `by`, with everything nested in it, so a
+`·` block is one tactic. A `calc` whose first step shares its line is selected
+whole; to select that step alone, give its lines as `[start, end]`. Lines count
+from 1, and the bytes CRLF, CR and LF each end a line, so the count is the same
+whether the file is UTF-8, Latin-1 or another ASCII-compatible encoding.
 
 ### Generic
 
