@@ -14,6 +14,7 @@ import tomllib
 import unicodedata
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import date
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -35,6 +36,7 @@ EXAMPLES = ROOT / "examples" / "companion"
 FIXTURE = HERE / "fixtures" / "companion"
 ANNOTATION_SUFFIXES = (".json", ".jsonl", ".ndjson")
 EXPECT_INSTALLED = os.environ.get("LITERATURE_LINKS_TEST_INSTALLED") == "1"
+EXPECT_RELEASE = os.environ.get("LITERATURE_LINKS_RELEASE") == "1"
 
 
 def subprocess_env() -> dict:
@@ -86,6 +88,15 @@ class TestStandalone(unittest.TestCase):
         self.assertEqual(released[-1], "2.0.0")
         oldest = changelog[changelog.rindex("\n## "):].split("\n", 2)[2]
         self.assertTrue(oldest.lstrip().startswith("First public release."), oldest[:80])
+
+    def test_a_release_commit_dates_its_changelog_heading(self):
+        if not EXPECT_RELEASE:
+            self.skipTest("LITERATURE_LINKS_RELEASE is not set")
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        heading = re.search(r"^## .*$", changelog, re.M).group(0)
+        dated = re.fullmatch(rf"## {re.escape(literature_links.__version__)} \((\d{{4}}-\d{{2}}-\d{{2}})\)", heading)
+        self.assertTrue(dated, heading)
+        date.fromisoformat(dated.group(1))
 
     def test_the_schema_id_names_the_release_tag(self):
         # The $id names this release's tag, so a later schema never claims an earlier release.
