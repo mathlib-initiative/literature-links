@@ -324,14 +324,19 @@ The end's `version` is the commit and should be given in full, as a Git object
 ID of 40 lowercase hex digits, or 64 in a SHA-256 repository, not as a branch
 or a tag.
 
-`declaration` is the fully qualified name of a declaration, as Lean prints it.
-Validation does not parse it. A name is unique within a project at a commit,
-and it survives the file moves that make paths and line numbers stale.
+`declaration` is the fully qualified name of a declaration, as Lean prints it
+in the declaration's own module. Validation does not parse it. A name survives
+the file moves that make paths and line numbers stale, but private declarations
+in different modules can share one, and so can public ones in modules that are
+never imported together, such as two test files. An end that names a private
+declaration, which in a `module` file is any declaration not made public, must
+give its `module`.
 
 `module` is a dotted module name, such as `Mathlib.GroupTheory.Coset.Card`, and
-selects that module's source file in the project. Beside a declaration it is a
-hint for finding the source or the documentation page; if the declaration is
-not in that module, the declaration wins.
+selects that module's source file in the project. Beside a declaration, it
+decides between the declarations that share that name; otherwise it is a hint
+for finding the source or the documentation page, and if the declaration is not
+in that module, the declaration wins.
 
 `lines` requires `module` and selects [lines](#lines) of the module's file.
 With a module alone, `lines` is how an end selects an item with no name. This
