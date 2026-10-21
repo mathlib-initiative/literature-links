@@ -19,7 +19,7 @@
   "status": "not_formalized",
   "kind": "proposition",
   "id": "21b2af87df95",
-  "note": "Illustrative record of a checked absence, not a reviewed claim about Mathlib. It says that Mathlib at this commit was searched and holds nothing that matches the passage. A record with an empty object would say only that nobody has linked the passage.",
+  "note": "Illustrative record of a checked absence, not a reviewed claim about Mathlib. It says that Mathlib at this commit was searched and holds no counterpart of the passage. A record with an empty object would say only that nobody has linked the passage.",
   "extensions": {
     "org.example.curation": {
       "reviewed": false
