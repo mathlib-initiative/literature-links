@@ -100,7 +100,7 @@ recommended:
 | `narrowMatch` | The subject is more general, in the same sense |
 | `relatedMatch` | The sides are related in another way, such as a lemma the proof uses |
 | `hasPart` | The object states one part of the subject, such as one of several claims of a theorem or one clause of a definition |
-| `noMatch` | A [checked absence](#unlinked-passages-and-checked-absences): the object, typically a whole project at a `version`, was searched and holds nothing that matches the subject |
+| `noMatch` | A [checked absence](#unlinked-passages-and-checked-absences): the object, typically a whole project at a `version`, was searched and holds no counterpart of the subject |
 
 The first five are the
 [SKOS mapping relations](https://www.w3.org/TR/skos-reference/#mapping), which
@@ -141,15 +141,19 @@ An annotation with `"object": []` records its subject, a passage that nobody
 has linked yet. Its empty object claims nothing about whether a counterpart
 exists. With nothing to relate, it should have no `relation`.
 
-A *checked absence* claims more: the producer extracted the statement, searched
-a formal library at a version, and found no counterpart. It is a `noMatch`
+A *checked absence* claims more. The producer extracted the statement,
+searched a formal library at a version, and found no counterpart: no
+declaration, alone or with others, that would be an `exactMatch`, `closeMatch`
+or `broadMatch` of the subject. The library may still hold narrower, partial
+or related results, and other annotations can link them with `narrowMatch`,
+`hasPart` or `relatedMatch`. It is a `noMatch`
 annotation whose object is the library at that version, usually a `lean` end
 with no location. A `noMatch` object end should have a `version`. A producer
-that does not know the version it searched writes `"object": []` with
-`"status": "not_formalized"` instead.
+that does not know the version it searched writes `"object": []` instead, with
+a `status` such as `not_formalized`.
 
 The first annotation below leaves a remark unlinked. The second says that
-Mathlib at that commit was searched and holds nothing that matches it:
+Mathlib at that commit was searched and holds no counterpart to it:
 
 ```json
 { "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 8 }, "title": "Remark 1.5" } ],
