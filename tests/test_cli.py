@@ -229,6 +229,30 @@ class TestSingleAnnotationDiscovery(CommandCase):
             self.assertEqual(self.run_command("validate", str(rows)), (0, f"{rows}: ok (50 annotations, generic)\n", ""))
         self.assertEqual(len(reads), 1)
 
+    def test_root_stops_the_defaults_lookup_in_both_commands(self):
+        (self.directory / "_defaults.json").write_text('{"relation": "noMatch"}', encoding="utf-8")
+        folder = self.directory / "companion"
+        folder.mkdir()
+        (folder / "_defaults.json").write_text('{"object": []}', encoding="utf-8")
+        path = folder / "a.json"
+        path.write_text('{"subject": [{"type": "generic", "uri": "a"}]}', encoding="utf-8")
+        for extra, relation in (((), "noMatch"), (("--root", str(folder)), None)):
+            status, out, _ = self.run_command("scan", str(folder), "--format", "json", *extra)
+            self.assertEqual((status, companion.loads(out)["records"][0]["annotation"].get("relation")), (0, relation))
+            status, out, _ = self.run_command("validate", str(path), "--format", "json", *extra)
+            self.assertEqual((status, len(companion.loads(out)["defaults"])), (0, 1 if extra else 2))
+        outside = self.write("outside.json", annotation())
+        for command in ("scan", "validate"):
+            with self.subTest(command=command):
+                status, out, err = self.run_command(command, str(outside), "--root", str(folder))
+                self.assertEqual(status, 2)
+                self.assertIn("is outside the root", out + err)
+                self.assertIn("[PATH]", out + err)
+                for root in (self.directory / "missing", path):
+                    status, _, err = self.run_command(command, str(path), "--root", str(root))
+                    self.assertEqual(status, 2)
+                    self.assertIn("is not a folder", err)
+
     def test_validate_reports_a_broken_defaults_file_once_per_jsonl_file(self):
         (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
         rows = self.directory / "rows.jsonl"

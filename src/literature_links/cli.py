@@ -23,6 +23,9 @@ _EXIT_STATUS = ("exit status: 0 when every annotation is valid, 1 for an invalid
                 "defaults file, 2 for a read, write, JSON, path or symlink failure, no annotations, or a usage error")
 
 
+_ROOT = "the companion's root folder: defaults files above it do not apply, and a file outside it is a problem"
+
+
 def _write_json(text: str) -> None:
     """Write UTF-8 JSON with LF line ends, whatever the terminal's encoding."""
     if sys.stdout is None:
@@ -55,10 +58,15 @@ def _check_row(value: Any, line: int | None, path: Path, chain: list[tuple[Path,
     return merged, applied, companion.check(merged).problems
 
 
-def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[str]]]:
+def _check_file(path: Path, root: Path | None) -> tuple[list[Problem], tuple[Path, ...], list[list[str]]]:
     """Check each annotation in ``path``: the problems, the defaults files applied and each valid one's end types."""
     if path.name == discovery.DEFAULTS:
         return [Problem("DEFAULTS", "$", "a defaults file is not an annotation")], (), []
+    resolved = path.resolve()
+    reading: list[Problem] = []
+    defaults = discovery._Defaults(reading, root)
+    if defaults.folders(resolved) is None:
+        return reading, (), []  # outside the root, before reading
     rows = discovery._rows(path, path.read_bytes().decode("utf-8"))
     if not rows:
         return [Problem("NO_ANNOTATIONS", "$", "the file holds no annotations")], (), []
@@ -66,9 +74,7 @@ def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[
     reported: set[Problem] = set()
     applied: tuple[Path, ...] = ()
     types: list[list[str]] = []
-    resolved = path.resolve()
-    reading: list[Problem] = []
-    chain = discovery._Defaults(reading).chain(resolved)
+    chain = defaults.chain(resolved)
     for line, row in rows:
         try:
             merged, files, found = _check_row(companion.loads(row), line, resolved, chain, reading)
@@ -92,11 +98,12 @@ def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[
 def _validate(args: argparse.Namespace) -> int:
     """Report every input, including after unreadable files; status 2 wins."""
     status = 0
+    root = None if args.root is None else args.root.resolve()
     for path in args.documents:
         applied: tuple[Path, ...] = ()
         types: list[list[str]] = []
         try:
-            found, applied, types = _check_file(path)
+            found, applied, types = _check_file(path, root)
         except (OSError, ValueError, RecursionError) as exc:
             code = "IO" if isinstance(exc, (OSError, UnicodeError)) else "JSON"
             found = [Problem(code, "$", str(exc))]
@@ -120,7 +127,7 @@ def _validate(args: argparse.Namespace) -> int:
 
 def _scan(args: argparse.Namespace) -> int:
     try:
-        collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude)
+        collection = discovery.collect(args.paths, include=args.include, exclude=args.exclude, root=args.root)
     except (OSError, ValueError, RecursionError) as exc:
         # A failure that is not about one input, such as an unreadable schema.
         if args.format == "json":
@@ -160,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
                                        help="check JSON files, one annotation each, and JSONL files, one per line")
     validation.add_argument("documents", nargs="+", type=Path, metavar="FILE",
                             help="a .json file holds one annotation, a .jsonl or .ndjson file one per line")
+    validation.add_argument("--root", type=Path, metavar="DIR", help=_ROOT)
     validation.add_argument("--format", choices=("text", "json"), default="text",
                             help="json writes a report on one line for each file")
     scanning = subparsers.add_parser("scan", allow_abbrev=False, epilog=_EXIT_STATUS,
@@ -167,12 +175,17 @@ def main(argv: list[str] | None = None) -> int:
     scanning.add_argument("paths", nargs="+", type=Path, metavar="PATH",
                           help="a file, or a folder to walk for .json, .jsonl and .ndjson files")
     scanning.add_argument("--include", action="append", metavar="PATTERN",
-                          help="select files by root-relative pattern instead of suffix (repeatable)")
+                          help="select files by pattern on the path inside the walked folder instead of suffix "
+                               "(repeatable)")
     scanning.add_argument("--exclude", action="append", default=[], metavar="PATTERN",
-                          help="leave out files by root-relative pattern; wins over --include (repeatable)")
+                          help="leave out files by pattern on the path inside the walked folder; wins over "
+                               "--include (repeatable)")
+    scanning.add_argument("--root", type=Path, metavar="DIR", help=_ROOT)
     scanning.add_argument("--format", choices=("text", "json"), default="text",
                           help="json writes one report with the files, records and problems")
     args = parser.parse_args(argv)
+    if args.root is not None and not args.root.is_dir():
+        (validation if args.command == "validate" else scanning).error(f"--root {args.root} is not a folder")
     if args.format == "text" and getattr(sys.stdout, "errors", None) == "strict" and hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="backslashreplace")
     try:

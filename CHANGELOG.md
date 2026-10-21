@@ -28,6 +28,8 @@ below it shared fields. The `literature-links` command and the
   subject, and annotations about one subject share it.
 - LaTeX `lines` may be `[n]`, the item that starts on line n.
 - Folder defaults may hold an end template for each side.
+- A reader may be given the companion's root folder, and `validate` and `scan`
+  take `--root`.
 - `normalize` is removed, and `merge` takes `defaults=True`.
 - The `LINES` problem code replaces `LATEX_LINES` and covers Lean locations.
   `validate` lists the types of all ends.
