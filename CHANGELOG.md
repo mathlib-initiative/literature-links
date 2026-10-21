@@ -25,7 +25,8 @@ below it shared fields. The `literature-links` command and the
 - Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
   `sha256` and `identifiers`.
 - `status` is a string about the subject, not an object. `id` names the
-  subject, and annotations about one subject share it.
+  subject: annotations about one subject share it, and within a companion,
+  annotations that share it are about one subject.
 - LaTeX `lines` may be `[n]`, the item that starts on line n.
 - Folder defaults may hold an end template for each side.
 - `normalize` is removed, and `merge` takes `defaults=True`.
