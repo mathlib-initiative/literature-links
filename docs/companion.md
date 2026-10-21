@@ -287,8 +287,12 @@ Use exactly one of `{ "label": "thm:lagrange" }` or `{ "lines": [12, 18] }`.
 `label` is the literal argument of a `\label` command. It is looked up in the
 document rooted at the end's `uri` and in the files it reads with `\input` and
 `\include`, at any depth; other inclusion commands, macro expansion and
-generated labels are the application's concern. `lines` selects [lines](#lines)
-of the file at `uri`.
+generated labels are the application's concern. Every path in an `\input` or
+`\include` resolves against the folder of the file at `uri`, as when TeX runs
+there. So a chapter in a subfolder does not find the files it reads by paths
+from the main file's folder; for a label in one of them, give the main file, or
+the file that holds the label, as `uri`. `lines` selects [lines](#lines) of the
+file at `uri`.
 
 ### HTML
 
