@@ -277,6 +277,13 @@ document rooted at the end's `uri` and in the files it reads with `\input` and
 generated labels are the application's concern. `lines` selects [lines](#lines)
 of the file at `uri`.
 
+A command in text that TeX skips or prints as written does not count: it
+defines no label, reads no file and begins or ends no environment. That text is
+a `%` comment, `\iffalse` up to its `\else` or `\fi`, anything after
+`\end{document}`, `\verb`, and the `verbatim`, `verbatim*` and `comment`
+environments; other such text is the application's concern. In
+`\label[type]{key}`, as cleveref writes it, the label is `key`.
+
 ### HTML
 
 Use exactly one of these:
