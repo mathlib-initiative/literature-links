@@ -39,6 +39,16 @@ def _plural(count: int, noun: str) -> str:
     return f"{count} {noun}{'' if count == 1 else 's'}"
 
 
+def _text(value: Any) -> str:
+    """``str(value)`` with each unpaired surrogate, as in a file name that is not UTF-8, written as an escape."""
+    return str(value).encode("utf-8", "backslashreplace").decode("utf-8")
+
+
+def _report(problems: list[Problem]) -> list[dict[str, str]]:
+    """Problems for a JSON report, which must hold no unpaired surrogate."""
+    return [{key: _text(value) for key, value in asdict(problem).items()} for problem in problems]
+
+
 def _status(problems: list[Problem]) -> int:
     return 2 if any(problem.code in _OPERATIONAL for problem in problems) else 1 if problems else 0
 
@@ -101,9 +111,10 @@ def _validate(args: argparse.Namespace) -> int:
         status = max(status, item_status)
         problems = [asdict(problem) for problem in found]
         if args.format == "json":
-            _write_json(json.dumps({"document": str(path), "valid": not problems, "status": item_status,
-                                   "defaults": [str(file) for file in applied],
-                                   "problems": problems, "warnings": []}, ensure_ascii=True, allow_nan=False) + "\n")
+            _write_json(json.dumps({"document": _text(path), "valid": not problems, "status": item_status,
+                                   "defaults": [_text(file) for file in applied],
+                                   "problems": _report(found), "warnings": []},
+                                  ensure_ascii=True, allow_nan=False) + "\n")
         else:
             note = f" (with defaults from {', '.join(map(str, applied))})" if applied else ""
             for problem in problems:
@@ -129,12 +140,12 @@ def _scan(args: argparse.Namespace) -> int:
     status = _status(collection.problems)
     if args.format == "json":
         result = {"valid": not collection.problems, "status": status,
-                  "files": [str(path) for path in collection.files],
+                  "files": [_text(path) for path in collection.files],
                   "records": [{"annotation": record.annotation,
-                               "origin": {"path": str(record.path), "line": record.line, "base_uri": record.base_uri,
-                                          "defaults": [str(file) for file in record.defaults]}}
+                               "origin": {"path": _text(record.path), "line": record.line, "base_uri": record.base_uri,
+                                          "defaults": [_text(file) for file in record.defaults]}}
                               for record in collection.records],
-                  "problems": [asdict(problem) for problem in collection.problems]}
+                  "problems": _report(collection.problems)}
         _write_json(companion.dumps(result))
     else:
         for problem in collection.problems:
