@@ -105,6 +105,7 @@
 {"name": "uri with space", "rule": "reference: no White_Space", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "a b.pdf"}], "object": []}}
 {"name": "uri with stray percent", "rule": "reference: % starts an escape", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "100%.pdf"}], "object": []}}
 {"name": "uri with zero-width space", "rule": "reference: no invisible formatting", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "a\u200bb.pdf"}], "object": []}}
+{"name": "uri with word joiner", "rule": "reference: no invisible formatting", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "a\u2060b.pdf"}], "object": []}}
 {"name": "uri empty", "rule": "reference is nonempty", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": ""}], "object": []}}
 {"name": "empty version", "rule": "end strings are nonempty", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "notes.pdf", "version": ""}], "object": []}}
 {"name": "empty title", "rule": "end strings are nonempty", "schema_valid": false, "beyond": [], "record": {"subject": [{"type": "pdf", "uri": "notes.pdf", "title": ""}], "object": []}}
