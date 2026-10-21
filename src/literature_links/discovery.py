@@ -160,14 +160,20 @@ def inherit(annotation: dict[str, Any], path: Path | str) -> tuple[dict[str, Any
     """
     problems: list[Problem] = []
     path = Path(path).resolve()
-    chain = _Defaults(problems).chain(path)
+    return _inherit(annotation, path, _Defaults(problems).chain(path), problems)
+
+
+def _inherit(annotation: dict[str, Any], path: Path, chain: list[tuple[Path, dict[str, Any]]] | None,
+             problems: list[Problem]) -> tuple[dict[str, Any] | None, tuple[Path, ...], list[Problem]]:
+    """inherit() for a resolved ``path`` whose ``chain`` is already read, into ``problems``, so a file's rows read it
+    once."""
     if chain is None:
-        return None, (), problems
+        return None, (), list(problems)
     try:
         merged = _apply(annotation, path, chain)
     except RecursionError:
         return None, (), [Problem("JSON", "$", _TOO_DEEP)]
-    return merged, tuple(file for file, _ in chain), problems
+    return merged, tuple(file for file, _ in chain), list(problems)
 
 
 def _rows(path: Path, text: str) -> list[tuple[int | None, str]]:
