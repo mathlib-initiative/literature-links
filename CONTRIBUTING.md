@@ -17,4 +17,4 @@ To release version X.Y.Z, change three things in one commit:
 2. Give the release its dated `CHANGELOG.md` heading, `## X.Y.Z (YYYY-MM-DD)`, in place of `## Unreleased` or of `(unreleased)` after the version.
 3. Point the `$id` of `schema/companion.schema.json` at the release tag: `https://raw.githubusercontent.com/mathlib-initiative/literature-links/vX.Y.Z/schema/companion.schema.json`.
 
-`tests/test_packaging.py` checks that the version, the heading and `$id` agree. Tag that commit `vX.Y.Z`.
+`tests/test_packaging.py` checks that the version, the heading and `$id` agree; run it as `LITERATURE_LINKS_RELEASE=1 python3 -m pytest tests/test_packaging.py` to also require the dated heading. Tag that commit `vX.Y.Z`.
