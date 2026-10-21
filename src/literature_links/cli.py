@@ -43,13 +43,13 @@ def _status(problems: list[Problem]) -> int:
     return 2 if any(problem.code in _OPERATIONAL for problem in problems) else 1 if problems else 0
 
 
-def _check_row(value: Any, line: int | None, path: Path) -> tuple[dict[str, Any] | None, tuple[Path, ...],
-                                                                  list[Problem]]:
+def _check_row(value: Any, line: int | None, path: Path, chain: list[tuple[Path, dict[str, Any]]] | None,
+               reading: list[Problem]) -> tuple[dict[str, Any] | None, tuple[Path, ...], list[Problem]]:
     """The merged annotation or None, the defaults files applied, and the problems."""
     shape = discovery._shape(value, line)
     if shape:
         return None, (), [Problem("SHAPE", "$", shape)]
-    merged, applied, failures = discovery.inherit(value, path)
+    merged, applied, failures = discovery._inherit(value, path, chain, reading)
     if merged is None:
         return None, (), failures
     return merged, applied, companion.check(merged).problems
@@ -66,9 +66,12 @@ def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[
     reported: set[Problem] = set()
     applied: tuple[Path, ...] = ()
     types: list[list[str]] = []
+    resolved = path.resolve()
+    reading: list[Problem] = []
+    chain = discovery._Defaults(reading).chain(resolved)
     for line, row in rows:
         try:
-            merged, files, found = _check_row(companion.loads(row), line, path)
+            merged, files, found = _check_row(companion.loads(row), line, resolved, chain, reading)
         except companion.LoadError as exc:
             merged, files, found = None, (), [Problem("JSON", "$", str(exc))]
         applied = files or applied
