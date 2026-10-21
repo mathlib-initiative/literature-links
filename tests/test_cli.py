@@ -326,6 +326,25 @@ class TestSingleAnnotationDiscovery(CommandCase):
             with self.subTest(path=path.name):
                 self.assertEqual(self.run_command("scan", str(path))[0], 2)
 
+    def test_validate_rejects_a_symlink_or_a_non_regular_file_before_reading_it(self):
+        regular = "input must be a regular file"
+        cases = {self.directory: ("PATH", regular)}
+        link = self.directory / "link.json"
+        try:
+            link.symlink_to(self.write("good.json", annotation()))
+            cases[link] = ("SYMLINK", "explicit inputs must not be symlinks")
+        except (NotImplementedError, OSError):
+            pass  # Windows without symlink privilege
+        if hasattr(os, "mkfifo"):
+            fifo = self.directory / "fifo.json"
+            os.mkfifo(fifo)
+            cases[fifo] = ("PATH", regular)
+        # Reading a named pipe would wait for a writer, so any read fails the test.
+        with patch.object(Path, "read_bytes", side_effect=AssertionError("read before the check")):
+            for path, (code, message) in cases.items():
+                with self.subTest(path=path.name):
+                    self.assertEqual(self.run_command("validate", str(path)), (2, "", f"{path}: $: {message} [{code}]\n"))
+
     def test_scan_broken_install_exits_two_in_json_and_text(self):
         path = self.write("one.json", annotation())
         with patch.object(companion, "SCHEMA_PATH", self.directory / "missing-schema.json"):

@@ -6,6 +6,7 @@ from dataclasses import asdict
 import json
 import os
 from pathlib import Path
+import stat
 import sys
 from typing import Any
 
@@ -57,6 +58,11 @@ def _check_row(value: Any, line: int | None, path: Path, chain: list[tuple[Path,
 
 def _check_file(path: Path) -> tuple[list[Problem], tuple[Path, ...], list[list[str]]]:
     """Check each annotation in ``path``: the problems, the defaults files applied and each valid one's end types."""
+    mode = path.lstat().st_mode  # checked before reading, as scan checks a file named explicitly
+    if stat.S_ISLNK(mode):
+        return [Problem("SYMLINK", "$", "explicit inputs must not be symlinks")], (), []
+    if not stat.S_ISREG(mode):
+        return [Problem("PATH", "$", "input must be a regular file")], (), []
     if path.name == discovery.DEFAULTS:
         return [Problem("DEFAULTS", "$", "a defaults file is not an annotation")], (), []
     rows = discovery._rows(path, path.read_bytes().decode("utf-8"))
