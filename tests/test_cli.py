@@ -213,6 +213,22 @@ class TestSingleAnnotationDiscovery(CommandCase):
         self.assertEqual(self.run_command("validate", str(rows)),
                          (0, f"{rows}: ok (3 annotations, pdf, lean, html, latex, generic)\n", ""))
 
+    def test_validate_reads_the_defaults_once_for_a_jsonl_file(self):
+        (self.directory / "_defaults.json").write_text('{"object": []}', encoding="utf-8")
+        rows = self.directory / "many.jsonl"
+        rows.write_text('{"subject": [{"type": "generic", "uri": "a"}]}\n' * 50, encoding="utf-8")
+        reads = []
+        original = Path.read_text
+
+        def counting(path, *args, **kwargs):
+            if path.name == "_defaults.json":
+                reads.append(path)
+            return original(path, *args, **kwargs)
+
+        with patch.object(Path, "read_text", counting):
+            self.assertEqual(self.run_command("validate", str(rows)), (0, f"{rows}: ok (50 annotations, generic)\n", ""))
+        self.assertEqual(len(reads), 1)
+
     def test_validate_reports_a_broken_defaults_file_once_per_jsonl_file(self):
         (self.directory / "_defaults.json").write_text("[]", encoding="utf-8")
         rows = self.directory / "rows.jsonl"
