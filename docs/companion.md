@@ -292,7 +292,10 @@ of the file at `uri`.
 
 ### HTML
 
-Use exactly one of these:
+Each form below matches the document that the HTML parsing algorithm gives
+with scripting disabled, running no scripts: it never depends on what a script
+would add or change, and `noscript` content is ordinary markup. Use exactly one
+of them:
 
 - `fragment` is the decoded value of an element's `id` attribute; `name`
   attributes do not count. It does not start with `#` and contains no
@@ -308,18 +311,16 @@ Use exactly one of these:
   `White_Space`. Each matching position counts, overlapping or not: an `exact`
   of `aa` matches the text `aaa` at two positions, which is ambiguous.
 
-A quote matches this text layer. Parse the resource with the HTML parsing
-algorithm, scripting disabled, and run no scripts: the layer never depends on
-what a script would add or change, and `noscript` content is ordinary text.
-Take the `textContent` of the body, or of the document element if there is no
-body, without `script`, `style` and `template` elements in any namespace, SVG
-and MathML included. Replace each run of `White_Space` with one space and trim
-both ends. Do not change case, normalize Unicode or add spaces between
-elements, so `<b>natural</b><i>number</i>` gives `naturalnumber`. Hidden text
-counts, including MathML `annotation` and `annotation-xml` content such as the
-TeX copy some sites keep beside each formula; for a passage that runs through
-formulas, `css` or `fragment` is often the more robust choice. Shadow DOM and
-iframes do not count. Other text conventions need a `profile`.
+A quote matches this text layer: the `textContent` of the body, or of the
+document element if there is no body, without `script`, `style` and `template`
+elements in any namespace, SVG and MathML included. Replace each run of
+`White_Space` with one space and trim both ends. Do not change case, normalize
+Unicode or add spaces between elements, so `<b>natural</b><i>number</i>` gives
+`naturalnumber`. Hidden text counts, including MathML `annotation` and
+`annotation-xml` content such as the TeX copy some sites keep beside each
+formula; for a passage that runs through formulas, `css` or `fragment` is often
+the more robust choice. Shadow DOM and iframes do not count. Other text
+conventions need a `profile`.
 
 `White_Space` means U+0009–000D, U+0020, U+0085, U+00A0, U+1680, U+2000–200A,
 U+2028–2029, U+202F, U+205F and U+3000.
