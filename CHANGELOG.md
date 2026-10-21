@@ -31,3 +31,5 @@ below it shared fields. The `literature-links` command and the
 - `normalize` is removed, and `merge` takes `defaults=True`.
 - The `LINES` problem code replaces `LATEX_LINES` and covers Lean locations.
   `validate` lists the types of all ends.
+- `validate` rejects a symlink or a file that is not a regular file, such as a
+  pipe, as `scan` does.

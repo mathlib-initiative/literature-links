@@ -75,6 +75,9 @@ with none; in `scan`, a run that finds none. They exit 1 for any other problem,
 such as an invalid annotation, file shape or defaults file. Status 2 wins over
 1, and a usage error exits 2. `--help` lists the options and the exit statuses.
 
+In both commands, a file named on the command line that is a symlink, or that
+is not a regular file, such as a pipe, is an error; `scan` also takes folders.
+
 In text, `validate` prints a line for each problem and a line for each valid
 file that counts its annotations and lists each type of end once, in the order
 the types first appear, each annotation's subject ends before its object ends,
