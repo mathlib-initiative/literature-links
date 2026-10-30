@@ -28,7 +28,7 @@ in later 2.x; a breaking change bumps the major version.
 An *annotation* is one JSON object in this format, and an *annotation file*
 carries annotations ([Discovery](#discovery)). An *end* is a document, or a
 part of one: an object with a `type`, a `uri` and optionally a `location`. A
-*side* is the list of ends in `subject` or in `object`. A *companion* is the
+*side* is the list of ends in `subject` or in `object`. A *companion* is a
 set of annotations about one informal source, such as a book, article or wiki,
 with any files kept beside them, such as a copy of the source. A *producer*
 writes annotations, a *reader* reads annotation files and applies
@@ -182,8 +182,10 @@ does.
 `kind` names what the subject is; `definition`, `theorem`, `lemma`,
 `proposition`, `example`, `remark`, `exercise`, `proof` and `proof_step` are
 recommended. `id` names the subject: annotations about one subject should share
-it, so that a consumer can group them, and it need not be unique across
-subjects.
+it, so that a consumer can group them. Within a companion, annotations with the
+same `id` are about the same subject, though their `subject` ends may differ;
+ids in different companions, such as two repositories about one book, may
+coincide.
 
 ## Ends
 
