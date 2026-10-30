@@ -1,14 +1,21 @@
 {
-  "source": {
+  "subject": {
     "type": "pdf",
-    "uri": "https://example.org/notes.pdf",
-    "pin": { "type": "book", "title": "Lecture Notes on Groups", "url": "https://example.org/notes.html" }
-  },
-  "target": {
-    "pin": {
-      "type": "repository",
-      "url": "https://github.com/leanprover-community/mathlib4",
-      "commit": "db584cd6d46c92f209a44c0f1c829460d327499d"
+    "uri": "notes.pdf",
+    "sha256": "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f",
+    "citation": {
+      "id": "notes",
+      "type": "book",
+      "title": "Lecture Notes on Groups",
+      "author": [ { "family": "Author", "given": "A." }, { "family": "Coauthor", "given": "B." } ],
+      "publisher": "Example Press",
+      "issued": { "date-parts": [ [ 2026 ] ] },
+      "URL": "https://example.org/notes.html"
     }
+  },
+  "object": {
+    "type": "lean",
+    "uri": "https://github.com/leanprover-community/mathlib4",
+    "version": "db584cd6d46c92f209a44c0f1c829460d327499d"
   }
 }

@@ -1,0 +1,19 @@
+{
+  "subject": [
+    {
+      "type": "latex",
+      "uri": "chapters/groups.tex",
+      "location": { "label": "sec:index" },
+      "title": "Section 1.3 (The index of a subgroup)"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "module": "Mathlib.GroupTheory.Index" }
+    }
+  ],
+  "note": "The section and the module both develop the index of a subgroup. A module location without lines selects the whole module."
+}

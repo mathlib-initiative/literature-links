@@ -1,14 +1,12 @@
 {
+  "subject": [
+    { "location": { "page": 7, "rect": [0.12, 0.3, 0.76, 0.1] }, "title": "Theorem 1.4 (Lagrange)" }
+  ],
+  "object": [
+    { "location": { "declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card" },
+      "junk": [ "Nat.card of an infinite type is 0" ] }
+  ],
+  "relation": "exactMatch",
   "kind": "theorem",
-  "label": "Theorem 1.4 (Lagrange)",
-  "location": { "page": 7, "rect": [0.12, 0.3, 0.76, 0.1] },
-  "target": {
-    "uri": "https://github.com/leanprover-community/mathlib4/blob/db584cd6d46c92f209a44c0f1c829460d327499d/Mathlib/GroupTheory/Coset/Card.lean#L69",
-    "pin": {
-      "path": "Mathlib/GroupTheory/Coset/Card.lean",
-      "line": 69,
-      "module": "Mathlib.GroupTheory.Coset.Card",
-      "declaration": "Subgroup.card_subgroup_dvd_card"
-    }
-  }
+  "note": "The notes state the theorem for finite groups. Mathlib states it for every group, but an infinite group satisfies it only through the junk value."
 }

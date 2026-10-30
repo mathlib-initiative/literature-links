@@ -1,0 +1,21 @@
+{
+  "subject": [
+    {
+      "type": "html",
+      "uri": "notes/parity.html",
+      "location": { "fragment": "exercise-3" },
+      "title": "Exercise 3"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "module": "Mathlib.Algebra.Ring.Parity", "lines": [346] }
+    }
+  ],
+  "relation": "exactMatch",
+  "kind": "exercise",
+  "note": "An example has no name, so the object selects it by the line it starts on. It states that for natural numbers m and n with m even, n + 3 is odd exactly when m ^ 2 + m + n is even."
+}

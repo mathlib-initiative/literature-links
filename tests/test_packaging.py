@@ -11,8 +11,10 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+import unicodedata
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from datetime import date
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -26,11 +28,15 @@ if importlib.util.find_spec("literature_links") is None:
 import literature_links                                  # noqa: E402
 from literature_links import cli                         # noqa: E402
 from literature_links import companion as C              # noqa: E402
+from literature_links import discovery                   # noqa: E402
 
 PACKAGE = Path(literature_links.__file__).resolve().parent
 IMPORT_ROOT = PACKAGE.parent
 EXAMPLES = ROOT / "examples" / "companion"
+FIXTURE = HERE / "fixtures" / "companion"
+ANNOTATION_SUFFIXES = (".json", ".jsonl", ".ndjson")
 EXPECT_INSTALLED = os.environ.get("LITERATURE_LINKS_TEST_INSTALLED") == "1"
+EXPECT_RELEASE = os.environ.get("LITERATURE_LINKS_RELEASE") == "1"
 
 
 def subprocess_env() -> dict:
@@ -78,6 +84,23 @@ class TestStandalone(unittest.TestCase):
         self.assertLessEqual(headings.count("Unreleased"), 1)
         if "Unreleased" in headings:
             self.assertEqual(headings[0], "Unreleased")
+        # 1.x was never published: the changelog starts at 2.0.0.
+        self.assertEqual(released[-1], "2.0.0")
+
+    def test_a_release_commit_dates_its_changelog_heading(self):
+        if not EXPECT_RELEASE:
+            self.skipTest("LITERATURE_LINKS_RELEASE is not set")
+        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        heading = re.search(r"^## .*$", changelog, re.M).group(0)
+        dated = re.fullmatch(rf"## {re.escape(literature_links.__version__)} \((\d{{4}}-\d{{2}}-\d{{2}})\)", heading)
+        self.assertTrue(dated, heading)
+        date.fromisoformat(dated.group(1))
+
+    def test_the_schema_id_names_the_release_tag(self):
+        # The $id names this release's tag, so a later schema never claims an earlier release.
+        expected = (f"https://raw.githubusercontent.com/mathlib-initiative/literature-links/"
+                    f"v{literature_links.__version__}/schema/companion.schema.json")
+        self.assertEqual(C.load_schema()["$id"], expected)
 
     def test_the_schema_ships_as_package_data(self):
         setuptools = pyproject()["tool"]["setuptools"]
@@ -125,7 +148,7 @@ class TestEntryPoints(unittest.TestCase):
         status, out, err = self.run_cli("validate")
         self.assertEqual(status, 2)
         self.assertIn("literature-links validate: error: the following arguments are required: "
-                      "documents", err)
+                      "FILE", err)
         status, out, _ = self.run_cli("--help")
         self.assertEqual(status, 0)
         self.assertTrue(out.startswith("usage: literature-links "), out)
@@ -138,15 +161,36 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual((child.returncode, child.stdout, child.stderr), (0, expected, ""))
 
     def test_every_example_is_valid(self):
-        examples = sorted(EXAMPLES.glob("*.json*"))
-        self.assertIn(EXAMPLES / "latex-several.jsonl", examples)
-        self.assertEqual(self.run_cli("validate", *map(str, examples))[0], 0)
-        status, out, _ = self.run_cli("scan", str(EXAMPLES))  # the folders too
-        # 12 JSON files, 2 JSONL rows and 2 files under folder-defaults/.
-        self.assertEqual((status, out), (0, "16 annotations from 15 files; 0 problems\n"))
+        files = sorted(path for path in EXAMPLES.rglob("*")
+                       if path.suffix.lower() in ANNOTATION_SUFFIXES and path.name != "_defaults.json")
+        # The examples include JSONL and folder defaults, so validate and scan read both.
+        self.assertTrue(any(path.suffix.lower() != ".json" for path in files))
+        self.assertTrue(any(EXAMPLES.rglob("_defaults.json")))
+        self.assertEqual(self.run_cli("validate", *map(str, files))[0], 0)
+        count = sum(1 if path.suffix.lower() == ".json" else
+                    sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip(" \t"))
+                    for path in files)
+        status, out, _ = self.run_cli("scan", str(EXAMPLES))
+        summary = f"{count} annotation{'s' * (count != 1)} from {len(files)} file{'s' * (len(files) != 1)}"
+        self.assertEqual((status, out), (0, f"{summary}; 0 problems\n"))
 
-    def test_a_missing_current_schema_is_reported_without_a_traceback(self):
-        good = EXAMPLES / "pdf.json"
+    def test_the_examples_show_each_location_form_and_field(self):
+        # The README says so.
+        schema = C.load_schema()
+        records = discovery.collect([EXAMPLES]).records
+        ends = [end for record in records for side in ("subject", "object") for end in record.annotation[side]]
+        self.assertEqual({key for record in records for key in record.annotation}, set(schema["properties"]))
+        self.assertEqual({key for end in ends for key in end}, set(schema["$defs"]["end"]["properties"]))
+        for mode in schema["$defs"]["end"]["properties"]["type"]["enum"]:
+            locations = [end["location"] for end in ends if end["type"] == mode and "location" in end]
+            keys = set(schema["$defs"].get(f"{mode}_location", {}).get("properties", {}))
+            with self.subTest(type=mode):
+                self.assertTrue(locations)
+                self.assertLessEqual(keys, {key for location in locations for key in location})
+        self.assertTrue(any("profile" in end.get("location", {}) for end in ends))
+
+    def test_a_missing_schema_is_reported_without_a_traceback(self):
+        good = FIXTURE / "links.jsonl"
         with tempfile.TemporaryDirectory() as tmp:
             broken = Path(tmp).resolve() / "literature_links"
             shutil.copytree(PACKAGE, broken, ignore=shutil.ignore_patterns("__pycache__"))
@@ -162,9 +206,10 @@ REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
-#: The section anchors of docs/companion.md at 1.0.0, plus its current title. Other repositories may link to them.
-SPEC_ANCHORS = ("literature-links-specification", "fields", "location", "pdf", "latex", "html", "generic", "pins",
-                "facts", "extensions", "references", "folder-defaults", "validation", "discovery")
+#: The section anchors of docs/companion.md. Other repositories may link to them.
+SPEC_ANCHORS = ("literature-links-specification", "terms", "fields", "relation", "unlinked-passages-and-checked-absences",
+                "status-kind-id-and-note", "ends", "location", "pdf", "latex", "html", "lean", "lines", "generic",
+                "extensions", "references", "folder-defaults", "validation", "discovery")
 
 
 def prose(text: str) -> str:
@@ -209,10 +254,69 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
             with self.subTest(block=block[:40]):
                 self.assertEqual(C.validate(C.loads(block)), [])
 
+    def test_the_specification_examples_are_valid(self):
+        spec = (ROOT / "docs" / "companion.md").read_text(encoding="utf-8")
+        # A block holds an annotation, an end or a "location" member, or belongs to the folder defaults
+        # example: a defaults file, an annotation written beside it, and that annotation as read.
+        blocks = [C.loads(block if block.startswith("{") else "{" + block + "}")
+                  for block in re.findall(r"(?ms)^```json\n(.*?)^```", spec)]
+        first = next(index for index, block in enumerate(blocks) if isinstance(block.get("subject"), dict))
+        defaults, written, read = blocks[first:first + 3]
+        inherited = C.merge({}, defaults, defaults=True)
+        self.assertEqual(C.merge(inherited, written), read)
+        for block in blocks[:first] + blocks[first + 2:]:
+            if "subject" in block:
+                annotations = [block]
+            elif "type" in block:
+                annotations = [{"subject": [block], "object": []}]
+            else:
+                annotations = [{"subject": [{"type": mode, "uri": "a", **block}], "object": []}
+                               for mode in ("pdf", "latex", "html", "lean", "generic")]
+            for annotation in annotations:
+                with self.subTest(annotation=annotation):
+                    self.assertEqual(C.validate(annotation), [])
+        # The checked absence written in prose leaves its object to the template.
+        absence, = (C.loads(span) for span in re.findall(r"`(\{[^`]*\"noMatch\"[^`]*\})`", prose(spec)))
+        merged = C.merge(inherited, absence)
+        self.assertEqual((merged["object"], C.validate(merged)), ([defaults["object"]], []))
+        # In the section of each type, an object in prose is a location of that type.
+        found, section = set(), ""
+        for line in prose(spec).splitlines():
+            if line.startswith("#"):
+                section = line.lstrip("#").strip().lower()
+            elif section in ("pdf", "latex", "lean", "generic"):
+                for span in re.findall(r"`(\{[^`]*\})`", line):
+                    found.add(section)
+                    with self.subTest(section=section, location=span):
+                        location = C.loads(span)
+                        self.assertEqual(C.validate({"subject": [{"type": section, "uri": "a", "location": location}],
+                                                     "object": []}), [])
+        self.assertEqual(found, {"pdf", "latex", "lean", "generic"})
+
+    def test_the_tools_example_runs(self):
+        example, = re.findall(r"(?ms)^```python\n(.*?)^```", (ROOT / "docs" / "tools.md").read_text(encoding="utf-8"))
+        check = "assert problems == [] and collection.problems == [] and collection.records, (problems, collection)\n"
+        child = subprocess.run([sys.executable, "-c", example + check], capture_output=True, text=True,
+                               env=subprocess_env(), cwd=ROOT, check=False)
+        self.assertEqual((child.returncode, child.stderr), (0, ""))
+
     def test_no_em_dash_in_the_docs(self):
         for name in DOCS + ("CHANGELOG.md",):
             with self.subTest(doc=name):
                 self.assertNotIn("—", (ROOT / name).read_text(encoding="utf-8"))
+
+    def test_no_file_holds_a_literal_invisible_character(self):
+        # Bidirectional, zero-width and other invisible characters make text read unlike what it holds, and
+        # GitHub flags them. Python and JSON write them as escapes.
+        paths = [*ROOT.iterdir(), *(path for root in REPO_ROOTS for path in (ROOT / root).rglob("*"))]
+        for path in sorted(paths):
+            if path.suffix not in (".py", ".md", ".json", ".jsonl", ".toml", ".yml", ".in") or not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8")
+            hidden = sorted({f"U+{ord(char):04X}" for char in text if char not in "\t\n\r " and
+                             (unicodedata.category(char) in ("Cc", "Cf", "Zs", "Zl", "Zp") or char in "\ufffe\uffff")})
+            with self.subTest(file=path.relative_to(ROOT).as_posix()):
+                self.assertEqual(hidden, [])
 
     def test_local_markdown_links_reach_a_file_and_heading(self):
         for name in DOCS + ("CHANGELOG.md",):

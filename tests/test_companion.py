@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 from dataclasses import FrozenInstanceError
 import importlib.util
+import json
 import math
 import random
 import sys
@@ -16,93 +17,161 @@ if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
 from literature_links import companion as C
-from literature_links import discovery
 from literature_links.schemacheck import SchemaError, Validator
+
+MATHLIB = "https://github.com/leanprover-community/mathlib4"
+COMMIT = "db584cd6d46c92f209a44c0f1c829460d327499d"
+SHA256 = "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f"
+URIS = {"pdf": "notes.pdf", "latex": "chapters/groups.tex", "html": "notes/groups.html", "lean": MATHLIB,
+        "generic": "urn:example:record:17"}
+# One schema case per line: a record, whether the schema accepts it, and the codes check adds.
+CASES = Path(__file__).resolve().parent / "fixtures" / "schema-cases.jsonl"
+
+
+def end(mode: str = "latex", location: dict | None = None) -> dict:
+    result = {"type": mode, "uri": URIS.get(mode, "a")}
+    if location is not None:
+        result["location"] = location
+    return result
 
 
 def document(mode: str = "latex", location: dict | None = None) -> dict:
-    annotation = {"source": {"type": mode, "uri": "chapters/groups.tex"},
-                  "target": "../formal/Groups.html#Lagrange"}
-    if location is not None:
-        annotation["location"] = location
-    return annotation
+    """A record whose one subject end has this type and location, linked to a Mathlib declaration."""
+    return {"subject": [end(mode, location)],
+            "object": [{"type": "lean", "uri": MATHLIB, "version": COMMIT,
+                        "location": {"declaration": "Subgroup.card_subgroup_dvd_card"}}]}
+
+
+def schema_cases() -> list[dict]:
+    return [json.loads(line) for line in CASES.read_text(encoding="utf-8").splitlines()]
 
 
 VALID_LOCATIONS = {
     "pdf": [{"page": 1}, {"page": 7, "rect": [0.1, 0.2, 0.6, 0.1]},
-            {"page": 2, "rect": [0, 0, 1, 1]}, {"page": 2, "rect": [0.9, 0.9, 0.1, 0.1]}],
-    "latex": [{"label": "thm:α_2.1"}, {"lines": [1, 1]}, {"lines": [12, 18]}],
+            {"page": 2, "rect": [0, 0, 1, 1]}, {"page": 2, "rect": [0.9, 0.9, 0.1, 0.1]},
+            {"page": 3, "quote": {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}},
+            {"page": 1, "quote": {"exact": "x"}}],
+    "latex": [{"label": "thm:α_2.1"}, {"lines": [1, 1]}, {"lines": [12, 18]}, {"lines": [12]}],
     "html": [{"fragment": "thm-lagrange"}, {"fragment": "thm:α%20"},
              {"css": "article > h2[data-kind='theorem']"}, {"css": "["},
              {"quote": {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}}],
+    "lean": [{"declaration": "Subgroup.card_subgroup_dvd_card"},
+             {"declaration": "Subgroup.card_subgroup_dvd_card", "module": "Mathlib.GroupTheory.Coset.Card"},
+             {"declaration": "Subgroup.card_dvd_of_injective", "module": "Mathlib.GroupTheory.Coset.Card",
+              "lines": [82]},
+             {"declaration": "Subgroup.card_dvd_of_injective", "module": "Mathlib.GroupTheory.Coset.Card",
+              "lines": [82, 83]},
+             {"module": "Mathlib.GroupTheory.Coset.Card"}, {"module": "Notes.Groups", "lines": [12]},
+             {"module": "Notes.Groups", "lines": [3, 9]}, {"declaration": "«a name».with spaces and 100%"}],
     "generic": [{}, {"profile": "https://example.org/image-v1", "rect": [0, 1, 20, 30]},
                 {"database": {"row": 4, "cell": "A", "values": [None, True, 2.5, "text"]}}],
 }
 
+END_FIELDS = {
+    "version": COMMIT,
+    "sha256": SHA256,
+    "citation": {"id": "notes", "type": "book", "title": "Lecture Notes on Groups",
+                 "author": [{"family": "Author", "given": "A."}], "issued": {"date-parts": [[2026]]}},
+    "identifiers": {"wikidata": "Q263809", "arxiv": "0000.00000", "zbmath": "0000.00001", "doi": "10.0000/example"},
+    "title": "Theorem 1.4 (Lagrange)",
+    "role": "states",
+    "junk": ["Nat.card of an infinite type is 0"],
+    "extensions": {"org.example": {"line": 38}},
+}
+
 
 class TestSmallContract(unittest.TestCase):
-    def test_every_builtin_and_generic_location(self):
+    def test_every_builtin_and_generic_location_on_either_side(self):
         for mode, locations in VALID_LOCATIONS.items():
             for location in locations:
-                with self.subTest(mode=mode, location=location):
-                    self.assertEqual(C.validate(document(mode, location)), [])
+                for side in ("subject", "object"):
+                    doc = document()
+                    doc[side] = [end(mode, location)]
+                    with self.subTest(mode=mode, location=location, side=side):
+                        self.assertEqual(C.validate(doc), [])
 
-    def test_omitted_location_means_whole_resource_in_all_modes(self):
+    def test_omitted_location_means_the_whole_document_in_every_type(self):
         for mode in VALID_LOCATIONS:
-            with self.subTest(mode=mode):
-                self.assertEqual(C.validate(document(mode)), [])
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side] = [end(mode)]
+                with self.subTest(mode=mode, side=side):
+                    self.assertEqual(C.validate(doc), [])
 
-    def test_a_missing_source_is_the_only_problem_it_causes(self):
-        for location in ({"page": 3, "rect": [0.1, 0.2, 0.3, 0.4]}, {"label": "a"}, {"fragment": "a"}):
-            for source in ({}, {"source": {"uri": "a"}}, {"source": None}, {"source": "a.pdf"}):
-                with self.subTest(location=location, source=source):
-                    self.assertEqual(len(C.validate({"location": location, "target": "x.html", **source})), 1)
+    def test_a_missing_subject_or_end_type_is_the_only_problem_it_causes(self):
+        for location in ({"page": 3, "rect": [0.1, 0.2, 0.3, 0.4]}, {"label": "a"}, {"fragment": "a"},
+                         {"declaration": "a", "lines": [3]}):
+            for subject in ({}, {"subject": None}, {"subject": "a.pdf"}, {"subject": []}, {"subject": {"uri": "a"}}):
+                with self.subTest(location=location, subject=subject):
+                    doc = {"object": [{"type": "generic", "uri": "a", "location": location}], **subject}
+                    self.assertEqual(len(C.validate(doc)), 1)
+            with self.subTest(location=location, end="no type"):
+                self.assertEqual(len(C.validate({"subject": [{"uri": "a", "location": location}], "object": []})), 1)
 
     def test_required_fields_and_object_shapes(self):
-        cases = [None, [], 2, "document", {}, {"version": 2}]
-        doc = document()
-        del doc["source"]
-        cases.append(doc)
-        for field in ("type", "uri"):
+        cases = [None, [], 2, "document", {}, {"version": 2}, [document()]]
+        for side in ("subject", "object"):
             doc = document()
-            del doc["source"][field]
+            del doc[side]
             cases.append(doc)
+            for field in ("type", "uri"):
+                doc = document()
+                del doc[side][0][field]
+                cases.append(doc)
+            for item in (None, "a.pdf", [], 1, [end()]):
+                doc = document()
+                doc[side] = [item]
+                cases.append(doc)
         for bad in cases:
             with self.subTest(document=bad):
                 self.assertTrue(C.validate(bad))
 
-    def test_version_fields_and_unsupported_modes_are_rejected(self):
+    def test_top_level_version_fields_and_unknown_types_are_rejected(self):
         for key in ("version", "schema_version"):
             for version in (None, True, False, "2", 1, 2, 3, 2.1, "2.0"):
                 doc = document()
                 doc[key] = version
                 with self.subTest(key=key, version=version):
                     self.assertTrue(C.validate(doc))
-        for mode in ("markdown", "wikitext", "tex", "web", "PDF", "", None):
-            doc = document()
-            doc["source"]["type"] = mode
-            with self.subTest(mode=mode):
-                self.assertTrue(C.validate(doc))
+        for mode in ("markdown", "wikitext", "tex", "web", "PDF", "Lean", "lean4", "repository", "", None):
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side][0]["type"] = mode
+                with self.subTest(mode=mode, side=side):
+                    self.assertTrue(C.validate(doc))
 
-    def test_core_typos_and_wrappers_are_rejected(self):
-        for place, key in (("root", "sources"), ("root", "mode"), ("source", "format"),
-                           ("root", "targets"), ("root", "locaton"), ("root", "annotations")):
+    def test_1x_fields_typos_and_wrappers_are_rejected(self):
+        record_keys = ("source", "target", "location", "label", "pin", "sources", "subjects", "objects", "mode",
+                       "relations", "annotations", "type", "uri")
+        end_keys = ("format", "pin", "label", "page", "lines", "declaration", "status", "kind", "id", "note",
+                    "relation", "url", "subject")
+        for key in record_keys:
             doc = document()
-            node = doc if place == "root" else doc["source"]
-            node[key] = []
-            with self.subTest(place=place, key=key):
+            doc[key] = []
+            with self.subTest(place="record", key=key):
                 self.assertTrue(C.validate(doc))
+        for key in end_keys:
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side][0][key] = []
+                with self.subTest(place=side, key=key):
+                    self.assertTrue(C.validate(doc))
 
-    def test_multiple_targets_are_separate_complete_annotations(self):
-        first = document("latex", {"label": "thm:lagrange"})
-        second = copy.deepcopy(first)
-        second["target"] = "urn:lean:other_declaration"
-        self.assertEqual(C.validate(first), [])
-        self.assertEqual(C.validate(second), [])
-        for targets in ([], ["urn:lean:first"], ["urn:lean:first", "urn:lean:second"]):
-            first["target"] = targets
-            with self.subTest(targets=targets):
-                self.assertTrue(C.validate(first))
+    def test_sides_are_lists_of_ends_taken_jointly(self):
+        doc = document("pdf", {"page": 7})
+        doc["subject"].append(end("pdf", {"page": 8}))
+        doc["object"].append({"type": "lean", "uri": MATHLIB, "location": {"declaration": "Subgroup.index_mul_card"}})
+        self.assertEqual(C.validate(doc), [])
+        doc["subject"].append(copy.deepcopy(doc["subject"][0]))  # a repeated end is not a problem
+        self.assertEqual(C.validate(doc), [])
+        doc["object"] = []
+        self.assertEqual(C.validate(doc), [])
+        for side, value in (("subject", []), ("subject", end("pdf")), ("object", end("lean")), ("subject", "a.pdf"),
+                            ("object", None), ("object", [[end("lean")]]), ("subject", {"0": end()})):
+            doc = document()
+            doc[side] = value
+            with self.subTest(side=side, value=value):
+                self.assertTrue(C.validate(doc))
 
     def test_annotation_id_is_an_optional_nonempty_application_label(self):
         doc = document()
@@ -110,99 +179,264 @@ class TestSmallContract(unittest.TestCase):
         for identity in ("a", "a label", " ", "α", "https://example.org/annotation/1"):
             doc["id"] = identity
             duplicate = copy.deepcopy(doc)
-            duplicate["target"] = "urn:another"
+            duplicate["object"] = [end("generic")]
             self.assertEqual(C.validate(doc), [])
             self.assertEqual(C.validate(duplicate), [])
         doc["extensions"] = {"id": "a", "tool": {"id": "a"}}
-        doc["source"]["extensions"] = {"id": "a"}
+        doc["subject"][0]["extensions"] = {"id": "a"}
         self.assertEqual(C.validate(doc), [])
         for invalid in ("", None, 3, True, []):
             doc["id"] = invalid
             with self.subTest(id=invalid):
                 self.assertTrue(C.validate(doc))
+        doc["id"] = "a"
+        doc["subject"][0]["id"] = "a"  # an end has no id
+        self.assertTrue(C.validate(doc))
 
     def test_check_does_not_mutate_or_sort(self):
         doc = document("generic", {"z": [3, 2, 1], "a": {"key": "value"}})
         doc["extensions"] = {"z": {"target": "urn:embedded", "annotations": [3, 2, 1]}, "a": 0}
+        doc["object"].insert(0, end("pdf", {"page": 2, "rect": [0.5, 0, 0.5, 1]}))
         before = copy.deepcopy(doc)
         self.assertEqual(C.check(doc), C.Report())
         self.assertEqual(doc, before)
-        self.assertEqual(list(doc["location"]), ["z", "a"])
+        self.assertEqual(list(doc["subject"][0]["location"]), ["z", "a"])
         self.assertEqual(list(doc["extensions"]), ["z", "a"])
+        self.assertEqual([item["type"] for item in doc["object"]], ["pdf", "lean"])
+
+
+class TestRecordFields(unittest.TestCase):
+    def test_relation_status_kind_id_and_note_are_optional_nonempty_strings(self):
+        doc = document()
+        values = ("exactMatch", "closeMatch", "broadMatch", "narrowMatch", "relatedMatch", "hasPart", "noMatch",
+                  "formalized", "partial", "not_formalized", "proof_step", "A label with spaces", "α",
+                  "anything applications agree on")
+        for key in ("relation", "status", "kind", "id", "note"):
+            for value in values:
+                doc[key] = value
+                self.assertEqual(C.validate(doc), [], (key, value))
+            for value in ("", None, 1, True, [], ["formalized"], {"value": "formalized"}):
+                doc[key] = value
+                with self.subTest(key=key, value=value):
+                    self.assertTrue(C.validate(doc))
+            del doc[key]
+        self.assertEqual(C.validate(doc), [])
+
+    def test_status_objects_and_pins_are_gone(self):
+        mathlib = {"type": "repository", "url": MATHLIB, "commit": COMMIT}
+        for status in ({}, {"value": "not_formalized"}, {"pin": mathlib},
+                       {"value": "partial", "extensions": {"x.y": 1}}):
+            doc = document()
+            doc["status"] = status
+            with self.subTest(status=status):
+                self.assertTrue(C.validate(doc))
+        for side in ("subject", "object"):
+            doc = document()
+            doc[side][0]["pin"] = mathlib
+            with self.subTest(side=side):
+                self.assertTrue(C.validate(doc))
+
+    def test_an_unlinked_passage_and_a_checked_absence_are_both_valid(self):
+        unlinked = {"subject": [end("pdf", {"page": 8})], "object": []}
+        absence = {"subject": [end("pdf", {"page": 8})],
+                   "object": [{"type": "lean", "uri": MATHLIB, "version": COMMIT}], "relation": "noMatch"}
+        self.assertEqual((C.validate(unlinked), C.validate(absence)), ([], []))
+        # Validation does not judge a relation: noMatch over one declaration, or over nothing, is still valid.
+        self.assertEqual(C.validate({**unlinked, "relation": "noMatch"}), [])
+        self.assertEqual(C.validate({**document(), "relation": "noMatch"}), [])
+
+
+class TestEnds(unittest.TestCase):
+    def test_every_end_field_on_either_side(self):
+        for side in ("subject", "object"):
+            doc = document()
+            doc[side][0].update(copy.deepcopy(END_FIELDS))
+            with self.subTest(side=side):
+                self.assertEqual(C.validate(doc), [])
+
+    def test_end_field_shapes(self):
+        valid = [("version", "1374776629"), ("version", "v2"), ("version", " "), ("version", "main"),
+                 ("sha256", "0" * 64), ("citation", {"id": "x", "type": "book"}),
+                 ("citation", {"id": "a", "type": "not-a-csl-type", "URL": "a b", "author": [1], "issued": None}),
+                 ("identifiers", {}), ("identifiers", {"doi": "10.0000/x", "100%": "x", "α": " "}),
+                 ("title", "α"), ("role", "uses"), ("extensions", {}), ("extensions", {"x.y": None})]
+        for key, value in valid:
+            doc = document()
+            doc["subject"][0][key] = value
+            with self.subTest(key=key, value=value):
+                self.assertEqual(C.validate(doc), [])
+        invalid = [("version", ""), ("version", None), ("version", 1), ("version", []),
+                   ("sha256", "0" * 63), ("sha256", "0" * 65), ("sha256", "A" * 64), ("sha256", "0" * 64 + "\n"),
+                   ("sha256", "g" * 64), ("sha256", ""), ("sha256", 1),
+                   ("citation", {}), ("citation", {"id": "a"}), ("citation", {"type": "book"}),
+                   ("citation", {"id": "", "type": "book"}), ("citation", {"id": "a", "type": ""}),
+                   ("citation", {"id": 1, "type": "book"}), ("citation", "Notes, 2026"), ("citation", []),
+                   ("citation", None),
+                   ("identifiers", {"": "x"}), ("identifiers", {" ": "x"}), ("identifiers", {"a b": "x"}),
+                   ("identifiers", {"a\u2066": "x"}), ("identifiers", {"doi": 1}), ("identifiers", {"doi": ""}),
+                   ("identifiers", {"doi": None}), ("identifiers", []), ("identifiers", "Q1"),
+                   ("title", ""), ("title", None), ("title", 1), ("role", ""), ("role", ["states"]),
+                   ("extensions", []), ("extensions", None), ("extensions", "x"), ("extensions", {"": 1})]
+        for key, value in invalid:
+            doc = document()
+            doc["object"][0][key] = value
+            with self.subTest(key=key, value=value):
+                self.assertTrue(C.validate(doc))
+
+    def test_junk_is_an_optional_list_of_nonempty_strings_on_an_end(self):
+        doc = {**document(), "relation": "exactMatch"}
+        doc["object"].append({**doc["object"][0], "location": {"declaration": "Subgroup.index_dvd_card"}})
+        for junk in (["Nat.card of an infinite type is 0"], ["x / 0 = 0", "Real.log 0 = 0"], [" "], ["a", "a"]):
+            for side, index in (("subject", 0), ("object", 0), ("object", 1)):
+                end_with_junk = copy.deepcopy(doc)
+                end_with_junk[side][index]["junk"] = junk
+                self.assertEqual(C.validate(end_with_junk), [], (side, index, junk))
+        # Each object end lists its own.
+        doc["object"][0]["junk"] = ["Nat.card of an infinite type is 0"]
+        doc["object"][1]["junk"] = ["Nat.card of an infinite type is 0", "Subgroup.index of an infinite index is 0"]
+        self.assertEqual(C.validate(doc), [])
+        for junk in ([], [""], [1], [None], [["a"]], "x / 0 = 0", {"x / 0": "0"}, None, True):
+            doc["object"][1]["junk"] = junk
+            with self.subTest(junk=junk):
+                self.assertTrue(C.validate(doc))
+        del doc["object"][1]["junk"]
+        self.assertEqual(C.validate(doc), [])
+        # junk is not a record field.
+        doc["junk"] = doc["object"][0].pop("junk")
+        self.assertEqual([problem.code for problem in C.check(doc).problems], ["SCHEMA"])
+
+    def test_every_optional_end_key_is_typed(self):
+        for key in END_FIELDS:
+            for value in (1, "", None, True):
+                doc = document()
+                doc["subject"][0][key] = value
+                with self.subTest(key=key, value=value):
+                    self.assertTrue(C.validate(doc))
+
+    def test_ends_and_facts_are_not_verified(self):
+        doc = document()
+        doc["subject"][0].update({"uri": "https://unreachable.invalid/notes.pdf", "sha256": "0" * 64})
+        doc["object"][0].update({"version": "0" * 40, "location": {"declaration": "No.such", "module": "No.Such",
+                                                                   "lines": [99999]}})
+        doc.update({"relation": "exactMatch", "status": "formalized"})
+        with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
+            self.assertEqual(C.validate(doc), [])
 
 
 class TestReferencesAndExtensions(unittest.TestCase):
     def test_references_allow_relative_unicode_and_opaque_identifiers(self):
-        references = ("groups.tex", "../docs/Groups.html#Lagrange", "#theorem", "/docs/α.html",
-                      "https://example.org/α?x=1#theorem", "urn:lean:Nat.add_comm",
+        references = ("groups.tex", "../docs/Groups.html#Lagrange", "#theorem", "/docs/α.html", "..",
+                      "https://example.org/α?x=1#theorem", "urn:lean:Nat.add_comm", "http://[x",
                       "git+https://example.org/repo", "custom:record/1", "javascript:alert(1)", "x")
         for reference in references:
             doc = document()
-            doc["source"]["uri"] = reference
-            doc["target"] = reference
+            doc["subject"][0]["uri"] = reference
+            doc["object"][0]["uri"] = reference
+            doc["$schema"] = reference
             with self.subTest(reference=reference):
                 self.assertEqual(C.validate(doc), [])
 
     def test_references_disallow_literal_whitespace_controls_and_wrong_types(self):
         invalid = ("", " ", "a b", "url\n", "\turl", "url\x00", "url\x7f", "url\x85", "url\u00a0", None, 1, [], {})
         for value in invalid:
-            for key in ("source", "target"):
-                doc = document()
-                if key == "source":
-                    doc["source"]["uri"] = value
+            for place in ("subject", "object", "$schema", "profile"):
+                doc = document("generic", {"profile": "urn:x"})
+                if place == "$schema":
+                    doc["$schema"] = value
+                elif place == "profile":
+                    doc["subject"][0]["location"]["profile"] = value
                 else:
-                    doc["target"] = value
-                with self.subTest(value=value, key=key):
+                    doc[place][0]["uri"] = value
+                with self.subTest(value=value, place=place):
                     self.assertTrue(C.validate(doc))
 
     def test_no_references_or_selector_payloads_are_fetched_or_executed(self):
         doc = document("generic", {"profile": "https://unreachable.invalid/schema", "script": "arbitrary content"})
         doc["$schema"] = "https://unreachable.invalid/companion.json"
-        doc["source"]["uri"] = "https://unreachable.invalid/source"
-        doc["target"] = "https://unreachable.invalid/target"
+        doc["subject"][0]["uri"] = "https://unreachable.invalid/source"
+        doc["object"][0]["uri"] = "https://unreachable.invalid/target"
         with patch("socket.socket", side_effect=AssertionError("unexpected network access")):
             self.assertEqual(C.validate(doc), [])
 
-    def test_extensions_are_available_without_registration_at_both_levels(self):
+    def test_extensions_are_available_without_registration_on_records_and_ends(self):
         doc = document()
         payload = {"org.example.tool": {"a key with spaces": [None, True, False, 1, 0.5, "α"]},
                    "local": None, "https://example.org/profile": {}}
-        for node in (doc, doc["source"]):
+        for node in (doc, doc["subject"][0], doc["object"][0]):
             node["extensions"] = copy.deepcopy(payload)
         self.assertEqual(C.validate(doc), [])
         self.assertEqual(C.loads(C.dumps(doc)), doc)
 
     def test_extension_keys_are_nonempty_without_whitespace_or_control(self):
         for key in ("", "tool name", "tool\n", "tool\x00", "tool\x7f", "tool\x85"):
+            for node in ("record", "end"):
+                doc = document()
+                (doc if node == "record" else doc["object"][0])["extensions"] = {key: None}
+                with self.subTest(key=key, node=node):
+                    self.assertTrue(C.validate(doc))
+
+    def test_references_and_keys_exclude_invisible_formatting_characters(self):
+        # Bidirectional formatting, zero-width characters and U+FFFE/U+FFFF can make a link display as another.
+        forbidden = ("\u061c\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e"
+                     + "".join(map(chr, range(0x2060, 0x2070))) + "\ufeff\ufffe\uffff")
+        for char in forbidden:
+            for value in ("https://example.org/" + char + "gpj.exe", char + "x"):
+                with self.subTest(codepoint=hex(ord(char)), value=value):
+                    doc = document()
+                    doc["object"][0]["uri"] = value
+                    self.assertTrue(C.validate(doc))
+                    doc = document()
+                    doc["extensions"] = {value: None}
+                    self.assertTrue(C.validate(doc))
+                    doc = document()
+                    doc["subject"][0]["identifiers"] = {value: "x"}
+                    self.assertTrue(C.validate(doc))
+
+    def test_a_percent_sign_in_a_reference_starts_a_percent_encoding(self):
+        for value in ("a%20b", "%C3%A9", "x%2f%2F", "https://example.org/100%25"):
             doc = document()
-            doc["extensions"] = {key: None}
-            with self.subTest(key=key):
+            doc["object"][0]["uri"] = value
+            with self.subTest(value=value):
+                self.assertEqual(C.validate(doc), [])
+        for value in ("%", "a%", "a%2", "%zz", "100%", "a%g0"):
+            doc = document()
+            doc["object"][0]["uri"] = value
+            with self.subTest(value=value):
                 self.assertTrue(C.validate(doc))
+        # Extension keys, identifier names, fragments, versions, Lean names and citations are not references.
+        doc = document("html", {"fragment": "100%"})
+        doc["extensions"] = {"100%": None}
+        doc["subject"][0].update({"identifiers": {"100%": "x"}, "version": "100%",
+                                  "citation": {"id": "100%", "type": "book", "URL": "100%"}})
+        doc["object"][0]["location"]["declaration"] = "100%"
+        self.assertEqual(C.validate(doc), [])
 
     def test_extensions_require_objects(self):
         for value in (None, "extension", [1], True):
-            doc = document()
-            doc["extensions"] = value
-            with self.subTest(value=value):
-                self.assertTrue(C.validate(doc))
+            for node in ("record", "end"):
+                doc = document()
+                (doc if node == "record" else doc["subject"][0])["extensions"] = value
+                with self.subTest(value=value, node=node):
+                    self.assertTrue(C.validate(doc))
 
     def test_whitespace_definition_is_explicit_and_unicode_stable(self):
         # These cover Unicode White_Space outside ASCII, including characters
         # whose treatment differs between common regex dialects.
-        forbidden = "\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000"
+        forbidden = ("\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"
+                     "\u2028\u2029\u202f\u205f\u3000")
         forbidden += "".join(map(chr, range(0x21))) + "".join(map(chr, range(0x7f, 0xa0)))
         for char in forbidden:
             for value in ("x" + char + "y", "xy" + char):
                 doc = document()
-                doc["target"] = value
+                doc["object"][0]["uri"] = value
                 with self.subTest(codepoint=ord(char), value=value):
                     self.assertTrue(C.validate(doc))
-                    doc["target"] = "urn:valid"
+                    doc["object"][0]["uri"] = "urn:valid"
                     doc["extensions"] = {value: None}
                     self.assertTrue(C.validate(doc))
-        for char in ("\u180e", "\ufeff", "😀"):
+        for char in ("\u180e", "\u2070", "😀"):
             doc = document()
-            doc["target"] = "urn:" + char
+            doc["object"][0]["uri"] = "urn:" + char
             doc["extensions"] = {"tool" + char: None}
             with self.subTest(non_whitespace=char):
                 self.assertEqual(C.validate(doc), [])
@@ -210,20 +444,23 @@ class TestReferencesAndExtensions(unittest.TestCase):
 
 class TestStructuredDiagnostics(unittest.TestCase):
     def test_problem_is_frozen_and_has_a_readable_string(self):
-        problem = C.Problem("SCHEMA", "$.target", "must be a string")
-        self.assertEqual(str(problem), "$.target: must be a string")
+        problem = C.Problem("SCHEMA", "$.subject[0].uri", "must be a string")
+        self.assertEqual(str(problem), "$.subject[0].uri: must be a string")
         with self.assertRaises(FrozenInstanceError):
             problem.code = "OTHER"
 
     def test_stable_codes_paths_and_convenience_strings(self):
         bad_json = document("generic", {"payload": float("inf")})
         bad_shape = document()
-        bad_shape["target"] = []
-        cases = [(bad_json, "JSON", '$["location"]["payload"]'),
-                 (bad_shape, "SCHEMA", "$.target"),
-                 (document("pdf", {"page": 1, "rect": [0, 0, 0, 1]}), "PDF_RECT", "$.location.rect"),
-                 (document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}), "PDF_RECT", "$.location.rect"),
-                 (document("latex", {"lines": [5, 2]}), "LATEX_LINES", "$.location.lines")]
+        bad_shape["object"] = {}
+        lean_lines = document()
+        lean_lines["object"][0]["location"] = {"module": "Notes.Groups", "lines": [9, 3]}
+        cases = [(bad_json, "JSON", '$["subject"][0]["location"]["payload"]'),
+                 (bad_shape, "SCHEMA", "$.object"),
+                 (document("pdf", {"page": 1, "rect": [0, 0, 0, 1]}), "PDF_RECT", "$.subject[0].location.rect"),
+                 (document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}), "PDF_RECT", "$.subject[0].location.rect"),
+                 (document("latex", {"lines": [5, 2]}), "LINES", "$.subject[0].location.lines"),
+                 (lean_lines, "LINES", "$.object[0].location.lines")]
         for doc, code, path in cases:
             with self.subTest(code=code, path=path):
                 report = C.check(doc)
@@ -233,23 +470,93 @@ class TestStructuredDiagnostics(unittest.TestCase):
                 self.assertIn((code, path), [(problem.code, problem.path) for problem in report.problems])
                 self.assertEqual(C.validate(doc), [str(problem) for problem in report.problems])
 
+    def test_a_pattern_of_the_specification_is_named_by_its_rule(self):
+        doc = document("html", {"fragment": "#a"})
+        doc["subject"][0]["sha256"] = "ABC"
+        doc["object"][0]["uri"] = "My Notes.pdf"
+        doc["$schema"] = "100%"
+        self.assertEqual(C.validate(doc), [
+            '$.subject[0].sha256: "ABC" is not 64 lowercase hex digits',
+            '$.subject[0].location.fragment: "#a" is not a fragment: it is empty, starts with # or has White_Space or a '
+            "control character; use css for such an ID",
+            '$.object[0].uri: "My Notes.pdf" is not a reference: percent-encode White_Space, controls, invisible '
+            "characters and any bare %",
+            '$.$schema: "100%" is not a reference: percent-encode White_Space, controls, invisible characters and '
+            "any bare %"])
+        # An empty reference breaks minLength, which says so alone.
+        doc = document("html", {"fragment": ""})
+        doc["subject"][0]["sha256"] = ""
+        doc["object"][0]["uri"] = ""
+        doc["$schema"] = ""
+        self.assertEqual(C.validate(doc), [
+            '$.subject[0].sha256: "" is not 64 lowercase hex digits',
+            '$.subject[0].location.fragment: "" is not a fragment: it is empty, starts with # or has White_Space or a '
+            "control character; use css for such an ID",
+            "$.object[0].uri: must be at least 1 character long",
+            "$.$schema: must be at least 1 character long"])
+        # Other patterns are shown as they are.
+        self.assertEqual(Validator({"pattern": "^a$"}).errors("b"), [("$", '"b" does not match ^a$')])
+
+    def test_a_rectangle_is_checked_in_a_second_subject_end(self):
+        doc = document("pdf", {"page": 7, "rect": [0.1, 0.2, 0.6, 0.1]})
+        doc["subject"].append(end("pdf", {"page": 8, "rect": [0.8, 0, 0.3, 1]}))
+        self.assertEqual(C.check(doc).problems,
+                         [C.Problem("PDF_RECT", "$.subject[1].location.rect", "rectangle must stay within the page")])
+
+    def test_every_end_is_checked_subject_first(self):
+        doc = {"subject": [end("latex", {"lines": [9, 2]}), end("pdf", {"page": 1, "rect": [0.5, 0, 0, 1]}),
+                           end("latex", {"lines": [4]})],
+               "object": [end("lean", {"declaration": "x", "module": "M", "lines": [9, 3]}), end("lean"),
+                          end("pdf", {"page": 1, "rect": [0.5, 0.5, 0.6, -0.0]})]}
+        self.assertEqual([(problem.code, problem.path, problem.message) for problem in C.check(doc).problems], [
+            ("LINES", "$.subject[0].location.lines", "end must be greater than or equal to start"),
+            ("PDF_RECT", "$.subject[1].location.rect", "width and height must be positive"),
+            ("LINES", "$.object[0].location.lines", "end must be greater than or equal to start"),
+            ("PDF_RECT", "$.object[2].location.rect", "width and height must be positive"),
+            ("PDF_RECT", "$.object[2].location.rect", "rectangle must stay within the page")])
+
+    def test_one_line_is_never_out_of_order(self):
+        for location, mode in (({"lines": [12]}, "latex"), ({"lines": [2**100]}, "latex"),
+                               ({"module": "Notes.Groups", "lines": [12]}, "lean"),
+                               ({"declaration": "x", "module": "M", "lines": [1]}, "lean")):
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side] = [end(mode, location)]
+                with self.subTest(location=location, side=side):
+                    self.assertEqual(C.check(doc).problems, [])
+
+    def test_a_profile_skips_the_checks_beyond_the_schema(self):
+        profiled = [end("pdf", {"profile": "urn:example:figure", "page": 0, "rect": [0.9, 0.9, 0.5, 0.5]}),
+                    end("latex", {"profile": "urn:example:environment", "lines": [9, 2]}),
+                    end("lean", {"profile": "urn:example:tactic", "module": "M", "lines": [9, 3]}),
+                    end("lean", {"profile": "urn:example:tactic", "lines": [9, 3]})]
+        self.assertEqual(C.check({"subject": profiled, "object": copy.deepcopy(profiled)}).problems, [])
+        # A generic location is opaque, so its lines are never checked either.
+        self.assertEqual(C.check(document("generic", {"lines": [20, 1], "rect": [0.9, 0, 0.5, 0]})).problems, [])
+
     def test_malformed_structure_prevents_secondary_semantic_failures(self):
         report = C.check(document("pdf", {"page": 1, "rect": [0, None, 0, "width"]}))
         self.assertTrue(report.problems)
         self.assertEqual({problem.code for problem in report.problems}, {"SCHEMA"})
+        # A schema problem anywhere stops the other checks everywhere.
+        doc = document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]})
+        doc["object"].append(end("latex", {"lines": [5, 2]}))
+        doc["object"].append({"type": "lean"})
+        self.assertEqual([(problem.code, problem.path) for problem in C.check(doc).problems],
+                         [("SCHEMA", "$.object[2]")])
 
 
 class TestLocatorBounds(unittest.TestCase):
-    def test_empty_builtin_locations_are_not_whole_resource_aliases(self):
-        for mode in ("pdf", "latex", "html"):
+    def test_empty_builtin_locations_are_not_whole_document_aliases(self):
+        for mode in ("pdf", "latex", "html", "lean"):
             with self.subTest(mode=mode):
                 self.assertTrue(C.validate(document(mode, {})))
         self.assertEqual(C.validate(document("generic", {})), [])
 
-    def test_null_location_is_invalid_in_every_mode(self):
+    def test_null_location_is_invalid_in_every_type(self):
         for mode in VALID_LOCATIONS:
             doc = document(mode)
-            doc["location"] = None
+            doc["subject"][0]["location"] = None
             with self.subTest(mode=mode):
                 self.assertTrue(C.validate(doc))
 
@@ -264,8 +571,11 @@ class TestLocatorBounds(unittest.TestCase):
                    [0.5, 0, 0.5000000000000002, 1], [0, 0.5, 1, 0.5000000000000002],
                    [0, 0, 1], [0, 0, 1, 1, 1], [True, 0, 1, 1], "0,0,1,1")
         for rectangle in invalid:
-            with self.subTest(rect=rectangle):
-                self.assertTrue(C.validate(document("pdf", {"page": 1, "rect": rectangle})))
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side] = [end("pdf", {"page": 1, "rect": rectangle})]
+                with self.subTest(rect=rectangle, side=side):
+                    self.assertTrue(C.validate(doc))
         self.assertTrue(C.validate(document("pdf", {"rect": [0, 0, 1, 1]})))
 
     def test_a_pdf_rectangle_fits_when_the_double_sums_do(self):
@@ -274,13 +584,58 @@ class TestLocatorBounds(unittest.TestCase):
             with self.subTest(rect=rect):
                 self.assertEqual(C.validate(document("pdf", {"page": 1, "rect": rect})), [])
 
-    def test_latex_anchor_alternatives_and_inclusive_ranges(self):
-        invalid = ({"label": ""}, {"label": "a", "lines": [1, 2]}, {"lines": [2, 1]},
-                   {"lines": [0, 1]}, {"lines": [1, 1.5]}, {"lines": [True, 2]},
-                   {"lines": [1]}, {"lines": [1, 2, 3]}, {"line": 1}, {"label": "a", "file": "other.tex"})
+    def test_pdf_quote_is_the_html_quote_beside_a_page_and_never_with_a_rect(self):
+        quote = {"exact": "a finite group", "prefix": "Let ", "suffix": " be given."}
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "quote": quote})), [])
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "quote": {"exact": "α\nβ", "prefix": ""}})), [])
+        invalid = ({"page": 3, "rect": [0, 0, 1, 1], "quote": quote}, {"quote": quote},
+                   {"page": 3, "quote": {"exact": ""}}, {"page": 3, "quote": {}},
+                   {"page": 3, "quote": {"exact": "a", "position": 4}}, {"page": 3, "quote": {"exact": "a", "suffix": 3}},
+                   {"page": 3, "quote": "a finite group"}, {"page": 3, "quote": None},
+                   {"page": 3, "quote": quote, "fragment": "a"}, {"page": 3, "quote": quote, "pages": [3, 4]})
+        for location in invalid:
+            with self.subTest(location=location):
+                self.assertTrue(C.validate(document("pdf", location)))
+        # Both is a structural problem, so the rect checks never run on it.
+        report = C.check(document("pdf", {"page": 3, "rect": [0.8, 0, 0.3, 1], "quote": quote}))
+        self.assertEqual([(p.code, p.path) for p in report.problems], [("SCHEMA", "$.subject[0].location")])
+        self.assertEqual(C.validate(document("pdf", {"page": 3, "rect": [0, 0, 1, 1], "quote": quote})),
+                         ["$.subject[0].location: must not have both 'rect' and 'quote'"])
+        self.assertEqual(C.check(document("pdf", {"page": 3, "quote": quote})).problems, [])
+
+    def test_latex_anchor_alternatives(self):
+        invalid = ({"label": ""}, {"label": "a", "lines": [1, 2]}, {"label": "a", "lines": [1]}, {"lines": [2, 1]},
+                   {"line": 1}, {"label": "a", "file": "other.tex"}, {"module": "M"}, {"declaration": "x"},
+                   {"label": 3})
         for location in invalid:
             with self.subTest(location=location):
                 self.assertTrue(C.validate(document("latex", location)))
+
+    def test_lean_declaration_module_and_lines(self):
+        invalid = ({"lines": [1]}, {"declaration": "x", "lines": [1]}, {"declaration": ""}, {"module": ""},
+                   {"declaration": 1}, {"module": ["Mathlib"]}, {"declaration": None, "module": "M"},
+                   {"declaration": "x", "path": "Mathlib/GroupTheory/Coset/Card.lean"}, {"declaration": "x", "line": 3},
+                   {"module": "M", "lines": [9, 3]}, {"label": "x"}, {"fragment": "x"}, {"name": "x"},
+                   {"declaration": "x", "commit": COMMIT})
+        for location in invalid:
+            for side in ("subject", "object"):
+                doc = document()
+                doc[side] = [end("lean", location)]
+                with self.subTest(location=location, side=side):
+                    self.assertTrue(C.validate(doc))
+
+    def test_lines_are_one_or_two_positive_integers_in_latex_and_lean(self):
+        valid = ([1], [12], [1, 1], [12, 18], [2**100], [1, 2**100])
+        invalid = ([], [0], [0, 1], [1, 0], [-1], [1, 2, 3], [1, 1.5], [True], [1, False], [None], ["1"], "1", 1,
+                   None, {"start": 1})
+        for mode, location in (("latex", {}), ("lean", {"module": "Notes.Groups"}),
+                               ("lean", {"declaration": "x", "module": "M"})):
+            for lines in valid:
+                with self.subTest(mode=mode, lines=lines):
+                    self.assertEqual(C.validate(document(mode, {**location, "lines": lines})), [])
+            for lines in invalid:
+                with self.subTest(mode=mode, lines=lines):
+                    self.assertTrue(C.validate(document(mode, {**location, "lines": lines})))
 
     def test_html_anchor_alternatives(self):
         invalid = ({"fragment": ""}, {"fragment": "#theorem"}, {"fragment": "a b"},
@@ -301,7 +656,7 @@ class TestLocatorBounds(unittest.TestCase):
         doc = document("generic", {"page": -1, "lines": [20, 1], "fragment": "#x", "foreign": None})
         self.assertEqual(C.validate(doc), [])
         for value in (None, 2, "locator", [], True):
-            doc["location"] = value
+            doc["subject"][0]["location"] = value
             with self.subTest(location=value):
                 self.assertTrue(C.validate(doc))
 
@@ -311,11 +666,14 @@ class TestLocatorBounds(unittest.TestCase):
             with self.subTest(number=number):
                 self.assertEqual(C.validate(document("pdf", {"page": number})), [])
                 self.assertEqual(C.validate(document("latex", {"lines": [number, number]})), [])
+                self.assertEqual(C.validate(document("latex", {"lines": [number]})), [])
+                self.assertEqual(C.validate(document("lean", {"module": "M", "lines": [number, number]})), [])
 
-    def test_profile_marks_an_application_defined_location_in_every_mode(self):
+    def test_profile_marks_an_application_defined_location_in_every_type(self):
         profiled = {"pdf": {"profile": "urn:example:figure", "page": 0, "rect": [0.9, 0.9, 0.5, 0.5]},
                     "latex": {"profile": "urn:example:environment", "lines": [9, 2]},
                     "html": {"profile": "urn:example:anchor:v3", "section": "Definition", "snippet": "a group"},
+                    "lean": {"profile": "urn:example:tactic", "lines": [9, 3], "tactic": "calc"},
                     "generic": {"profile": "https://example.org/profiles/row", "row": 4}}
         for mode, location in profiled.items():
             with self.subTest(mode=mode):
@@ -323,7 +681,8 @@ class TestLocatorBounds(unittest.TestCase):
             for profile in ("", "a b", 1, None, [], {}):
                 with self.subTest(mode=mode, profile=profile):
                     self.assertTrue(C.validate(document(mode, {"profile": profile})))
-        for mode, location in (("html", {"fragmnet": "x"}), ("pdf", {"pag": 1}), ("latex", {"label": "a", "extra": 1})):
+        for mode, location in (("html", {"fragmnet": "x"}), ("pdf", {"pag": 1}), ("latex", {"label": "a", "extra": 1}),
+                               ("lean", {"declaraton": "x"})):
             with self.subTest(mode=mode, location=location):
                 self.assertTrue(C.validate(document(mode, location)))
 
@@ -333,210 +692,17 @@ class TestLocatorBounds(unittest.TestCase):
                    "properties": None, "\u0000": {"": [None, True, 2**100]}}
         doc = document("generic", payload)
         doc["extensions"] = {"tool": copy.deepcopy(payload)}
+        doc["object"][0]["citation"] = {**copy.deepcopy(payload), "id": "x", "type": "book"}
         original = copy.deepcopy(doc)
         self.assertEqual(C.validate(doc), [])
         self.assertEqual(C.loads(C.dumps(doc)), original)
 
 
-PINS = {
-    "website": {"title": "C*-algebra", "owner": "Wikipedia", "revision": "1374776629", "date": "2026-09-30",
-                "url": "https://en.wikipedia.org/w/index.php?title=C*-algebra&oldid=1374776629",
-                "retrieved": "2026-10-01", "sha256": "0" * 64, "identifiers": {"wikidata": "Q263809"}},
-    "book": {"title": "Notes", "author": ["A. Author", "B. Coauthor"], "publisher": "Example Press", "edition": "2",
-             "date": "2026", "isbn": "978-0-00-000000-0", "url": "urn:isbn:9780000000000", "retrieved": "2026-10-01",
-             "sha256": "f" * 64, "identifiers": {"zbl": "0000.00001"}},
-    "paper": {"title": "A note", "author": "A. Author", "venue": "Journal of Examples", "volume": "1", "number": "2",
-              "pages": "1-12", "date": "2026-01", "doi": "10.0000/example.0001", "arxiv": "0000.00000",
-              "url": "https://example.org/paper.pdf", "retrieved": "2026-10-01", "sha256": "a" * 64, "identifiers": {}},
-    "repository": {"url": "https://github.com/leanprover-community/mathlib4", "commit": "9e6b3aac" * 5,
-                   "path": "Mathlib/Analysis/CStarAlgebra/Classes.lean", "line": 38,
-                   "module": "Mathlib.Analysis.CStarAlgebra.Classes", "declaration": "CStarAlgebra",
-                   "sha256": "4c4df77d40d71b3b3e0058720dce489e704789582f0ebb4ce464b3d5d4cfae6b", "identifiers": {}},
-    "generic": {"catalogue": {"shelf": 3, "tags": ["x", None]}, "anything": 1},
-}
-
-
-class TestPinsAndFacts(unittest.TestCase):
-    def test_target_is_optional_and_may_be_an_object(self):
-        doc = document("html", {"fragment": "Quotients_and_approximate_identities"})
-        del doc["target"]
-        self.assertEqual(C.validate(doc), [])
-        doc["status"] = "not_formalized"
-        self.assertEqual(C.validate(doc), [])
-        for target in ({"uri": "Mathlib/Analysis/CStarAlgebra/Classes.lean#CStarAlgebra"},
-                       {"uri": "urn:lean:CStarAlgebra", "pin": {"type": "repository", **PINS["repository"]}},
-                       {"uri": "a", "extensions": {"org.example": {"line": 38}}}):
-            doc["target"] = target
-            with self.subTest(target=target):
-                self.assertEqual(C.validate(doc), [])
-        for target in (None, 1, [], ["a"], {}, {"pin": {"type": "book"}}, {"uri": ""}, {"uri": "a b"},
-                       {"uri": "a", "extra": 1}, {"uri": "a", "pin": {}}, {"uri": "a", "pin": "book"}):
-            doc["target"] = target
-            with self.subTest(target=target):
-                self.assertTrue(C.validate(doc))
-
-    def test_facts_are_optional_nonempty_strings(self):
-        doc = document()
-        for key in ("status", "kind", "label", "note"):
-            for value in ("formalized", "definition", "A label with spaces", "α", "anything applications agree on"):
-                doc[key] = value
-                self.assertEqual(C.validate(doc), [], (key, value))
-            for value in ("", None, 1, True, [], ["formalized"]):
-                doc[key] = value
-                with self.subTest(key=key, value=value):
-                    self.assertTrue(C.validate(doc))
-            del doc[key]
-        self.assertEqual(C.validate(doc), [])
-
-    def test_status_may_be_an_object_with_value_pin_and_extensions(self):
-        doc = document("html", {"fragment": "Quotients_and_approximate_identities"})
-        del doc["target"]
-        mathlib = {"type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
-                   "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8"}
-        for status in ({}, {"value": "not_formalized"}, {"pin": mathlib}, {"value": "not_formalized", "pin": mathlib},
-                       {"value": "partial", "pin": {"type": "generic", "searched": ["Mathlib", "Batteries"]},
-                        "extensions": {"org.example": {"checked": "2026-10-08"}}}):
-            doc["status"] = copy.deepcopy(status)
-            with self.subTest(status=status):
-                self.assertEqual(C.validate(doc), [])
-        for status in ({"value": ""}, {"value": 1}, {"value": None}, {"value": ["a"]}, {"pin": {}},
-                       {"pin": {"type": "web"}}, {"pin": "repository"}, {"pin": {**mathlib, "author": "x"}},
-                       {"extensions": []}, {"value": "a", "uri": "b"}, {"status": "a"}, [{"value": "a"}]):
-            doc["status"] = status
-            with self.subTest(status=status):
-                self.assertTrue(C.validate(doc))
-        del doc["status"]
-        for key in ("kind", "label", "note"):
-            doc[key] = {"value": "x"}
-            with self.subTest(key=key):
-                self.assertTrue(C.validate(doc))
-            del doc[key]
-
-    def test_every_pin_type_with_all_keys_and_with_type_alone(self):
-        for kind, keys in PINS.items():
-            for pin in ({"type": kind}, {"type": kind, **keys}):
-                doc = document()
-                doc["source"]["pin"] = copy.deepcopy(pin)
-                doc["target"] = {"uri": "formal.html#x", "pin": copy.deepcopy(pin)}
-                with self.subTest(kind=kind, pin=pin):
-                    self.assertEqual(C.validate(doc), [])
-
-    def test_pins_need_a_known_type_and_reject_unknown_keys_except_in_generic(self):
-        doc = document()
-        for pin in ({}, {"title": "no type"}, {"type": "web"}, {"type": None}, {"type": ""}, "book", [], None,
-                    {"type": "website", "publisher": "sites have owners"}, {"type": "book", "owner": "x"},
-                    {"type": "paper", "commit": "x"}, {"type": "repository", "author": "x"}):
-            doc["source"]["pin"] = pin
-            with self.subTest(pin=pin):
-                self.assertTrue(C.validate(doc))
-        doc["source"]["pin"] = {"type": "generic", "owner": "x", "commit": "y", "nested": {"a": [1, None]}}
-        self.assertEqual(C.validate(doc), [])
-
-    def test_pin_value_shapes(self):
-        doc = document()
-        valid = [("book", "author", "One Author"), ("book", "author", ["A", "B"]), ("book", "author", []),
-                 ("repository", "line", 1), ("repository", "line", 38.0), ("website", "sha256", "0" * 64),
-                 ("paper", "identifiers", {}), ("paper", "identifiers", {"doi": "10.0000/x", "arxiv": "0000.00000"}),
-                 ("website", "url", "urn:example:site"), ("website", "revision", "1374776629"),
-                 ("generic", "url", "catalogue/17"), ("generic", "shelf", 3)]
-        for kind, key, value in valid:
-            doc["source"]["pin"] = {"type": kind, key: value}
-            with self.subTest(kind=kind, key=key, value=value):
-                self.assertEqual(C.validate(doc), [])
-        invalid = [("book", "author", ""), ("book", "author", ["A", ""]), ("book", "author", [1]), ("book", "author", None),
-                   ("repository", "line", 0), ("repository", "line", "38"), ("repository", "line", 1.5),
-                   ("website", "sha256", "0" * 63), ("website", "sha256", "A" * 64), ("website", "sha256", "0" * 64 + "\n"),
-                   ("paper", "identifiers", {"doi": 1}), ("paper", "identifiers", {"doi": ""}), ("paper", "identifiers", []),
-                   ("website", "url", "a b"), ("website", "title", ""), ("repository", "commit", 123),
-                   ("generic", "url", "a b"), ("generic", "url", 5)]
-        for kind, key, value in invalid:
-            doc["source"]["pin"] = {"type": kind, key: value}
-            with self.subTest(kind=kind, key=key, value=value):
-                self.assertTrue(C.validate(doc))
-
-    def test_every_key_of_a_builtin_pin_is_typed(self):
-        wrong = {"line": (0, "1"), "author": ("", [1]), "identifiers": ([], {"a": 1})}
-        for kind, keys in PINS.items():
-            for key in keys if kind != "generic" else ():
-                for value in wrong.get(key, (1, "")):
-                    doc = document()
-                    doc["source"]["pin"] = {"type": kind, key: value}
-                    with self.subTest(kind=kind, key=key, value=value):
-                        self.assertTrue(C.validate(doc))
-
-    def test_pins_and_facts_are_not_verified(self):
-        doc = document()
-        doc["source"]["pin"] = {"type": "website", "url": "https://unreachable.invalid/", "sha256": "0" * 64}
-        doc["target"] = {"uri": "urn:nothing", "pin": {"type": "repository", "commit": "not-a-commit", "line": 99999}}
-        doc["status"] = "formalized"
-        with patch("urllib.request.urlopen", side_effect=AssertionError("network access")):
-            self.assertEqual(C.validate(doc), [])
-
-
-class TestNormalize(unittest.TestCase):
-    PIN = {"type": "repository", "url": "https://github.com/leanprover-community/mathlib4",
-           "commit": "9e6b3aac99b624d10c84653ab9c5357283b9b3b8"}
-
-    def test_string_target_and_status_become_objects_in_place(self):
-        doc = {"source": {"type": "pdf", "uri": "a.pdf"}, "target": "A.html#x", "status": "partial", "kind": "lemma"}
-        normal = C.normalize(doc)
-        self.assertEqual(normal, {"source": {"type": "pdf", "uri": "a.pdf"}, "target": {"uri": "A.html#x"},
-                                  "status": {"value": "partial"}, "kind": "lemma"})
-        self.assertEqual(list(normal), list(doc))
-        self.assertEqual(C.validate(normal), [])
-
-    def test_object_forms_come_back_equal(self):
-        doc = {"source": {"type": "generic", "uri": "a"},
-               "target": {"uri": "A.html", "pin": self.PIN, "extensions": {"x.y": "B.html"}},
-               "status": {"value": "not_formalized", "pin": self.PIN}}
-        self.assertEqual(C.normalize(doc), doc)
-        self.assertEqual(C.normalize({"status": {}}), {"status": {}})
-
-    def test_absent_fields_stay_absent_and_nothing_else_changes(self):
-        doc = {"source": {"type": "generic", "uri": "a", "extensions": {"target": "t"}},
-               "extensions": {"x.y": {"target": "t", "status": "s"}}, "label": "Lemma 1"}
-        self.assertEqual(C.normalize(doc), doc)
-        self.assertNotIn("target", C.normalize(doc))
-        self.assertEqual(C.normalize({}), {})
-
-    def test_it_takes_one_annotation_object(self):
-        for value in (None, 1, "x", [], [{}]):
-            with self.subTest(value=value), self.assertRaisesRegex(TypeError, "one annotation object"):
-                C.normalize(value)
-
-    def test_it_does_not_validate(self):
-        for value in (None, 1, True, [], ["a"], {}, {"pin": "x"}):
-            with self.subTest(value=value):
-                self.assertEqual(C.normalize({"target": value, "status": value}), {"target": value, "status": value})
-        self.assertEqual(C.normalize({"target": "", "status": ""}), {"target": {"uri": ""}, "status": {"value": ""}})
-
-    def test_it_is_idempotent_and_keeps_valid_records_valid(self):
-        examples = discovery.collect([ROOT / "examples" / "companion"])
-        self.assertEqual((len(examples.records), examples.problems), (16, []))
-        for record in examples.records:
-            with self.subTest(example=record.path.name, line=record.line):
-                once = C.normalize(record.annotation)
-                self.assertEqual(C.normalize(once), once)
-                self.assertEqual(C.validate(once), [])
-                self.assertTrue(all(isinstance(once[key], dict) for key in ("target", "status") if key in once))
-
-    def test_the_input_is_not_changed_or_shared(self):
-        doc = {"source": {"type": "generic", "uri": "a"}, "target": "A.html",
-               "status": {"value": "partial", "pin": copy.deepcopy(self.PIN)}, "extensions": {"x.y": [1]}}
-        before = copy.deepcopy(doc)
-        normal = C.normalize(doc)
-        self.assertEqual(doc, before)
-        normal["source"]["uri"] = "b"
-        normal["status"]["pin"]["commit"] = "c"
-        normal["extensions"]["x.y"].append(2)
-        self.assertEqual(doc, before)
-
-
 class TestStrictJson(unittest.TestCase):
     def test_duplicate_keys_are_rejected_at_every_depth(self):
         for text in ('{"version":2,"version":2}', '{"extensions":{"tool":1,"tool":2}}',
-                     '{"location":{"nested":{"same":1,"same":2}}}',
-                     '{"source":1,"\\u0073ource":2}', '{"😀":1,"\\ud83d\\ude00":2}'):
+                     '{"subject":[{"location":{"nested":{"same":1,"same":2}}}]}',
+                     '{"subject":1,"\\u0073ubject":2}', '{"😀":1,"\\ud83d\\ude00":2}'):
             with self.subTest(text=text), self.assertRaises(C.LoadError):
                 C.loads(text)
 
@@ -563,12 +729,13 @@ class TestStrictJson(unittest.TestCase):
 
     def test_python_only_values_are_rejected_even_inside_extensions(self):
         for value in (float("nan"), float("inf"), float("-inf"), (1, 2), {1: "value"}, {1, 2}, b"value", object()):
-            doc = document()
-            doc["extensions"] = {"tool": {"nested": value}}
-            with self.subTest(value=repr(value)):
-                self.assertTrue(C.validate(doc))
-                with self.assertRaises(C.LoadError):
-                    C.dumps(doc)
+            for node in ("record", "end"):
+                doc = document()
+                (doc if node == "record" else doc["object"][0])["extensions"] = {"tool": {"nested": value}}
+                with self.subTest(value=repr(value), node=node):
+                    self.assertTrue(C.validate(doc))
+                    with self.assertRaises(C.LoadError):
+                        C.dumps(doc)
 
     def test_cycles_are_rejected_but_shared_objects_are_valid(self):
         child = {"value": [1, 2]}
@@ -605,13 +772,19 @@ class TestStrictJson(unittest.TestCase):
         self.assertEqual(C.loads('"\\ud83d\\ude00"'), "😀")
         self.assertEqual(C.loads(C.dumps("😀")), "😀")
 
+    def test_a_byte_order_mark_is_rejected_but_not_inside_a_string(self):
+        for text in ("\ufeff{}", "\ufeff\n{}"):
+            with self.subTest(text=text), self.assertRaisesRegex(C.LoadError, "^not JSON: .*byte order mark$"):
+                C.loads(text)
+        self.assertEqual(C.loads('"\ufeff"'), "\ufeff")
+
     def test_round_trip_preserves_large_integers_unicode_and_order(self):
         doc = document("generic", {"z": {"β": 2**100, "α": -2**100}, "a": [3, 2, 1]})
         text = C.dumps(doc)
         result = C.loads(text)
         self.assertEqual(result, doc)
-        self.assertEqual(list(result["location"]), ["z", "a"])
-        self.assertEqual(list(result["location"]["z"]), ["β", "α"])
+        self.assertEqual(list(result["subject"][0]["location"]), ["z", "a"])
+        self.assertEqual(list(result["subject"][0]["location"]["z"]), ["β", "α"])
         self.assertTrue(text.endswith("\n"))
         self.assertIn("β", text)
         self.assertEqual(C.dumps({"a": [1]}), '{\n  "a": [\n    1\n  ]\n}\n')
@@ -634,7 +807,7 @@ class TestStrictJson(unittest.TestCase):
         with self.assertRaises(C.LoadError):
             C.dumps(large)
         doc = document()
-        doc["source"]["type"] = large
+        doc["subject"][0]["type"] = large
         self.assertTrue(C.validate(doc))
 
 
@@ -648,43 +821,80 @@ class TestSchema(unittest.TestCase):
 
     def test_semantic_invariants_are_additional_to_structure(self):
         structural = Validator(C.load_schema())
+        lean = document()
+        lean["object"][0]["location"] = {"module": "Notes.Groups", "lines": [9, 3]}
         invalid = [document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}),
-                   document("latex", {"lines": [4, 2]})]
+                   document("latex", {"lines": [4, 2]}), lean]
         for doc in invalid:
             with self.subTest(document=doc):
                 self.assertTrue(structural.is_valid(doc))
                 self.assertTrue(C.validate(doc))
 
+    def test_the_case_table(self):
+        cases = schema_cases()
+        self.assertGreaterEqual(len(cases), 100)
+        self.assertEqual(len({case["name"] for case in cases}), len(cases))
+        structural = Validator(C.load_schema())
+        for case in cases:
+            with self.subTest(case=case["name"], rule=case["rule"]):
+                self.assertEqual(structural.is_valid(case["record"]), case["schema_valid"])
+                codes = [problem.code for problem in C.check(case["record"]).problems]
+                if case["schema_valid"]:
+                    self.assertEqual(codes, case["beyond"])
+                else:
+                    self.assertTrue(codes)
+                    self.assertEqual(set(codes), {"SCHEMA"})
+        # The table covers both outcomes and both checks beyond the schema.
+        self.assertEqual({code for case in cases for code in case["beyond"]}, {"PDF_RECT", "LINES"})
+        self.assertEqual({case["schema_valid"] for case in cases}, {True, False})
+
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
-    def test_agreement_with_reference_jsonschema_on_boundary_mutations(self):
+    def test_agreement_with_reference_jsonschema_on_the_case_table_and_mutations(self):
         import jsonschema
 
         schema = C.load_schema()
         jsonschema.Draft202012Validator.check_schema(schema)
         reference = jsonschema.Draft202012Validator(schema)
         ours = Validator(schema)
-        cases = [document(mode, location) for mode, locations in VALID_LOCATIONS.items() for location in locations]
+        cases = [case["record"] for case in schema_cases()]
+        for mode, locations in VALID_LOCATIONS.items():
+            for location in locations:
+                cases += [document(mode, location), {"subject": [end("pdf")], "object": [end(mode, location)]}]
         cases += [document(mode) for mode in VALID_LOCATIONS]
-        cases += [{"target": "x", "location": {"page": 1}}, {"source": "a.pdf", "location": {"page": 1}}]
-        cases += [{"source": {"type": "html", "uri": "a", "pin": {"type": "generic", "url": url}}} for url in (5, "a b", "a")]
+        cases += [{"object": [], "location": {"page": 1}}, {"subject": "a.pdf", "object": []}]
+        cases += [document("pdf", location) for location in (
+            {"page": 1, "rect": [0, 0, 1, 1], "quote": {"exact": "a"}}, {"quote": {"exact": "a"}},
+            {"page": 1, "quote": {"exact": ""}}, {"page": 1, "quote": {"exact": "a", "extra": 1}},
+            {"page": 1, "quote": {"exact": "a"}, "extra": 1}, {"page": 1, "quote": []})]
+        cases += [{"subject": [{"type": "html", "uri": uri}], "object": []}
+                  for uri in ("a%20", "a%zz", "a%", "a\u202eb", "\ufeffa", "a\u200b")]
+        cases += [{"subject": [{"type": "html", "uri": "a", "identifiers": {name: "x"}}], "object": []}
+                  for name in ("doi", "", "a b", "a\u2066", "100%")]
+        cases += [document("html", {"fragment": fragment}) for fragment in ("100%", "#a", "a#", "a\u3000b", "a\n")]
+        cases += [document(mode, {"module": "M", "lines": lines}) for mode in ("lean", "latex")
+                  for lines in ([1], [1, 2], [], [0], [1, 2, 3], [1.0], [True])]
         randomizer = random.Random(917)
-        values = [None, False, 0, 1, 1.5, "", "a", "a\n", {}, [], [1], [1, 2], [0, 0, 1, 1],
-                  {"type": "website"}, {"type": "book", "author": ["x", "y"]}, {"type": "book", "author": [1]},
-                  {"type": "paper", "sha256": "ab"}, {"type": "repository", "line": 0}, {"type": "nope"},
-                  {"type": "generic", "anything": [1, {}]}, {"title": "no type"}, {"type": "website", "owner": ""},
-                  {"uri": "a"}, {"uri": "a", "pin": {"type": "generic"}, "extensions": {"k": 1}}, {"pin": {"type": "book"}},
-                  {"uri": "a", "extra": 1}, {"type": "paper", "identifiers": {"doi": 1}},
-                  {"value": "a"}, {"value": ""}, {"value": "a", "pin": {"type": "repository", "line": 1}},
-                  {"value": "a", "extra": 1},
-                  {"profile": "urn:x"}, {"profile": "a b"}, {"profile": "urn:x", "page": 0}]
-        for _ in range(160):
+        values = [None, False, 0, 1, 1.5, "", "a", "a\n", "a b", "0" * 64, {}, [], [1], [1, 2], [2, 1], [0, 0, 1, 1],
+                  [{}], ["a"], ["a", "b"], [""], {"type": "pdf", "uri": "a"}, [{"type": "pdf", "uri": "a"}],
+                  {"uri": "a"}, {"type": "pdf"},
+                  [{"type": "lean", "uri": "a", "location": {"module": "M", "lines": [1]}}],
+                  {"id": "a", "type": "book"}, {"id": "a"}, {"wikidata": "Q1"}, {"doi": 1}, {"a b": "x"},
+                  {"value": "a"}, {"pin": {"type": "book"}}, {"type": "book", "title": "Notes"},
+                  {"profile": "urn:x"}, {"profile": "a b"}, {"profile": "urn:x", "page": 0},
+                  {"page": 1, "quote": {"exact": "a"}}, {"page": 1, "rect": [0, 0, 1, 1], "quote": {"exact": "a"}},
+                  {"declaration": "x"}, {"declaration": "x", "lines": [1]}, {"module": "M", "lines": [3]},
+                  {"lines": [1]}, {"label": "a"}, {"fragment": "a"}]
+        for _ in range(240):
             mode = randomizer.choice(list(VALID_LOCATIONS))
             doc = document(mode, copy.deepcopy(randomizer.choice(VALID_LOCATIONS[mode])))
-            node, key = randomizer.choice([(doc, "version"), (doc, "source"),
-                                           (doc["source"], "type"), (doc["source"], "uri"),
-                                           (doc["source"], "pin"), (doc, "target"), (doc, "id"),
-                                           (doc, "status"), (doc, "kind"), (doc, "label"), (doc, "note"),
-                                           (doc, "location"), (doc, "extensions")])
+            first, last = doc["subject"][0], doc["object"][0]
+            node, key = randomizer.choice([
+                (doc, "subject"), (doc, "object"), (doc, "relation"), (doc, "status"), (doc, "kind"), (doc, "id"),
+                (doc, "note"), (doc, "junk"), (doc, "extensions"), (doc, "$schema"), (doc, "version"), (doc, "source"),
+                (doc, "target"), (first, "junk"), (first, "type"), (first, "uri"), (first, "location"),
+                (first, "version"), (first, "sha256"), (first, "citation"), (first, "identifiers"), (first, "title"),
+                (first, "role"), (first, "extensions"), (first, "pin"),
+                (last, "type"), (last, "location"), (last, "citation"), (last, "junk")])
             node[key] = copy.deepcopy(randomizer.choice(values))
             cases.append(doc)
         for doc in cases:
@@ -718,6 +928,35 @@ class TestSchemaEvaluator(unittest.TestCase):
                 Validator(schema)
         with self.assertRaises(SchemaError):
             Validator({"type": "nul"}).is_valid(1)
+
+    def test_a_banned_set_of_keys_is_named(self):
+        self.assertEqual(Validator({"not": {"required": ["a", "b", "c"]}}).errors({"a": 1, "b": 2, "c": 3}),
+                         [("$", "must not have all of 'a', 'b' and 'c'")])
+        generic = [("$", "matches a shape that is not allowed here (not)")]
+        self.assertEqual(Validator({"not": {"required": ["a", "b"]}}).errors(3), generic)
+        self.assertEqual(Validator({"not": {"required": ["a"]}}).errors({"a": 1}), generic)
+        self.assertEqual(Validator({"not": {"required": ["a", "b"], "type": "object"}}).errors({"a": 1, "b": 2}),
+                         generic)
+
+    def test_alternative_keys_are_named(self):
+        either = Validator({"anyOf": [{"required": ["a"]}, {"required": ["b"]}]})
+        self.assertEqual(either.errors({"c": 1}), [("$", "must have 'a' or 'b'")])
+        one = Validator({"oneOf": [{"required": ["a"]}, {"required": ["b"]}, {"required": ["c"]}]})
+        for value in ({}, {"a": 1, "c": 2}):
+            with self.subTest(value=value):
+                self.assertEqual(one.errors(value), [("$", "must have exactly one of 'a', 'b' and 'c'")])
+        # Other alternatives, and values that are not objects, keep the general messages.
+        self.assertEqual(one.errors(3), [("$", "must match exactly one alternative (oneOf), matched 3")])
+        self.assertEqual(Validator({"anyOf": [{"required": ["a"]}, {"type": "array"}]}).errors({}),
+                         [("$", "matches none of the allowed alternatives (anyOf)")])
+        self.assertEqual(Validator({"oneOf": [{"required": ["a"]}]}).errors({}),
+                         [("$", "must match exactly one alternative (oneOf), matched 0")])
+        # The location forms read this way.
+        self.assertEqual(C.validate(document("html", {})),
+                         ["$.subject[0].location: must have exactly one of 'fragment', 'css' and 'quote'"])
+        self.assertEqual(C.validate(document("latex", {"label": "a", "lines": [1]})),
+                         ["$.subject[0].location: must have exactly one of 'label' and 'lines'"])
+        self.assertEqual(C.validate(document("lean", {})), ["$.subject[0].location: must have 'declaration' or 'module'"])
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
     def test_supported_applicators_agree_with_reference_on_json_values(self):

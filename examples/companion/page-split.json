@@ -1,0 +1,28 @@
+{
+  "subject": [
+    {
+      "type": "pdf",
+      "uri": "https://example.org/notes.pdf",
+      "location": { "page": 4, "rect": [0.12, 0.8, 0.76, 0.14] },
+      "title": "Definition 1.2 (index)"
+    },
+    {
+      "type": "pdf",
+      "uri": "https://example.org/notes.pdf",
+      "location": { "page": 5, "rect": [0.12, 0.06, 0.76, 0.08] },
+      "title": "Definition 1.2 (index), continued"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "Subgroup.index", "module": "Mathlib.GroupTheory.Index" },
+      "junk": [ "Subgroup.index of a subgroup with infinitely many cosets is 0" ]
+    }
+  ],
+  "relation": "exactMatch",
+  "kind": "definition",
+  "note": "The definition runs over a page break, so the subject has two ends, taken together. The notes define the index of a subgroup as the number of its cosets when there are finitely many, and leave it undefined otherwise."
+}
