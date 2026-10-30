@@ -19,7 +19,7 @@ if importlib.util.find_spec("literature_links") is None:
     sys.path.insert(0, str(ROOT / "src"))
 
 import literature_links
-from literature_links import cli, companion
+from literature_links import cli, companion, discovery
 
 
 def annotation() -> dict:
@@ -371,6 +371,34 @@ class TestJsonStdout(CommandCase):
         self.assertTrue(result.stdout.endswith(b"\n"))
         self.assertNotIn(b"\r\n", result.stdout)
         return companion.loads(result.stdout.decode("utf-8"))
+
+    def test_json_reports_survive_a_file_name_that_is_not_utf8(self):
+        # A name that is not UTF-8 reaches Python as an unpaired surrogate (surrogateescape).
+        good, odd = self.write("good.json", annotation()), str(self.directory / "caf\udce9.json")
+        escaped = odd.replace("\udce9", "\\udce9")
+        status, out, _ = self.run_command("scan", str(good), odd, "--format", "json")
+        report = companion.loads(out)
+        self.assertEqual((status, len(report["records"])), (2, 1))
+        self.assertEqual(report["problems"][0]["path"], escaped)
+        status, out, _ = self.run_command("validate", odd, "--format", "json")
+        self.assertEqual((status, companion.loads(out)["document"]), (2, escaped))
+
+    def test_json_reports_escape_record_and_defaults_paths(self):
+        # On Linux a folder name that is not UTF-8 reaches records and defaults; macOS refuses such names.
+        folder = self.directory / "caf\udce9"
+        file, defaults = folder / "a.json", folder / "_defaults.json"
+        expected = [str(path).replace("\udce9", "\\udce9") for path in (file, defaults)]
+        record = discovery.Record(annotation(), file, defaults=(defaults,))
+        with patch.object(discovery, "collect", return_value=discovery.Collection(records=[record], files=[file])):
+            status, out, _ = self.run_command("scan", "unused", "--format", "json")
+        report = companion.loads(out)
+        self.assertEqual((status, report["files"]), (0, expected[:1]))
+        self.assertEqual(report["records"][0]["origin"], {"path": expected[0], "line": None,
+                                                          "base_uri": file.as_uri(), "defaults": expected[1:]})
+        with patch.object(cli, "_check_file", return_value=([], (defaults,), [["generic", "generic"]])):
+            status, out, _ = self.run_command("validate", str(file), "--format", "json")
+        report = companion.loads(out)
+        self.assertEqual((status, report["document"], report["defaults"]), (0, expected[0], expected[1:]))
 
     def test_json_output_is_utf8_even_when_stdout_uses_an_ansi_codepage(self):
         # é is representable in cp1252 but has different bytes; α is not
