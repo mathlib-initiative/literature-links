@@ -30,17 +30,20 @@ files. It needs Python 3.11 or newer and nothing else.
 `discovery` reads annotations from files and folders, as in
 [Discovery](#discovery):
 
-- `collect(paths, *, include=None, exclude=())` returns a `Collection` of
-  `records`, `problems` and the `files` read. Valid annotations are kept when
-  other files fail, so check `problems` first. Each argument is a list: one
-  string raises `TypeError`.
+- `collect(paths, *, include=None, exclude=(), root=None)` returns a
+  `Collection` of `records`, `problems` and the `files` read. Valid annotations
+  are kept when other files fail, so check `problems` first. Each argument is a
+  list: one string raises `TypeError`. `root`, the companion's root folder,
+  stops the defaults lookup: no defaults file above it applies, and a file
+  outside it is a `PATH` problem.
 - A `Record(annotation, path, *, line=None, defaults=())` holds the
   `annotation` with its folder defaults applied, its file `path`, its `line` in
   a JSONL file (None in a JSON file), the `defaults` files applied, outermost
   first, and the `base_uri` that its relative references resolve against.
-- `inherit(annotation, path)` applies the folder defaults that cover the file
-  `path` to an annotation read from it. It returns the merged annotation or
-  None, the defaults files applied, and the problems.
+- `inherit(annotation, path, *, root=None)` applies the folder defaults that
+  cover the file `path`, up to `root`, to an annotation read from it. It
+  returns the merged annotation or None, the defaults files applied, and the
+  problems.
 - `DEFAULTS` is the file name of folder defaults, `_defaults.json`.
 - Reading adds the codes `IO`, `JSON`, `PATH`, `SYMLINK`, `SHAPE`, `DEFAULTS`
   and `NO_ANNOTATIONS` to those of `check`.
@@ -60,14 +63,14 @@ collection = discovery.collect(["examples/companion"])  # check .problems before
 ## Command line
 
 ```sh
-literature-links validate FILE... [--format text|json]
-literature-links scan PATH... [--include PATTERN]... [--exclude PATTERN]... [--format text|json]
+literature-links validate FILE... [--root DIR] [--format text|json]
+literature-links scan PATH... [--include PATTERN]... [--exclude PATTERN]... [--root DIR] [--format text|json]
 literature-links --version
 ```
 
 `validate` checks each file with its folder defaults applied. A
 `_defaults.json` named directly is a problem: it is not an annotation. `scan`
-also walks folders.
+also walks folders. `--root DIR` is `root` in `collect`.
 
 Both exit 0 when they find no problem. They exit 2 for a read, write, JSON,
 path or symlink failure, or for no annotations: in `validate`, a JSONL file
@@ -116,15 +119,15 @@ carry; the rest is a reader convention.
   ignoring case. A file named explicitly may have any suffix. `.jsonl` and
   `.ndjson` files are read by line, and other files as JSON.
 - `--include` replaces the suffix filter, and `--exclude` always wins. Patterns
-  are case-sensitive shell wildcards on the path relative to the root, or on
-  the file name for a file named explicitly. `*` also matches `/`, and a
-  leading `**/` also matches files in the root.
+  are case-sensitive shell wildcards on the path relative to the folder being
+  walked, or on the file name for a file named explicitly. `*` also matches
+  `/`, and a leading `**/` also matches files directly in that folder.
 - Hidden directories are read. Symlinks are skipped while walking and are an
   error when named explicitly.
 - A file named `_defaults.json` holds
   [folder defaults](companion.md#folder-defaults), not annotations. Every
-  defaults file that covers a selected file applies, whatever `--include` and
-  `--exclude` select, and a symlinked one is an error.
+  defaults file that covers a selected file, up to `--root`, applies, whatever
+  `--include` and `--exclude` select, and a symlinked one is an error.
 - Files are read in sorted path order, each resolved path once.
 - Unrelated or malformed JSON in a selected file is reported, not skipped.
   Valid annotations from other files are still returned.
