@@ -1,8 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
-
-First public release.
+## 2.0.0 (2026-10-30)
 
 An annotation relates a `subject` and an `object`, each a list of ends, such as
 a passage of a book and a Lean declaration. An end names a document by `type`
