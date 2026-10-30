@@ -90,7 +90,9 @@ with their origins, and the problems. A problem's path in `scan` is the file,
 then `(line N)` for a JSONL line, then the place in the annotation, such as
 `$.subject[0].location`; a problem with the whole run, such as finding no
 annotations, has the path `$`, which the text output leaves out. `validate`
-names the file first and gives a JSONL line as `line N`.
+names the file first and gives a JSONL line as `line N`. In both reports, an
+unpaired surrogate in a path or message, as in a file name that is not UTF-8,
+is written as an escape such as `\udce9`.
 
 ## Discovery
 
