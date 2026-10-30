@@ -424,12 +424,12 @@ keep unknown values unchanged and never fetch or run them.
 
 `$schema`, each end's `uri` and a location's `profile` are nonempty URI or IRI
 references. They contain no `White_Space`, no C0 or C1 control (U+0000–001F,
-U+007F–009F), no bidirectional formatting or zero-width character (U+200B–200F,
-U+202A–202E, U+2066–2069, U+FEFF) and neither U+FFFE nor U+FFFF, so a link
-cannot display as another; and each `%` starts a percent-encoding such as
-`%20`. Relative and absolute references are allowed, including names such as
-`urn:isbn:9780000000000`. The check is lexical: it does not parse the
-reference, so `http://[x` passes.
+U+007F–009F), no bidirectional formatting or zero-width character (U+061C,
+U+200B–200F, U+202A–202E, U+2060–206F, U+FEFF) and neither U+FFFE nor U+FFFF,
+since these can make a link display as another; and each `%` starts a
+percent-encoding such as `%20`. Relative and absolute references are allowed,
+including names such as `urn:isbn:9780000000000`. The check is lexical: it does
+not parse the reference, so `http://[x` passes.
 
 A relative reference resolves against the URI of the document that carries the
 annotation: the file, or the retrieval URI of the response that delivered the

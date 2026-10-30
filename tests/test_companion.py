@@ -377,8 +377,8 @@ class TestReferencesAndExtensions(unittest.TestCase):
 
     def test_references_and_keys_exclude_invisible_formatting_characters(self):
         # Bidirectional formatting, zero-width characters and U+FFFE/U+FFFF can make a link display as another.
-        forbidden = ("\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e"
-                     "\u2066\u2067\u2068\u2069\ufeff\ufffe\uffff")
+        forbidden = ("\u061c\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e"
+                     + "".join(map(chr, range(0x2060, 0x2070))) + "\ufeff\ufffe\uffff")
         for char in forbidden:
             for value in ("https://example.org/" + char + "gpj.exe", char + "x"):
                 with self.subTest(codepoint=hex(ord(char)), value=value):
@@ -434,7 +434,7 @@ class TestReferencesAndExtensions(unittest.TestCase):
                     doc["object"][0]["uri"] = "urn:valid"
                     doc["extensions"] = {value: None}
                     self.assertTrue(C.validate(doc))
-        for char in ("\u180e", "\u2060", "😀"):
+        for char in ("\u180e", "\u2070", "😀"):
             doc = document()
             doc["object"][0]["uri"] = "urn:" + char
             doc["extensions"] = {"tool" + char: None}
