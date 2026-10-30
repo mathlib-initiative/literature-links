@@ -1,0 +1,21 @@
+{
+  "subject": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib3",
+      "version": "65a1391a0106c9204fe45bc73a039f056558cb83",
+      "location": { "declaration": "subgroup.index", "module": "group_theory.index" }
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": { "declaration": "Subgroup.index", "module": "Mathlib.GroupTheory.Index" }
+    }
+  ],
+  "relation": "exactMatch",
+  "kind": "definition",
+  "note": "The index of a subgroup in Lean 3 mathlib and in Mathlib, its Lean 4 port. Both define it as the cardinality of the quotient, a natural number that is 0 when the quotient is infinite."
+}

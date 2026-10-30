@@ -19,8 +19,12 @@ from literature_links import companion, discovery
 
 
 def annotation(page: int = 1) -> dict:
-    return {"source": {"type": "pdf", "uri": "../source/book.pdf"},
-            "target": "../site/Module.html#result", "location": {"page": page}}
+    return {"subject": [{"type": "pdf", "uri": "../source/book.pdf", "location": {"page": page}}],
+            "object": [{"type": "html", "uri": "../site/Module.html#result"}]}
+
+
+def first_page(record: discovery.Record) -> int:
+    return record.annotation["subject"][0]["location"]["page"]
 
 
 class TestDiscovery(unittest.TestCase):
@@ -51,7 +55,7 @@ class TestDiscovery(unittest.TestCase):
                 self.skipTest("this Windows user cannot create symbolic links")
             raise
 
-    def test_mixed_carriers_recurse_and_keep_deterministic_origins(self):
+    def test_json_and_jsonl_files_are_walked_in_order_with_their_origins(self):
         single = self.write("a.json", annotation(1))
         nested = self.write("chapter/b.json", annotation(2))
         jsonl = self.raw("chapter/c.jsonl", "\n" + json.dumps(annotation(3)) + "\n\n" + json.dumps(annotation(4)))
@@ -59,32 +63,32 @@ class TestDiscovery(unittest.TestCase):
         result = discovery.collect([self.root])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.files, [single, nested, jsonl, ndjson])
-        self.assertEqual([r.annotation["location"]["page"] for r in result.records], list(range(1, 6)))
+        self.assertEqual([first_page(r) for r in result.records], list(range(1, 6)))
         self.assertEqual([r.line for r in result.records], [None, None, 2, 4, 1])
 
-    def test_every_record_uses_its_carrier_as_reference_base(self):
+    def test_every_record_uses_its_file_as_reference_base(self):
         first = self.raw("first/links.jsonl", json.dumps(annotation()) + "\n" + json.dumps(annotation(2)))
         second = self.write("second/link.json", annotation())
         result = discovery.collect([first, second])
         self.assertEqual(result.problems, [])
         self.assertEqual([r.base_uri for r in result.records],
                          [first.as_uri(), first.as_uri(), second.as_uri()])
-        self.assertEqual(result.records[0].annotation["source"]["uri"], "../source/book.pdf")
-        self.assertEqual(result.records[0].annotation["target"], "../site/Module.html#result")
+        self.assertEqual(result.records[0].annotation["subject"][0]["uri"], "../source/book.pdf")
+        self.assertEqual(result.records[0].annotation["object"][0]["uri"], "../site/Module.html#result")
 
-    def test_captured_carrier_base_does_not_follow_later_filesystem_changes(self):
-        carrier = self.write("original/link.json", annotation())
-        record = discovery.collect([carrier]).records[0]
+    def test_the_base_does_not_follow_later_file_system_changes(self):
+        file = self.write("original/link.json", annotation())
+        record = discovery.collect([file]).records[0]
         captured = record.base_uri
-        carrier.parent.rename(self.root / "moved")
+        file.parent.rename(self.root / "moved")
         replacement = self.root / "replacement"
         replacement.mkdir()
-        self.symlink(carrier.parent, replacement, directory=True)
-        self.assertEqual(record.path, carrier)
+        self.symlink(file.parent, replacement, directory=True)
+        self.assertEqual(record.path, file)
         self.assertEqual(record.base_uri, captured)
-        self.assertEqual(record.base_uri, carrier.as_uri())
+        self.assertEqual(record.base_uri, file.as_uri())
 
-    def test_repeated_ids_equal_records_and_equal_targets_are_preserved(self):
+    def test_repeated_ids_equal_records_and_equal_objects_are_preserved(self):
         first = annotation()
         first["id"] = "optional-id"
         second = annotation(2)
@@ -160,12 +164,13 @@ class TestDiscovery(unittest.TestCase):
 
     def test_bad_jsonl_rows_report_their_line_and_keep_other_valid_records(self):
         bad = annotation()
-        bad["location"]["page"] = 0
+        bad["subject"][0]["location"]["page"] = 0
         path = self.raw("links.jsonl", "\n".join(map(json.dumps, [annotation(), bad, None, annotation(3)])))
         result = discovery.collect([path])
         self.assertEqual([r.line for r in result.records], [1, 4])
-        self.assertTrue(any(p.code == "SCHEMA" and "line 2" in p.path for p in result.problems))
-        self.assertTrue(any(p.code == "SHAPE" and "line 3" in p.path for p in result.problems))
+        # The path is the file, then the line, then the place in the annotation.
+        self.assertEqual([(p.code, p.path) for p in result.problems],
+                         [("SCHEMA", f"{path} (line 2) $.subject[0].location.page"), ("SHAPE", f"{path} (line 3)")])
 
     def test_jsonl_reports_physical_line_and_disallows_array_rows(self):
         path = self.raw("links.jsonl", "\n" + json.dumps(annotation()) + "\n{broken}\n[]\n" + json.dumps(annotation(2)))
@@ -182,7 +187,7 @@ class TestDiscovery(unittest.TestCase):
         self.assertEqual(result.problems, [])
         self.assertEqual([r.line for r in result.records], [1, 2, 3])
 
-    def test_jsonl_unicode_line_separator_is_not_a_carrier_delimiter(self):
+    def test_jsonl_lines_do_not_end_at_unicode_line_separators(self):
         value = annotation()
         value["extensions"] = {"example": {"text": "first\u2028second\u2029third"}}
         path = self.raw("links.jsonl", json.dumps(value, ensure_ascii=False) + "\n")
@@ -199,15 +204,24 @@ class TestDiscovery(unittest.TestCase):
                 result = discovery.collect([path])
                 self.assertEqual([p.code for p in result.problems], ["JSON"])
 
+    def test_a_byte_order_mark_is_a_json_problem(self):
+        message = "not JSON: the text starts with a byte order mark"
+        single = self.raw("a.json", "\ufeff" + json.dumps(annotation()))
+        rows = self.raw("b.jsonl", "\ufeff" + json.dumps(annotation(1)) + "\n" + json.dumps(annotation(2)) + "\n")
+        result = discovery.collect([self.root])
+        self.assertEqual([(p.code, p.path, p.message) for p in result.problems],
+                         [("JSON", str(single), message), ("JSON", f"{rows} (line 1)", message)])
+        self.assertEqual([(r.path, r.line) for r in result.records], [(rows, 2)])
+
     def test_generic_locations_and_extension_values_are_opaque(self):
-        value = {"source": {"type": "generic", "uri": "urn:example:record"},
-                 "target": "urn:example:formal", "location": {"z": [3, 2, 1], "a": {}},
+        value = {"subject": [{"type": "generic", "uri": "urn:example:record", "location": {"z": [3, 2, 1], "a": {}}}],
+                 "object": [{"type": "generic", "uri": "urn:example:formal"}],
                  "extensions": {"example": {"large": 2 ** 100, "order": [False, None, "a"]}}}
         path = self.write("link.json", value)
         result = discovery.collect([path])
         self.assertEqual(result.problems, [])
         self.assertEqual(result.records[0].annotation, value)
-        self.assertEqual(list(result.records[0].annotation["location"]), ["z", "a"])
+        self.assertEqual(list(result.records[0].annotation["subject"][0]["location"]), ["z", "a"])
 
     def test_missing_path_and_invalid_utf8_are_reported_with_other_results(self):
         good = self.write("good.json", annotation())
@@ -252,7 +266,7 @@ class TestDiscovery(unittest.TestCase):
             result = discovery.collect([self.root])
         self.assertEqual([p.code for p in result.problems], ["IO"])
 
-    def test_empty_selection_and_empty_only_carriers_are_errors(self):
+    def test_an_empty_selection_and_files_without_annotations_are_errors(self):
         for paths in ([], [self.root]):
             with self.subTest(paths=paths):
                 result = discovery.collect(paths)
@@ -287,7 +301,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_discovery_performs_no_network_access(self):
         value = annotation()
-        value["source"]["uri"] = "https://example.invalid/book.pdf"
+        value["subject"][0]["uri"] = "https://example.invalid/book.pdf"
         path = self.write("link.json", value)
         with patch("socket.create_connection", side_effect=AssertionError("network forbidden")), \
              patch("urllib.request.urlopen", side_effect=AssertionError("network forbidden")):

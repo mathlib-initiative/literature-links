@@ -1,47 +1,36 @@
 # Changelog
 
-## Unreleased
+## 2.0.0 (2026-10-30)
 
-- Breaking: a `.json` file holds one annotation, an object. One that holds an
-  array is now a `SHAPE` problem, and `scan` exits 1 on it; 1.0.0 read `[x]`
-  and `[x, y]` with exit 0, and `[]` was `NO_ANNOTATIONS` with exit 2.
-  `validate` reports `SHAPE` there instead of `SCHEMA`. To migrate, put one
-  object in each `.json` file, or convert: `jq -c '.[]' a.json > a.jsonl`. The
-  schema is unchanged.
-- Breaking: `discovery.Record` has no `pointer`, and its `line` and `defaults`
-  are keyword-only, so a positional call fails instead of shifting fields. The
-  `scan --format json` origin has no `pointer`. Problem paths no longer put `#`
-  after the file name: `a.json $.location`, `a.jsonl (line 2) $.location`.
-- `validate` reads `.jsonl` and `.ndjson` files one annotation per line and
-  names the line in each problem; an empty one exits 2. A JSON file holding a
-  scalar is a `SHAPE` problem, as in `scan`, and a `JSON` problem exits 2, as
-  in `scan`.
-- `companion.normalize` copies a record with a string `target` as
-  `{"uri": ...}` and a string `status` as `{"value": ...}`, so readers handle
-  one shape. It raises `TypeError` for anything but a dict.
-- The specification says what an annotation file carries: a JSON document one
-  annotation, a JSONL document one per nonblank line, for files and web
-  responses alike.
-- `docs/companion.md` now holds only the format. The checker, its Python API,
-  the command line and how files are found and read moved to `docs/tools.md`.
-  The specification keeps its headings.
+An annotation relates a `subject` and an `object`, each a list of ends, such as
+a passage of a book and a Lean declaration. An end names a document by `type`
+(`pdf`, `latex`, `html`, `lean` or `generic`) and `uri`, and its optional
+`location` selects part of it. An optional `relation`, such as `exactMatch` or
+`noMatch`, says how the sides relate. A JSON file holds one annotation and a
+JSONL file one per line, and a `_defaults.json` file gives the annotations
+below it shared fields. The `literature-links` command and the
+`literature_links` Python package check annotations offline.
 
-## 1.0.0 (2026-10-09)
+### Changes from 1.x
 
-First public release.
-
-- One annotation links one informal `source`, optionally narrowed by a
-  `location`, to one formal `target`. Sources are PDF, LaTeX, HTML or generic.
-  Without `target`, an annotation records the passage alone.
-- A location with a `profile` key is application-defined under every source
-  type, so a location no built-in form fits does not force a `generic` source.
-- Optional typed pins on `source`, `target` and `status`: `website`, `book`,
-  `paper`, `repository` and `generic`.
-- Optional facts `status`, `kind`, `label` and `note`. `status` may be an object
-  with `value`, `pin` and `extensions`.
-- Folder defaults: a `_defaults.json` file supplies shared members to every
-  annotation in its folder and below, merged like JSON Merge Patch.
-- The `literature-links` command with `validate` and `scan`, and the
-  `companion` and `discovery` modules.
-- Records valid under 1.x stay valid in later 1.x; a breaking change bumps the
-  major version.
+- `subject` and `object`, lists of ends taken jointly, replace `source`,
+  `location` and `target`. `"object": []` records an unlinked passage.
+- `relation` is new. `noMatch` records a checked absence.
+- A `lean` end names the project in `uri` and the commit in `version`, and its
+  `location` a `declaration` or a `module`, optionally with `lines`.
+- An end may list its `junk` values and give a `role`. Its `title` replaces the
+  annotation's `label`.
+- Pins are gone. An end's `citation` is a CSL-JSON item, beside its `version`,
+  `sha256` and `identifiers`.
+- `status` is a string about the subject, not an object. `id` names the
+  subject: annotations about one subject share it, and within a companion,
+  annotations that share it are about one subject.
+- LaTeX `lines` may be `[n]`, the item that starts on line n.
+- Folder defaults may hold an end template for each side.
+- A reader may be given the companion's root folder, and `validate` and `scan`
+  take `--root`.
+- `normalize` is removed, and `merge` takes `defaults=True`.
+- The `LINES` problem code replaces `LATEX_LINES` and covers Lean locations.
+  `validate` lists the types of all ends.
+- `validate` rejects a symlink or a file that is not a regular file, such as a
+  pipe, as `scan` does.

@@ -1,0 +1,25 @@
+{
+  "subject": [
+    {
+      "type": "pdf",
+      "uri": "https://example.org/notes.pdf",
+      "location": { "page": 9, "rect": [0.12, 0.4, 0.76, 0.06] },
+      "title": "Proof of Corollary 1.7, first paragraph"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://github.com/leanprover-community/mathlib4",
+      "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+      "location": {
+        "declaration": "Subgroup.card_dvd_of_injective",
+        "module": "Mathlib.GroupTheory.Coset.Card",
+        "lines": [82]
+      }
+    }
+  ],
+  "relation": "exactMatch",
+  "kind": "proof_step",
+  "note": "The paragraph says that an injective homomorphism f from G to H is a bijection onto its image, a subgroup of H, so G and the image have the same order. The first step of the calc block in the proof of Subgroup.card_dvd_of_injective starts on line 82 and makes the same step."
+}

@@ -1,0 +1,38 @@
+{
+  "subject": [
+    {
+      "type": "generic",
+      "uri": "data/results.csv",
+      "location": {
+        "table": "results",
+        "row": "42"
+      },
+      "citation": {
+        "id": "results-3",
+        "type": "dataset",
+        "title": "Results",
+        "version": "3",
+        "URL": "https://example.org/datasets/results"
+      }
+    }
+  ],
+  "object": [
+    {
+      "type": "generic",
+      "uri": "https://example.org/formal/Results.lean",
+      "extensions": {
+        "org.example.build": {
+          "compiled": true
+        }
+      }
+    }
+  ],
+  "status": "partial",
+  "kind": "example",
+  "note": "A generic location without a profile, a CSL-JSON citation of a dataset, and extensions on an end and on the record.",
+  "extensions": {
+    "org.example.review": {
+      "reviewed": false
+    }
+  }
+}
