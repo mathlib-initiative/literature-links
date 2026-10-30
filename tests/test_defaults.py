@@ -310,6 +310,42 @@ class TestFolders(unittest.TestCase):
         self.assertEqual(second.annotation["subject"], [{**SUBJECT, "uri": "../book.pdf"}])
         self.assertEqual(second.annotation["kind"], "lemma")
 
+    def test_a_root_stops_the_lookup_and_a_file_outside_it_is_a_problem(self):
+        outer = self.root.parent / "_defaults.json"
+        outer.write_text(json.dumps({"relation": "noMatch"}), encoding="utf-8")
+        inner = self.write("_defaults.json", {"object": []})
+        leaf = self.write("ch/a.json", {"subject": [SUBJECT]})
+        self.assertEqual(discovery.collect([self.root]).records[0].defaults, (outer, inner))
+        result = discovery.collect([self.root], root=self.root)
+        self.assertEqual(result.problems, [])
+        self.assertEqual(result.records[0].defaults, (inner,))
+        self.assertNotIn("relation", result.records[0].annotation)
+        merged, applied, problems = discovery.inherit({"subject": [SUBJECT]}, leaf, root=self.root / "ch")
+        self.assertEqual((applied, problems), ((), []))
+        outside = self.root.parent / "outside.json"
+        outside.write_text(json.dumps({"subject": [SUBJECT], "object": []}), encoding="utf-8")
+        result = discovery.collect([outside], root=self.root)
+        self.assertEqual(result.records, [])
+        self.assertEqual([(problem.code, problem.path) for problem in result.problems], [("PATH", str(outside))])
+        self.assertIsNone(discovery.inherit({}, outside, root=self.root)[0])
+
+    def test_a_file_outside_the_root_is_a_path_problem_whatever_it_holds(self):
+        self.write("a.json", {"subject": [SUBJECT], "object": []})
+        outside = self.root.parent / "outside.json"
+        outside.write_text("[]", encoding="utf-8")
+        result = discovery.collect([outside], root=self.root)
+        self.assertEqual(([p.code for p in result.problems], result.files), (["PATH"], []))
+
+    def test_a_root_spelled_in_another_case_is_the_same_folder(self):
+        self.write("_defaults.json", {"object": []})
+        self.write("a.json", {"subject": [SUBJECT]})
+        other = self.root.parent / self.root.name.upper()
+        if not other.exists():
+            self.skipTest("the file system is case-sensitive")
+        result = discovery.collect([self.root], root=other)
+        self.assertEqual(result.problems, [])
+        self.assertEqual(len(result.records[0].defaults), 1)
+
     def test_nested_defaults_apply_outermost_first_and_can_remove(self):
         self.write("_defaults.json", {"subject": SUBJECT, "object": OBJECT, "status": "formalized"})
         inner = self.write("1.2/_defaults.json", {"status": "partial", "kind": "lemma",
