@@ -29,6 +29,7 @@ classifiers = [
 dependencies = []  # Validation and discovery use only the standard library.
 
 [project.urls]
+Documentation = "https://mathlib-initiative.github.io/literature-links/"
 Source = "https://github.com/mathlib-initiative/literature-links"
 Issues = "https://github.com/mathlib-initiative/literature-links/issues"
 Changelog = "https://github.com/mathlib-initiative/literature-links/blob/main/CHANGELOG.md"
