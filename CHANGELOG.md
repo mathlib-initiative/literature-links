@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (2026-10-30)
+## 1.0.0 (2026-10-30)
 
 An annotation relates a `subject` and an `object`, each a list of ends, such as
 a passage of a book and a Lean declaration. An end names a document by `type`
@@ -11,7 +11,7 @@ JSONL file one per line, and a `_defaults.json` file gives the annotations
 below it shared fields. The `literature-links` command and the
 `literature_links` Python package check annotations offline.
 
-### Changes from 1.x
+### Changes from 0.x
 
 - `subject` and `object`, lists of ends taken jointly, replace `source`,
   `location` and `target`. `"object": []` records an unlinked passage.
