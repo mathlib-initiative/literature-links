@@ -140,7 +140,7 @@ class TestSmallContract(unittest.TestCase):
                 with self.subTest(mode=mode, side=side):
                     self.assertTrue(C.validate(doc))
 
-    def test_1x_fields_typos_and_wrappers_are_rejected(self):
+    def test_0x_fields_typos_and_wrappers_are_rejected(self):
         record_keys = ("source", "target", "location", "label", "pin", "sources", "subjects", "objects", "mode",
                        "relations", "annotations", "type", "uri")
         end_keys = ("format", "pin", "label", "page", "lines", "declaration", "status", "kind", "id", "note",

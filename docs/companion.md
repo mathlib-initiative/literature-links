@@ -20,8 +20,8 @@ equivalence, proof or review. No annotation claims that its ends exist.
 The [JSON Schema](../schema/companion.schema.json) gives the structure of an
 annotation, [Validation](#validation) adds two checks, and [tools.md](tools.md)
 documents the checker and the command line. The format is versioned by release,
-and annotations have no version field. Annotations valid under 2.x stay valid
-in later 2.x; a breaking change bumps the major version.
+and annotations have no version field. Annotations valid under 1.x stay valid
+in later 1.x; a breaking change bumps the major version.
 
 ## Terms
 
