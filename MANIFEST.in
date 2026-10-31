@@ -3,5 +3,6 @@ include CHANGELOG.md CONTRIBUTING.md
 graft docs
 graft examples
 graft schema
+graft site
 graft tests
 global-exclude __pycache__ *.py[cod] .DS_Store

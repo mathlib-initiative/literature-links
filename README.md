@@ -10,7 +10,9 @@ such as a book passage and a Lean declaration.
 Each record is an *annotation*. It names a passage of informal text like a page in a book, article,
 wiki or LaTeX label, and its formal counterpart, such as a declaration in
 [Mathlib](https://github.com/leanprover-community/mathlib4). The annotations about one source make a
-*companion* to it. This format is for people to create these links, by hand or with AI, and for downstream projects to consume them. This repository holds [its specification](docs/companion.md) and [an offline checker](docs/tools.md).
+*companion* to it. This format is for people to create these links, by hand or with AI, and for downstream projects to consume them. This repository holds [its specification](docs/companion.md) and [an offline checker](docs/tools.md),
+and the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/)
+shows every field on one page.
 
 ## Try it
 
@@ -140,6 +142,7 @@ exit statuses.
 | [`docs/tools.md`](docs/tools.md) | The checker, its Python API and the command line, with its options and exit statuses |
 | [`schema/companion.schema.json`](schema/companion.schema.json) | The JSON Schema |
 | [`examples/companion/`](examples/companion/) | Valid examples of each location form and field |
+| [`site/`](site/) | The source of the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/): every field of the format on one page, with the examples |
 | [`src/literature_links/`](src/literature_links/) | The checker's source |
 | [`CHANGELOG.md`](CHANGELOG.md) | The changes in each release |
 
