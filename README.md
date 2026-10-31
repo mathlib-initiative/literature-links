@@ -15,7 +15,9 @@ library for the Lean proof assistant. The annotations about one source make a
 *companion* to it: a guide from the text to its formalization. The format is for
 people who write these links, by hand or with a tool, and for people who build
 viewers and other tools that read them. This repository holds
-[its specification](docs/companion.md) and [an offline checker](docs/tools.md).
+[its specification](docs/companion.md) and [an offline checker](docs/tools.md),
+and the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/)
+shows every field on one page.
 
 ## Try it
 
@@ -145,6 +147,7 @@ exit statuses.
 | [`docs/tools.md`](docs/tools.md) | The checker, its Python API and the command line, with its options and exit statuses |
 | [`schema/companion.schema.json`](schema/companion.schema.json) | The JSON Schema |
 | [`examples/companion/`](examples/companion/) | Valid examples of each location form and field |
+| [`site/`](site/) | The source of the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/): every field of the format on one page, with the examples |
 | [`src/literature_links/`](src/literature_links/) | The checker's source |
 | [`CHANGELOG.md`](CHANGELOG.md) | The changes in each release |
 
