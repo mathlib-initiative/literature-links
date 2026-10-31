@@ -11,9 +11,8 @@ Each record is an *annotation*. It usually names a passage of a book, article,
 wiki or other source by where it sits, such as a page or a LaTeX label, and its
 counterpart, such as a declaration in
 [Mathlib](https://github.com/leanprover-community/mathlib4). The annotations about one source make a
-*companion* to it: a guide from the text to its formalization. The format is for
-people who write these links, by hand or with a tool, and for people who build
-viewers and other tools that read them. This repository holds
+*companion* to it. This format is for
+people to create these links, by hand or with AI, and for downstream projects to consume them. This repository holds
 [its specification](docs/companion.md) and [an offline checker](docs/tools.md).
 
 ## Try it
