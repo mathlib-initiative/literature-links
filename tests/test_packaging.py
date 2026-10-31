@@ -84,8 +84,8 @@ class TestStandalone(unittest.TestCase):
         self.assertLessEqual(headings.count("Unreleased"), 1)
         if "Unreleased" in headings:
             self.assertEqual(headings[0], "Unreleased")
-        # 1.x was never published: the changelog starts at 2.0.0.
-        self.assertEqual(released[-1], "2.0.0")
+        # 0.x has tags but no entries: the changelog starts at 1.0.0.
+        self.assertEqual(released[-1], "1.0.0")
 
     def test_a_release_commit_dates_its_changelog_heading(self):
         if not EXPECT_RELEASE:
