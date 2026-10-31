@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annotation Format Map &middot; Literature Links</title>
+<meta name="description" content="Every field a Literature Links annotation can carry, rendered from the schema and examples.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230e7490'/%3E%3Cpath%20d='M10%2022%2022%2010'%20stroke='%23fff'%20stroke-width='3'/%3E%3Ccircle%20cx='10'%20cy='22'%20r='4'%20fill='%23fff'/%3E%3Ccircle%20cx='22'%20cy='10'%20r='4'%20fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" media="print" onload="this.media='all'">
+<style>
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --fg: #1a2330; --muted: #5a6978; --line: #d6dde5;
+  --accent: #0e7490; --accent-soft: #e0f1f5; --req: #a35a0a; --req-soft: #fbeedd;
+  --code-bg: #eaeef2; --j-key: #0e7490; --j-str: #7a3e9d; --j-num: #9c5609; --j-kw: #2f6f4f;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f151b; --surface: #171f27; --fg: #e4eaf0; --muted: #98a6b4; --line: #2b353f;
+  --accent: #3fc1d6; --accent-soft: #12353c; --req: #e39a3c; --req-soft: #3b2a12;
+  --code-bg: #1d262f; --j-key: #5dd2e4; --j-str: #c69ae0; --j-num: #e39a3c; --j-kw: #7fcf9f; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #171f27; --fg: #e4eaf0; --muted: #98a6b4; --line: #2b353f;
+  --accent: #3fc1d6; --accent-soft: #12353c; --req: #e39a3c; --req-soft: #3b2a12;
+  --code-bg: #1d262f; --j-key: #5dd2e4; --j-str: #c69ae0; --j-num: #e39a3c; --j-kw: #7fcf9f; color-scheme: dark }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5; }
+.page { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; padding-inline: 16px; }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; font-weight: 600; }
+h1 { font-size: clamp(26px, 4vw, 34px); letter-spacing: -0.01em; }
+h2 { font-size: 20px; margin-bottom: 12px; }
+h3 { font-size: 16px; }
+h4 { font-size: 14px; margin: 14px 0 6px; color: var(--muted); font-weight: 500; }
+p { margin: 0; max-width: 68ch; }
+code, pre { font-family: var(--mono); font-size: 0.92em; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+main a:not(.ex), .prov a, footer a, noscript a { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.top { display: grid; gap: 10px; margin-bottom: 28px; }
+.top .lede { font-size: 16px; }
+.prov { color: var(--muted); font-size: 13px; max-width: none; }
+.wrap { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; align-items: start; }
+.toc { position: sticky; top: 12px; display: grid; gap: 4px; font-size: 14px; padding-top: 4px; }
+.toc a { padding: 4px 8px; border-radius: 6px; color: var(--fg); }
+.toc a:hover { background: var(--accent-soft); text-decoration: none; }
+main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; min-width: 0; }
+section, tr[id] { scroll-margin-top: 12px; }
+.lead { margin-bottom: 12px; max-width: none; }
+.note { margin-top: 10px; font-size: 14px; scroll-margin-top: 12px; max-width: none; }
+.note.fn { color: var(--muted); font-size: 13px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th code { text-transform: none; letter-spacing: 0; font-size: 12px; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+td.key { white-space: nowrap; width: 1%; }
+td.val, .v { color: var(--muted); }
+td.ex { width: 1%; white-space: nowrap; }
+td p + p.sub { margin-top: 6px; }
+.exs { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.kb { white-space: nowrap; }
+.badge { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; vertical-align: middle; margin-left: 6px; background: var(--req-soft); color: var(--req); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
+/* A location's fields: field, then what its value holds; one-of groups get a guide line. */
+.kl { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 3px 14px; }
+.kl .k { white-space: nowrap; }
+.kl .grp { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; gap: 3px 14px; border-left: 2px solid var(--line); padding-left: 10px; margin: 2px 0; }
+.kl .grp > .lbl { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
+a.ex { display: inline-block; font-family: var(--mono); font-size: 12px; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; background: var(--surface); }
+a.ex:hover { border-color: var(--accent); text-decoration: none; }
+.lead a.ex, .note a.ex { margin-left: 4px; }
+@media (max-width: 700px) {
+  table.stack, table.stack tbody { display: block; }
+  table.stack thead { display: none; }
+  table.stack tr { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 10px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  table.stack tbody tr:last-child { border-bottom: 0; }
+  table.stack td { display: block; padding: 0; border: 0; width: auto; }
+  table.stack td.main { order: 1; flex: 1 1 100%; min-width: 0; }
+  table.stack td.ex { margin-left: auto; }
+  .exs { align-items: flex-end; }
+}
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.chips button { font: inherit; font-size: 13px; font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); color: var(--fg); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.chips button.defaults { border-style: dashed; }
+.chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.chips button:hover { border-color: var(--accent); }
+.example { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+.example h3 { font-family: var(--mono); font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.example h4 { margin: 4px 0 0; }
+pre.json { margin: 0; padding: 14px 16px; background: var(--code-bg); border-radius: 8px; line-height: 1.45; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre.json code { background: none; padding: 0; }
+/* One source line; a long line wraps under itself, indented past its start. */
+pre.json .ln { display: block; padding-left: calc(var(--i) * 1ch + 4ch); text-indent: calc(var(--i) * -1ch - 4ch); }
+pre.json.jsonl .ln + .ln, pre.json .rec + .rec { margin-top: 8px; }
+pre.json .rec { display: block; }
+.j-key { color: var(--j-key); } .j-str { color: var(--j-str); } .j-num { color: var(--j-num); } .j-kw { color: var(--j-kw); }
+footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
+@media (max-width: 900px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .toc a { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--surface); }
+}
+@media (max-width: 600px) { .example { padding: 12px; } pre.json { padding: 10px 12px; } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <p class="eyebrow">Literature Links &middot; @@VERSION@@</p>
+    <h1>Annotation Format Map</h1>
+    <p class="lede">An annotation records a correspondence between two documents, or parts of them, such as a passage of a book and a Lean declaration. This page shows every field it can carry, rendered from the schema and examples.</p>
+    <p class="prov">@@PROVENANCE@@</p>
+  </header>
+  <noscript><p class="note">This page draws its tables with JavaScript. The <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> holds the same rules as text.</p></noscript>
+  <div class="wrap">
+    <nav class="toc" aria-label="Sections">
+      <a href="#record">The annotation</a>
+      <a href="#ends">Ends</a>
+      <a href="#locations">Locations</a>
+      <a href="#relation">Relation</a>
+      <a href="#files">Files</a>
+      <a href="#examples">Examples</a>
+    </nav>
+    <main>
+      <section id="record">
+        <h2>The annotation</h2>
+        <p class="lead" id="defaults"></p>
+        <div class="panel" id="record-table"></div>
+        <p class="note" id="record-note"></p>
+      </section>
+      <section id="ends">
+        <h2>Ends</h2>
+        <p class="lead" id="ends-lead"></p>
+        <div class="panel" id="end-table"></div>
+        <p class="note" id="end-note"></p>
+      </section>
+      <section id="locations">
+        <h2>Locations</h2>
+        <div class="panel" id="location-table"></div>
+        <p class="note" id="quote"></p>
+        <p class="note">Every <code>html</code> form matches the document parsed with scripting disabled, never what a script would add or change.</p>
+        <p class="note" id="lines"></p>
+        <p class="note fn">&dagger; Not in the schema; the checker enforces it.</p>
+      </section>
+      <section id="relation">
+        <h2>Relation</h2>
+        <p class="lead" id="relation-lead"></p>
+        <div class="panel" id="relation-table"></div>
+        <p class="note" id="relation-note"></p>
+      </section>
+      <section id="files">
+        <h2>Files</h2>
+        <p class="lead">Every file is UTF-8 JSON with unique keys, finite numbers and no unpaired surrogates.</p>
+        <div class="panel" id="file-table"></div>
+      </section>
+      <section id="examples">
+        <h2>Examples</h2>
+        <div class="chips" id="example-chips" role="group" aria-label="Example files"></div>
+        <div class="example">
+          <h3 id="example-title"></h3>
+          <pre class="json"><code id="example-json"></code></pre>
+          <div id="example-merged"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <footer>
+    <p>The specification, <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md"><code>docs/companion.md</code></a>, is the authority for the format, and <a href="https://github.com/mathlib-initiative/literature-links/blob/main/schema/companion.schema.json"><code>schema/companion.schema.json</code></a> is its JSON Schema. The checker is <code>literature-links validate</code> or <code>scan</code>, documented in <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/tools.md"><code>docs/tools.md</code></a>.</p>
+  </footer>
+</div>
+<script type="application/json" id="schema-json">@@SCHEMA@@</script>
+<script type="application/json" id="examples-json">@@EXAMPLES@@</script>
+<script>
+(function () {
+  'use strict';
+  var SCHEMA = JSON.parse(document.getElementById('schema-json').textContent);
+  var FILES = JSON.parse(document.getElementById('examples-json').textContent);
+  var DEFS = SCHEMA.$defs, END = DEFS.end;
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var code = function (s) { return '<code>' + esc(s) + '</code>'; };
+  var REQ = '<span class="badge">required</span>';
+  var kb = function (k, b) { return '<span class="kb">' + k + (b || '') + '</span>'; };
+  var refName = function (n) { return n && n.$ref ? n.$ref.replace('#/$defs/', '') : null; };
+  var list = function (xs, sep) { return xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' ' + (sep || 'and') + ' ' + xs[xs.length - 1]; };
+  var inOrder = function (first, keys) {
+    var rank = function (k) { var i = first.indexOf(k); return i < 0 ? first.length + keys.indexOf(k) : i; };
+    return keys.slice().sort(function (a, b) { return rank(a) - rank(b); });
+  };
+  var set = function (id, html) { document.getElementById(id).innerHTML = html; };
+  var link = function (id, html) { return '<a href="#' + id + '">' + html + '</a>'; };
+  var badge = function (obj, k) { return (obj.required || []).indexOf(k) >= 0 ? REQ : ''; };
+  var has = function (p) { return FILES.some(function (f) { return f.path === p; }); };
+  var label = function (p) { return p.replace(/\.json$/, ''); };
+  var exLink = function (p) { return has(p) ? '<a class="ex" href="#examples" data-example="' + esc(p) + '">' + esc(label(p)) + '</a>' : ''; };
+  var exCell = function (ps) { return '<td class="ex"><div class="exs">' + (ps || []).map(exLink).join('') + '</div></td>'; };
+  var table = function (heads, rows) {
+    return '<table class="stack"><thead><tr>' + heads.map(function (h) { return '<th scope="col">' + h + '</th>'; }).join('') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+  };
+
+  // What a value holds, from the schema; a short phrase from the spec where the schema says too little.
+  var NAMED = { sha256: '64 lowercase hex digits', identifiers: 'object of strings', extensions: 'object, any values; namespaced keys such as ' + code('org.example.tool') + ' are recommended, and consumers keep unknown values unchanged' };
+  function shape(n) {
+    var r = refName(n);
+    if (r === 'citation') return 'CSL-JSON item with ' + list(DEFS.citation.required.map(function (k) { return kb(code(k), REQ); }));
+    if (r && NAMED[r]) return NAMED[r];
+    if (n.enum) return list(n.enum.map(code), 'or');
+    if (n.type === 'array') {
+      var it = refName(n.items);
+      return 'list of ' + (n.minItems ? 'one or more ' : '') + (it === 'end' ? link('ends', 'ends') : 'strings');
+    }
+    return '';
+  }
+  var SAY = {
+    'subject': ', by convention the side being annotated, the informal side when there is one',
+    'object': ', the other side, possibly empty: ' + code('[]') + ' leaves the subject unlinked and claims nothing about whether a counterpart exists',
+    'relation': 'see ' + link('relation', 'Relation'),
+    'end.junk': ': values this end assigns where the other side is undefined or says nothing, such as ' + code('x / 0 = 0') + '. They never change the relation, and an absent ' + code('junk') + ' does not say there are none',
+    'status': 'how far the producer judges the subject to be formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code)) + '. It describes the subject, not the link',
+    'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'lemma', 'proposition', 'example', 'remark', 'exercise', 'proof', 'proof_step'].map(code)),
+    'id': 'names the subject: annotations about one subject should share it. Within a companion, the annotations about one source, annotations that share it are about one subject; ids in different companions may coincide',
+    'end.uri': 'the document, usually the companion\'s copy; for ' + code('lean') + ', the project. A fragment here selects nothing: under every type but ' + code('generic') + ', ' + code('location') + ' is the selection',
+    'end.location': 'object, fields set by ' + code('type') + ': see ' + link('locations', 'Locations') + '. Without it, the whole document; an unresolved or ambiguous location never means the whole document',
+    'end.version': 'the revision, such as a Git commit; for ' + code('lean') + ', the full commit. A ' + code('location') + ' and ' + code('sha256') + ' refer to this revision or, with no ' + code('version') + ', to what ' + code('uri') + ' served when the producer wrote them',
+    'end.sha256': ': the SHA-256 of the one file that ' + code('uri') + ' names, for ' + code('latex') + ' the root file alone, so a ' + code('lean') + ' end, whose ' + code('uri') + ' is a project, leaves it out',
+    'end.citation': 'its other fields are unchecked',
+    'end.identifiers': ', by registry that CSL has no field for, such as ' + code('wikidata') + ' or ' + code('arxiv') + '. A work\'s DOI goes in ' + code('citation')
+  };
+  function value(n, at) {
+    var s = shape(n), say = SAY[at] || '';
+    return say.charAt(0) === ',' || say.charAt(0) === ':' ? (s ? s + say : '') : s && say ? s + '; ' + say : s || say;
+  }
+  function keyTable(obj, prefix, first, keep) {
+    var rows = '', plain = [];
+    inOrder(first, Object.keys(obj.properties)).forEach(function (k) {
+      var v = keep.indexOf(k) < 0 ? '' : value(obj.properties[k], prefix + k);
+      if (!v && !badge(obj, k)) { plain.push(k); return; }
+      rows += '<tr id="key-' + esc(prefix + k).replace(/\./g, '-') + '"><td class="key">' + code(k) + badge(obj, k) + '</td><td class="val main">' + v + '</td></tr>';
+    });
+    return { html: table(['Field', 'Value'], rows), plain: plain };
+  }
+
+  // Defaults. The URI rule names every key whose value the schema types as a reference.
+  var uriKeys = [];
+  (function walk(n) {
+    if (Array.isArray(n)) return n.forEach(walk);
+    if (!n || typeof n !== 'object') return;
+    Object.keys(n.properties || {}).forEach(function (k) {
+      if (refName(n.properties[k]) === 'reference' && uriKeys.indexOf(k) < 0) uriKeys.push(k);
+    });
+    Object.keys(n).forEach(function (k) { walk(n[k]); });
+  })(SCHEMA);
+  set('defaults', 'Fields are optional unless marked ' + REQ + '. Values are strings unless another type is given. ' +
+    'Strings are nonempty and numbers are whole numbers from 1, unless stated. ' +
+    list(inOrder(['uri', 'profile', '$schema'], uriKeys).map(code)) + ' hold URI or IRI references with no whitespace, control or invisible characters, in which each ' + code('%') + ' starts a percent-encoding. A relative reference resolves against the file or web response that holds the annotation, never against the repository or the working directory.');
+
+  // 1. The annotation.
+  var rec = keyTable(SCHEMA, '', ['subject', 'object', 'relation', 'status', 'kind', 'id', 'note', 'extensions', '$schema'],
+    ['subject', 'object', 'relation', 'status', 'kind', 'id', 'extensions']);
+  set('record-table', rec.html);
+  set('record-note', 'An annotation may also hold ' + list(rec.plain.map(code)) + '. ' + code('note') + ' is free text, and ' + code('$schema') + ' is a tooling hint that never changes which schema applies. No field names the version of the format, which is versioned by release. Other fields are invalid in an annotation, in an end and in a built-in location; application data goes in ' + link('key-extensions', code('extensions')) + '.');
+
+  // 2. Ends. Extensions are described once, on the annotation.
+  set('ends-lead', 'The ends of a side are taken together: a theorem that runs over a page break is one subject with two ends.' + exLink('page-split.json') + ' The annotation relates the sides as wholes, and the order of the ends carries no meaning. Independent links stay separate annotations: a passage that two declarations each state is two annotations.');
+  var end = keyTable(END, 'end.', ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk', 'title', 'role', 'extensions'],
+    ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk']);
+  set('end-table', end.html);
+  set('end-note', 'An end may also hold ' + list(end.plain.map(function (k) { return k === 'extensions' ? link('key-extensions', code(k)) : code(k); })) + '. A ' + code('title') + ' names the part the end selects, and ' + code('citation.title') + ' names the work. Applications define the values of ' + code('role') + ', such as ' + list(['states', 'defines', 'uses', 'supports'].map(code), 'or') + '.');
+
+  // 3. Locations, from the end's allOf: fields, value shapes, and the one-of rules.
+  var EXAMPLES = { pdf: ['pdf-quote.json'], latex: ['latex-several.jsonl'], html: ['html-quote.json'], lean: ['proof-step.json', 'lean-module-lines.json'],
+                   generic: ['generic-table.json'], profile: ['html-profile.json'] };
+  var KEYS = {
+    'pdf_location.page': 'physical page number',
+    'pdf_location.rect': '[x, y, width, height] as fractions, 0–1, of the displayed page box after rotation, from the top left; positive size and inside the page&dagger;',
+    'latex_location.label': 'literal argument of a <code>\\label</code> command, looked up through <code>\\input</code> and <code>\\include</code>',
+    'html_location.css': 'CSS selector; the checker does not parse it',
+    'html_location.fragment': 'decoded value of an element\'s <code>id</code> attribute, not percent-decoded again; no leading <code>#</code>, no whitespace or control characters (use <code>css</code> for such an ID)',
+    'lean_location.declaration': 'fully qualified name, as Lean prints it in the declaration\'s own module',
+    'lean_location.module': 'dotted module name; selects that module\'s source file. Beside a <code>declaration</code>, it decides between declarations that share a name. An end that names a private declaration, which in a <code>module</code> file is any declaration not made public, must give it'
+  };
+  function keyList(name) {
+    var d = DEFS[name], keys = Object.keys(d.properties);
+    var needs = d['if'] && d.then ? { key: d['if'].required[0], what: d.then.required[0] } : null;
+    var item = function (k) {
+      var r = refName(d.properties[k]), key = r === 'quote' || r === 'lines' ? link(r, code(k)) : code(k);
+      var v = KEYS[name + '.' + k] || '';
+      if (needs && needs.key === k) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? '; beside a ' + code('declaration') + ', narrows it, such as to a proof step' : '');
+      return '<span class="k">' + key + badge(d, k) + '</span><span class="v">' + v + '</span>';
+    };
+    var rule = d.oneOf ? ['exactly one of', d.oneOf] : d.anyOf ? ['at least one of', d.anyOf] : d.not ? ['at most one of', null] : null;
+    var one = !rule ? [] : rule[1] ? rule[1].map(function (o) { return o.required[0]; }) : d.not.required;
+    var out = '', grouped = false;
+    keys.forEach(function (k) {
+      if (one.indexOf(k) < 0) { out += item(k); return; }
+      if (grouped) return;
+      grouped = true;
+      out += '<div class="grp"><span class="lbl">' + rule[0] + '</span>' + one.map(item).join('') + '</div>';
+    });
+    return '<div class="kl">' + out + '</div>';
+  }
+  var lrow = function (form, head, keys) { return '<tr><td class="key">' + head + '</td><td class="main">' + keys + '</td>' + exCell(EXAMPLES[form]) + '</tr>'; };
+  var covered = [], lrows = '';
+  END.allOf.forEach(function (c) {
+    var t = c['if'].properties.type.const;
+    covered.push(t);
+    lrows += lrow(t, code(t), keyList(refName(c.then.properties.location['else'])));
+  });
+  END.properties.type.enum.forEach(function (t) {
+    if (covered.indexOf(t) < 0) lrows += lrow(t, code(t), '<span class="v">any object, which its producer and consumer define; ' + code('{}') + ' is not the same as no location</span>');
+  });
+  lrows += lrow('profile', 'any, with ' + code('profile'), '<span class="v">names the convention that gives any other fields their meaning; only ' + code('profile') + ' is checked. Use it when no built-in form fits</span>');
+  set('location-table', table(['<code>type</code>', 'Fields', 'Example'], lrows));
+  var q = DEFS.quote, qopt = Object.keys(q.properties).filter(function (k) { return !badge(q, k); });
+  set('quote', 'A ' + code('quote') + ' is an object with ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) + ', and ' +
+    list(qopt.map(code)) + ', which may be empty: the text just before and after the match, which narrow it and are not part of the selection. All three are compared as written with the document\'s text, in which each run of whitespace is one space. A PDF quote matches the text of its one page. A quote that matches more than once is ambiguous.');
+  set('lines', code('lines') + ' is ' + code('[start, end]') + ', inclusive, with start ≤ end&dagger;, so ' + code('[n, n]') + ' is line n alone; or ' +
+    code('[n]') + ', the outermost item that starts on line n: in LaTeX, an environment whose <code>\\begin</code> is there; in Lean, a declaration, ' + code('example') + ', ' + code('have') + ', ' + code('calc') + ', ' + code('calc') + ' step or tactic.');
+
+  // 4. Relation. The schema allows any string; these are the spec's recommended values.
+  set('relation-lead', 'Read “subject ' + code('relation') + ' object”. These values are recommended, and any other string is allowed. ' +
+    'Without a relation, an annotation claims only that its sides correspond, not equivalence, proof or review. Every field is its producer\'s claim: validation checks its form, never its truth.');
+  var RELATIONS = [
+    ['exactMatch', 'The same definition or claim, up to notation and junk values', 'split-declarations.json'],
+    ['closeMatch', 'Nearly the same, with differences a reader should know'],
+    ['broadMatch', 'The object is more general, not only through junk values', 'broad-match.json'],
+    ['narrowMatch', 'The subject is more general'],
+    ['relatedMatch', 'Related in another way, such as a lemma the proof uses', 'pdf-region.jsonl'],
+    ['hasPart', 'The object states one part of the subject', 'has-part.json'],
+    ['noMatch', 'Checked absence: the object, usually a whole project at a ' + code('version') + ', was searched and holds no declaration, alone or with others, that would be an ' + code('exactMatch') + ', ' + code('closeMatch') + ' or ' + code('broadMatch') + ' of the subject. It may still hold narrower, partial or related results', 'checked-absence.json']
+  ];
+  set('relation-table', table(['<code>relation</code>', 'Reading', 'Example'], RELATIONS.map(function (r) {
+    return '<tr><td class="key">' + code(r[0]) + '</td><td class="main">' + r[1] + '</td>' + exCell(r[2] ? [r[2]] : []) + '</tr>';
+  }).join('')));
+  set('relation-note', 'A ' + code('noMatch') + ' object end should have a ' + code('version') + '. A producer that does not know the version it searched writes ' + code('"object": []') + ' instead, with a ' + code('status') + ' such as ' + code('not_formalized') + ', which does not say where anyone looked.');
+
+  // 5. Files, with folder defaults and the end template.
+  var FILE_ROWS = [
+    ['name.json', 'One annotation, an object.', 'pdf.json'],
+    ['name.jsonl', 'One annotation per nonblank line (' + code('.ndjson') + ' too).', 'latex-several.jsonl'],
+    ['_defaults.json', '<p>Fields shared by its folder and the folders below, merged into each annotation: missing fields are inherited, ' +
+      'objects merge, ' + code('null') + ' removes, other values replace. Nearer files win. The checker validates the merged annotation.</p>' +
+      '<p class="sub">Its ' + code('subject') + ' or ' + code('object') + ' may be an object, an end template: fields the ends on that side share. ' +
+      'It fills each end with no ' + code('uri') + ' of its own, and a ' + code('location') + ' is never merged. ' +
+      'An annotation that leaves the side out gets the template alone, and ' + code('"object": []') + ' stays empty.</p>' +
+      '<p class="sub">Relative references in a defaults file resolve against that file. A tool reading local files looks in every folder up to the root of the file system or, given the companion\'s root folder (' + code('--root') + ' in the checker), up to that folder. One fetching over the web is given the root as a base URL and, given none, applies no defaults.</p>', 'folder-defaults/_defaults.json']
+  ];
+  set('file-table', table(['File', 'Holds', 'Example'], FILE_ROWS.map(function (r) {
+    return '<tr><td class="key">' + code(r[0]) + '</td><td class="main">' + r[1] + '</td>' + exCell([r[2]]) + '</tr>';
+  }).join('')));
+
+  // 6. Examples. Annotations under folder defaults are embedded already merged.
+  function highlight(text) {
+    return esc(text).replace(/(&quot;(?:\\.|[^\\])*?&quot;)(\s*:)?|\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b|\b(true|false|null)\b/g, function (m, str, colon, num, kw) {
+      if (str) return colon ? '<span class="j-key">' + str + '</span>' + colon : '<span class="j-str">' + str + '</span>';
+      if (num) return '<span class="j-num">' + num + '</span>';
+      return '<span class="j-kw">' + kw + '</span>';
+    });
+  }
+  function lines(text) {
+    return text.replace(/\n+$/, '').split('\n').map(function (line) {
+      return '<span class="ln" style="--i:' + line.match(/^ */)[0].length + '">' + (highlight(line) || ' ') + '</span>';
+    }).join('');
+  }
+  function flat(v) {
+    if (Array.isArray(v)) return '[' + v.map(flat).join(', ') + ']';
+    if (v && typeof v === 'object') {
+      var ks = Object.keys(v);
+      return ks.length ? '{ ' + ks.map(function (k) { return JSON.stringify(k) + ': ' + flat(v[k]); }).join(', ') + ' }' : '{}';
+    }
+    return JSON.stringify(v);
+  }
+  function pretty(v, ind, at) {
+    var f = flat(v);
+    if (!v || typeof v !== 'object' || at + f.length <= 76) return f;
+    var inner = ind + '  ';
+    if (Array.isArray(v)) return '[\n' + v.map(function (x) { return inner + pretty(x, inner, inner.length); }).join(',\n') + '\n' + ind + ']';
+    return '{\n' + Object.keys(v).map(function (k) {
+      var head = inner + JSON.stringify(k) + ': ';
+      return head + pretty(v[k], inner, head.length);
+    }).join(',\n') + '\n' + ind + '}';
+  }
+  var chips = document.getElementById('example-chips'), pre = document.getElementById('example-json'),
+      title = document.getElementById('example-title'), mergedEl = document.getElementById('example-merged');
+  function show(path) {
+    var f = FILES.filter(function (x) { return x.path === path; })[0];
+    title.textContent = 'examples/companion/' + path;
+    pre.innerHTML = lines(f.text);
+    pre.parentNode.classList.toggle('jsonl', f.kind === 'jsonl');
+    mergedEl.innerHTML = f.defaults.length ? '<h4>Merged with ' + f.defaults.map(code).join(', ') + '</h4><pre class="json"><code>' +
+      f.records.map(function (r) { return '<span class="rec">' + lines(pretty(r, '', 0)) + '</span>'; }).join('') + '</code></pre>' : '';
+    Array.prototype.forEach.call(chips.children, function (b) { b.setAttribute('aria-pressed', b.dataset.path === path ? 'true' : 'false'); });
+  }
+  FILES.forEach(function (f) {
+    var b = document.createElement('button'); b.type = 'button'; b.dataset.path = f.path; b.textContent = label(f.path);
+    if (f.kind === 'defaults') b.className = 'defaults';
+    b.addEventListener('click', function () { show(f.path); });
+    chips.appendChild(b);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('a[data-example]'), function (a) {
+    a.addEventListener('click', function () { show(a.dataset.example); });
+  });
+  show(has('split-declarations.json') ? 'split-declarations.json' : FILES[0].path);
+})();
+</script>
+</body>
+</html>

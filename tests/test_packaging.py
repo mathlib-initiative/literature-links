@@ -202,7 +202,7 @@ class TestEntryPoints(unittest.TestCase):
             self.assertNotIn("Traceback", child.stdout + child.stderr)
 
 
-REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "tests/", ".github/")
+REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "site/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
 DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
@@ -310,7 +310,7 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
         # GitHub flags them. Python and JSON write them as escapes.
         paths = [*ROOT.iterdir(), *(path for root in REPO_ROOTS for path in (ROOT / root).rglob("*"))]
         for path in sorted(paths):
-            if path.suffix not in (".py", ".md", ".json", ".jsonl", ".toml", ".yml", ".in") or not path.is_file():
+            if path.suffix not in (".py", ".md", ".json", ".jsonl", ".toml", ".yml", ".in", ".html") or not path.is_file():
                 continue
             text = path.read_text(encoding="utf-8")
             hidden = sorted({f"U+{ord(char):04X}" for char in text if char not in "\t\n\r " and
