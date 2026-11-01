@@ -237,7 +237,8 @@ work. Applications define the values of `role`, such as `states`, `defines`,
 
 Without `location`, an end is the whole document. A `null` location is invalid.
 Under `pdf`, `latex`, `html` and `lean`, `location` must take one of the forms
-below, so `{}` is invalid.
+below, so `{}` is invalid. Every string in those forms is nonempty, except a
+quote's `prefix` and `suffix`, which may be empty.
 
 A location with a `profile` field is application-defined under every type.
 `profile` is a [reference](#references) that names the convention, and the

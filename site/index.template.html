@@ -38,7 +38,7 @@ code, pre { font-family: var(--mono); font-size: 0.92em; }
 code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover, a:focus-visible { text-decoration: underline; }
-main a:not(.ex), .prov a, footer a, noscript a { text-decoration: underline; }
+main a:not(.ex), .lede a, .prov a, footer a, noscript a { text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 .top { display: grid; gap: 10px; margin-bottom: 28px; }
@@ -52,7 +52,6 @@ main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; min-widt
 section, tr[id] { scroll-margin-top: 12px; }
 .lead { margin-bottom: 12px; max-width: none; }
 .note { margin-top: 10px; font-size: 14px; scroll-margin-top: 12px; max-width: none; }
-.note.fn { color: var(--muted); font-size: 13px; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th code { text-transform: none; letter-spacing: 0; font-size: 12px; }
@@ -61,7 +60,6 @@ tbody tr:last-child td { border-bottom: 0; }
 td.key { white-space: nowrap; width: 1%; }
 td.val, .v { color: var(--muted); }
 td.ex { width: 1%; white-space: nowrap; }
-td p + p.sub { margin-top: 6px; }
 .exs { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .kb { white-space: nowrap; }
 .badge { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; vertical-align: middle; margin-left: 6px; background: var(--req-soft); color: var(--req); }
@@ -114,10 +112,10 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   <header class="top">
     <p class="eyebrow">Literature Links &middot; @@VERSION@@</p>
     <h1>Annotation Format Map</h1>
-    <p class="lede">An annotation records a correspondence between two documents, or parts of them, such as a passage of a book and a Lean declaration. This page shows every field it can carry, rendered from the schema and examples.</p>
+    <p class="lede">An annotation records a correspondence between two documents, such as a book passage and a Lean declaration. This page shows every field it can carry; the <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> has the rules.</p>
     <p class="prov">@@PROVENANCE@@</p>
   </header>
-  <noscript><p class="note">This page draws its tables with JavaScript. The <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> holds the same rules as text.</p></noscript>
+  <noscript><p class="note">This page needs JavaScript. The <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> has the same fields as text.</p></noscript>
   <div class="wrap">
     <nav class="toc" aria-label="Sections">
       <a href="#record">The annotation</a>
@@ -130,7 +128,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     <main>
       <section id="record">
         <h2>The annotation</h2>
-        <p class="lead" id="defaults"></p>
         <div class="panel" id="record-table"></div>
         <p class="note" id="record-note"></p>
       </section>
@@ -144,19 +141,15 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
         <h2>Locations</h2>
         <div class="panel" id="location-table"></div>
         <p class="note" id="quote"></p>
-        <p class="note">Every <code>html</code> form matches the document parsed with scripting disabled, never what a script would add or change.</p>
         <p class="note" id="lines"></p>
-        <p class="note fn">&dagger; Not in the schema; the checker enforces it.</p>
       </section>
       <section id="relation">
         <h2>Relation</h2>
         <p class="lead" id="relation-lead"></p>
         <div class="panel" id="relation-table"></div>
-        <p class="note" id="relation-note"></p>
       </section>
       <section id="files">
         <h2>Files</h2>
-        <p class="lead">Every file is UTF-8 JSON with unique keys, finite numbers and no unpaired surrogates.</p>
         <div class="panel" id="file-table"></div>
       </section>
       <section id="examples">
@@ -171,7 +164,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     </main>
   </div>
   <footer>
-    <p>The specification, <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md"><code>docs/companion.md</code></a>, is the authority for the format, and <a href="https://github.com/mathlib-initiative/literature-links/blob/main/schema/companion.schema.json"><code>schema/companion.schema.json</code></a> is its JSON Schema. The checker is <code>literature-links validate</code> or <code>scan</code>, documented in <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/tools.md"><code>docs/tools.md</code></a>.</p>
+    <p><a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">Specification</a> &middot; <a href="https://github.com/mathlib-initiative/literature-links/blob/main/schema/companion.schema.json">JSON Schema</a> &middot; <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/tools.md">Checker</a></p>
   </footer>
 </div>
 <script type="application/json" id="schema-json">@@SCHEMA@@</script>
@@ -204,7 +197,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   };
 
   // What a value holds, from the schema; a short phrase from the spec where the schema says too little.
-  var NAMED = { sha256: '64 lowercase hex digits', identifiers: 'object of strings', extensions: 'object, any values; namespaced keys such as ' + code('org.example.tool') + ' are recommended, and consumers keep unknown values unchanged' };
+  var NAMED = { sha256: '64 lowercase hex digits', identifiers: 'object of strings', extensions: 'object for application data' };
   function shape(n) {
     var r = refName(n);
     if (r === 'citation') return 'CSL-JSON item with ' + list(DEFS.citation.required.map(function (k) { return kb(code(k), REQ); }));
@@ -212,24 +205,23 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     if (n.enum) return list(n.enum.map(code), 'or');
     if (n.type === 'array') {
       var it = refName(n.items);
-      return 'list of ' + (n.minItems ? 'one or more ' : '') + (it === 'end' ? link('ends', 'ends') : 'strings');
+      return 'list of ' + (it === 'end' ? link('ends', 'ends') : 'strings');
     }
     return '';
   }
   var SAY = {
-    'subject': ', by convention the side being annotated, the informal side when there is one',
-    'object': ', the other side, possibly empty: ' + code('[]') + ' leaves the subject unlinked and claims nothing about whether a counterpart exists',
+    'subject': ', usually the informal side',
+    'object': ', the other side; ' + code('[]') + ' leaves the subject unlinked',
     'relation': 'see ' + link('relation', 'Relation'),
-    'end.junk': ': values this end assigns where the other side is undefined or says nothing, such as ' + code('x / 0 = 0') + '. They never change the relation, and an absent ' + code('junk') + ' does not say there are none',
-    'status': 'how far the producer judges the subject to be formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code)) + '. It describes the subject, not the link',
-    'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'lemma', 'proposition', 'example', 'remark', 'exercise', 'proof', 'proof_step'].map(code)),
-    'id': 'names the subject: annotations about one subject should share it. Within a companion, the annotations about one source, annotations that share it are about one subject; ids in different companions may coincide',
-    'end.uri': 'the document, usually the companion\'s copy; for ' + code('lean') + ', the project. A fragment here selects nothing: under every type but ' + code('generic') + ', ' + code('location') + ' is the selection',
-    'end.location': 'object, fields set by ' + code('type') + ': see ' + link('locations', 'Locations') + '. Without it, the whole document; an unresolved or ambiguous location never means the whole document',
-    'end.version': 'the revision, such as a Git commit; for ' + code('lean') + ', the full commit. A ' + code('location') + ' and ' + code('sha256') + ' refer to this revision or, with no ' + code('version') + ', to what ' + code('uri') + ' served when the producer wrote them',
-    'end.sha256': ': the SHA-256 of the one file that ' + code('uri') + ' names, for ' + code('latex') + ' the root file alone, so a ' + code('lean') + ' end, whose ' + code('uri') + ' is a project, leaves it out',
-    'end.citation': 'its other fields are unchecked',
-    'end.identifiers': ', by registry that CSL has no field for, such as ' + code('wikidata') + ' or ' + code('arxiv') + '. A work\'s DOI goes in ' + code('citation')
+    'end.junk': ': values this end assigns where the other side is undefined, such as ' + code('x / 0 = 0'),
+    'status': 'how far the subject is formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code), 'or'),
+    'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'proof', 'proof_step'].map(code), 'or'),
+    'id': 'names the subject: annotations about one subject should share it',
+    'end.uri': 'the document; for ' + code('lean') + ', the project',
+    'end.location': 'the part of the document: see ' + link('locations', 'Locations') + '. Without it, the whole document',
+    'end.version': 'the revision, such as a Git commit',
+    'end.sha256': ': the SHA-256 of the file that ' + code('uri') + ' names',
+    'end.identifiers': ', by registry, such as ' + code('wikidata') + ' or ' + code('arxiv')
   };
   function value(n, at) {
     var s = shape(n), say = SAY[at] || '';
@@ -245,44 +237,30 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     return { html: table(['Field', 'Value'], rows), plain: plain };
   }
 
-  // Defaults. The URI rule names every key whose value the schema types as a reference.
-  var uriKeys = [];
-  (function walk(n) {
-    if (Array.isArray(n)) return n.forEach(walk);
-    if (!n || typeof n !== 'object') return;
-    Object.keys(n.properties || {}).forEach(function (k) {
-      if (refName(n.properties[k]) === 'reference' && uriKeys.indexOf(k) < 0) uriKeys.push(k);
-    });
-    Object.keys(n).forEach(function (k) { walk(n[k]); });
-  })(SCHEMA);
-  set('defaults', 'Fields are optional unless marked ' + REQ + '. Values are strings unless another type is given. ' +
-    'Strings are nonempty and numbers are whole numbers from 1, unless stated. ' +
-    list(inOrder(['uri', 'profile', '$schema'], uriKeys).map(code)) + ' hold URI or IRI references with no whitespace, control or invisible characters, in which each ' + code('%') + ' starts a percent-encoding. A relative reference resolves against the file or web response that holds the annotation, never against the repository or the working directory.');
-
   // 1. The annotation.
   var rec = keyTable(SCHEMA, '', ['subject', 'object', 'relation', 'status', 'kind', 'id', 'note', 'extensions', '$schema'],
     ['subject', 'object', 'relation', 'status', 'kind', 'id', 'extensions']);
   set('record-table', rec.html);
-  set('record-note', 'An annotation may also hold ' + list(rec.plain.map(code)) + '. ' + code('note') + ' is free text, and ' + code('$schema') + ' is a tooling hint that never changes which schema applies. No field names the version of the format, which is versioned by release. Other fields are invalid in an annotation, in an end and in a built-in location; application data goes in ' + link('key-extensions', code('extensions')) + '.');
+  set('record-note', 'An annotation may also hold ' + list(rec.plain.map(code)) + '.');
 
   // 2. Ends. Extensions are described once, on the annotation.
-  set('ends-lead', 'The ends of a side are taken together: a theorem that runs over a page break is one subject with two ends.' + exLink('page-split.json') + ' The annotation relates the sides as wholes, and the order of the ends carries no meaning. Independent links stay separate annotations: a passage that two declarations each state is two annotations.');
+  set('ends-lead', 'An end is a document or part of one. A theorem that runs over a page break is one subject with two ends, taken together.' + exLink('page-split.json'));
   var end = keyTable(END, 'end.', ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk', 'title', 'role', 'extensions'],
     ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk']);
   set('end-table', end.html);
-  set('end-note', 'An end may also hold ' + list(end.plain.map(function (k) { return k === 'extensions' ? link('key-extensions', code(k)) : code(k); })) + '. A ' + code('title') + ' names the part the end selects, and ' + code('citation.title') + ' names the work. Applications define the values of ' + code('role') + ', such as ' + list(['states', 'defines', 'uses', 'supports'].map(code), 'or') + '.');
+  set('end-note', 'An end may also hold ' + list(end.plain.map(function (k) { return k === 'extensions' ? link('key-extensions', code(k)) : k === 'role' ? code(k) + ' (such as ' + list(['states', 'uses'].map(code), 'or') + ')' : code(k); })) + '.');
 
   // 3. Locations, from the end's allOf: fields, value shapes, and the one-of rules.
   var EXAMPLES = { pdf: ['pdf-quote.json'], latex: ['latex-several.jsonl'], html: ['html-quote.json'], lean: ['proof-step.json', 'lean-module-lines.json'],
                    generic: ['generic-table.json'], profile: ['html-profile.json'] };
   var KEYS = {
     'pdf_location.page': 'physical page number',
-    'pdf_location.rect': '[x, y, width, height] as fractions, 0–1, of the displayed page box after rotation, from the top left; positive size and inside the page&dagger;',
-    'latex_location.label': 'literal argument of a <code>\\label</code> command, looked up through <code>\\input</code> and <code>\\include</code>',
-    'html_location.css': 'CSS selector; the checker does not parse it',
-    'html_location.fragment': 'decoded value of an element\'s <code>id</code> attribute, not percent-decoded again; no leading <code>#</code>, no whitespace or control characters (use <code>css</code> for such an ID)',
-    'lean_location.declaration': 'fully qualified name, as Lean prints it in the declaration\'s own module',
-    'lean_location.module': 'dotted module name; selects that module\'s source file. Beside a <code>declaration</code>, it decides between declarations that share a name. An end that names a private declaration, which in a <code>module</code> file is any declaration not made public, must give it'
+    'pdf_location.rect': '[x, y, width, height] as fractions of the page, from the top left',
+    'latex_location.label': 'argument of a <code>\\label</code> command',
+    'html_location.css': 'CSS selector',
+    'html_location.fragment': 'an element\'s <code>id</code>',
+    'lean_location.declaration': 'fully qualified name',
+    'lean_location.module': 'dotted module name'
   };
   function keyList(name) {
     var d = DEFS[name], keys = Object.keys(d.properties);
@@ -290,7 +268,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     var item = function (k) {
       var r = refName(d.properties[k]), key = r === 'quote' || r === 'lines' ? link(r, code(k)) : code(k);
       var v = KEYS[name + '.' + k] || '';
-      if (needs && needs.key === k) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? '; beside a ' + code('declaration') + ', narrows it, such as to a proof step' : '');
+      if (needs && needs.key === k) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? '; selects lines of its file, such as a proof step' : '');
       return '<span class="k">' + key + badge(d, k) + '</span><span class="v">' + v + '</span>';
     };
     var rule = d.oneOf ? ['exactly one of', d.oneOf] : d.anyOf ? ['at least one of', d.anyOf] : d.not ? ['at most one of', null] : null;
@@ -312,43 +290,35 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     lrows += lrow(t, code(t), keyList(refName(c.then.properties.location['else'])));
   });
   END.properties.type.enum.forEach(function (t) {
-    if (covered.indexOf(t) < 0) lrows += lrow(t, code(t), '<span class="v">any object, which its producer and consumer define; ' + code('{}') + ' is not the same as no location</span>');
+    if (covered.indexOf(t) < 0) lrows += lrow(t, code(t), '<span class="v">any object</span>');
   });
-  lrows += lrow('profile', 'any, with ' + code('profile'), '<span class="v">names the convention that gives any other fields their meaning; only ' + code('profile') + ' is checked. Use it when no built-in form fits</span>');
+  lrows += lrow('profile', 'any, with ' + code('profile'), '<span class="v">names the convention that gives the other fields their meaning</span>');
   set('location-table', table(['<code>type</code>', 'Fields', 'Example'], lrows));
   var q = DEFS.quote, qopt = Object.keys(q.properties).filter(function (k) { return !badge(q, k); });
   set('quote', 'A ' + code('quote') + ' is an object with ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) + ', and ' +
-    list(qopt.map(code)) + ', which may be empty: the text just before and after the match, which narrow it and are not part of the selection. All three are compared as written with the document\'s text, in which each run of whitespace is one space. A PDF quote matches the text of its one page. A quote that matches more than once is ambiguous.');
-  set('lines', code('lines') + ' is ' + code('[start, end]') + ', inclusive, with start ≤ end&dagger;, so ' + code('[n, n]') + ' is line n alone; or ' +
-    code('[n]') + ', the outermost item that starts on line n: in LaTeX, an environment whose <code>\\begin</code> is there; in Lean, a declaration, ' + code('example') + ', ' + code('have') + ', ' + code('calc') + ', ' + code('calc') + ' step or tactic.');
+    list(qopt.map(code)) + ': the text just before and after it.');
+  set('lines', code('lines') + ' is ' + code('[start, end]') + ', inclusive, or ' + code('[n]') + ', the outermost item that starts on line n.');
 
   // 4. Relation. The schema allows any string; these are the spec's recommended values.
-  set('relation-lead', 'Read “subject ' + code('relation') + ' object”. These values are recommended, and any other string is allowed. ' +
-    'Without a relation, an annotation claims only that its sides correspond, not equivalence, proof or review. Every field is its producer\'s claim: validation checks its form, never its truth.');
+  set('relation-lead', 'These values are recommended.');
   var RELATIONS = [
     ['exactMatch', 'The same definition or claim, up to notation and junk values', 'split-declarations.json'],
-    ['closeMatch', 'Nearly the same, with differences a reader should know'],
-    ['broadMatch', 'The object is more general, not only through junk values', 'broad-match.json'],
+    ['closeMatch', 'Nearly the same'],
+    ['broadMatch', 'The object is more general', 'broad-match.json'],
     ['narrowMatch', 'The subject is more general'],
     ['relatedMatch', 'Related in another way, such as a lemma the proof uses', 'pdf-region.jsonl'],
     ['hasPart', 'The object states one part of the subject', 'has-part.json'],
-    ['noMatch', 'Checked absence: the object, usually a whole project at a ' + code('version') + ', was searched and holds no declaration, alone or with others, that would be an ' + code('exactMatch') + ', ' + code('closeMatch') + ' or ' + code('broadMatch') + ' of the subject. It may still hold narrower, partial or related results', 'checked-absence.json']
+    ['noMatch', 'Checked absence: the object, usually a project at a ' + code('version') + ', was searched and holds no counterpart', 'checked-absence.json']
   ];
   set('relation-table', table(['<code>relation</code>', 'Reading', 'Example'], RELATIONS.map(function (r) {
     return '<tr><td class="key">' + code(r[0]) + '</td><td class="main">' + r[1] + '</td>' + exCell(r[2] ? [r[2]] : []) + '</tr>';
   }).join('')));
-  set('relation-note', 'A ' + code('noMatch') + ' object end should have a ' + code('version') + '. A producer that does not know the version it searched writes ' + code('"object": []') + ' instead, with a ' + code('status') + ' such as ' + code('not_formalized') + ', which does not say where anyone looked.');
 
   // 5. Files, with folder defaults and the end template.
   var FILE_ROWS = [
-    ['name.json', 'One annotation, an object.', 'pdf.json'],
-    ['name.jsonl', 'One annotation per nonblank line (' + code('.ndjson') + ' too).', 'latex-several.jsonl'],
-    ['_defaults.json', '<p>Fields shared by its folder and the folders below, merged into each annotation: missing fields are inherited, ' +
-      'objects merge, ' + code('null') + ' removes, other values replace. Nearer files win. The checker validates the merged annotation.</p>' +
-      '<p class="sub">Its ' + code('subject') + ' or ' + code('object') + ' may be an object, an end template: fields the ends on that side share. ' +
-      'It fills each end with no ' + code('uri') + ' of its own, and a ' + code('location') + ' is never merged. ' +
-      'An annotation that leaves the side out gets the template alone, and ' + code('"object": []') + ' stays empty.</p>' +
-      '<p class="sub">Relative references in a defaults file resolve against that file. A tool reading local files looks in every folder up to the root of the file system or, given the companion\'s root folder (' + code('--root') + ' in the checker), up to that folder. One fetching over the web is given the root as a base URL and, given none, applies no defaults.</p>', 'folder-defaults/_defaults.json']
+    ['name.json', 'One annotation.', 'pdf.json'],
+    ['name.jsonl', 'One annotation per line (' + code('.ndjson') + ' too).', 'latex-several.jsonl'],
+    ['_defaults.json', 'Fields shared by its folder and the folders below; nearer files win. Its ' + code('subject') + ' or ' + code('object') + ' may be a template for the ends on that side.', 'folder-defaults/_defaults.json']
   ];
   set('file-table', table(['File', 'Holds', 'Example'], FILE_ROWS.map(function (r) {
     return '<tr><td class="key">' + code(r[0]) + '</td><td class="main">' + r[1] + '</td>' + exCell([r[2]]) + '</tr>';
@@ -405,7 +375,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   Array.prototype.forEach.call(document.querySelectorAll('a[data-example]'), function (a) {
     a.addEventListener('click', function () { show(a.dataset.example); });
   });
-  show(has('split-declarations.json') ? 'split-declarations.json' : FILES[0].path);
+  show(has('pdf.json') ? 'pdf.json' : FILES[0].path);
 })();
 </script>
 </body>
