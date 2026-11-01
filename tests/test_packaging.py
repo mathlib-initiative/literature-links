@@ -189,6 +189,15 @@ class TestEntryPoints(unittest.TestCase):
                 self.assertLessEqual(keys, {key for location in locations for key in location})
         self.assertTrue(any("profile" in end.get("location", {}) for end in ends))
 
+    def test_the_examples_name_mathlib_by_its_release_tag(self):
+        # No tag names the mathlib3 revision, so that end keeps its commit and shows the other form.
+        records = discovery.collect([EXAMPLES]).records
+        versions = {(end["uri"], end["version"]) for record in records for side in ("subject", "object")
+                    for end in record.annotation[side] if end["type"] == "lean" and "version" in end}
+        self.assertEqual(versions, {("https://github.com/leanprover-community/mathlib4", "v4.33.0"),
+                                    ("https://github.com/leanprover-community/mathlib3",
+                                     "65a1391a0106c9204fe45bc73a039f056558cb83")})
+
     def test_a_missing_schema_is_reported_without_a_traceback(self):
         good = FIXTURE / "links.jsonl"
         with tempfile.TemporaryDirectory() as tmp:

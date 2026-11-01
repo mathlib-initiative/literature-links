@@ -42,7 +42,7 @@ examples/companion/latex.json: ok (1 annotation, latex, lean)
   "subject": [ { "type": "latex", "uri": "chapters/groups.tex",
                  "location": { "label": "thm:lagrange" } } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-                "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+                "version": "v4.33.0",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
   "relation": "exactMatch"
 }
@@ -59,7 +59,7 @@ examples/companion/latex.json: ok (1 annotation, latex, lean)
 | End | A document, named by a `type` and a `uri`. A `location` selects part of it, such as a page of a PDF, a label in LaTeX, an element in HTML or a declaration in Lean |
 | [`relation`](docs/companion.md#relation) | Optional: how the sides relate. The recommended values are `exactMatch`, `closeMatch`, `broadMatch`, `narrowMatch`, `relatedMatch`, `hasPart` and `noMatch` |
 | Empty `object`, `noMatch` | An empty `object` records a passage nobody has linked. `noMatch` records that someone searched a project and found no counterpart |
-| [`version`, `sha256`, `citation`](docs/companion.md#ends) | Optional: the document's revision, such as a Git commit; a hash of the file; and a description of the work |
+| [`version`, `sha256`, `citation`](docs/companion.md#ends) | Optional: the document's revision, such as a release tag or a Git commit; a hash of the file; and a description of the work |
 | `status`, `kind` | Optional: how far the subject is formalized, and what it is |
 | [Folder defaults](docs/companion.md#folder-defaults) | A `_defaults.json` file holds the fields shared by every annotation in its folder and the folders below it |
 
