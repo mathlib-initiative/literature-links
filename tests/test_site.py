@@ -135,8 +135,8 @@ class TestTheMap(unittest.TestCase):
         end = self.schema["$defs"]["end"]["properties"]
         known = {key for owner in (self.schema, *self.schema["$defs"].values()) for key in owner.get("properties", ())}
         known |= {*end["location"]["properties"], *end["type"]["enum"], *re.findall(r"(?m)^\s*\['(\w+)',", self.relations)}
-        # Values the wording gives as examples, Lean's keywords and the names of registries.
-        known |= {"arxiv", "calc", "example", "have", "not_formalized", "null", "wikidata"}
+        # The names of registries, which the wording gives as examples.
+        known |= {"arxiv", "wikidata"}
         for name in re.findall(r"code\('(\$?\w+)'\)", self.template):
             with self.subTest(cited=name):
                 self.assertIn(name, known)
@@ -163,7 +163,7 @@ class TestTheMap(unittest.TestCase):
 
     def test_the_script_can_read_the_schema(self):
         # The script names these definitions, and shows a location's rules in only these forms.
-        for name in ("citation", "extensions", "identifiers", "reference", "sha256"):
+        for name in ("citation", "extensions", "identifiers", "sha256"):
             self.assertIn(name, self.schema["$defs"])
         for name, definition in self.schema["$defs"].items():
             if name.endswith("_location"):
