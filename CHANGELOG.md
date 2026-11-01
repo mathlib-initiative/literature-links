@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- A `lean` end's `version` may be a release tag, such as Mathlib's `v4.33.0`, as
+  well as the full commit. It still should not be a branch. Annotations that give
+  a commit stay valid, and the schema and the checker do not change. The examples
+  name Mathlib by its tag.
+
 ## 1.0.0 (2026-10-30)
 
 An annotation relates a `subject` and an `object`, each a list of ends, such as

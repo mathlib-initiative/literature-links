@@ -9,7 +9,7 @@ relate.
 {
   "subject": [ { "type": "html", "uri": "notes/groups.html", "location": { "fragment": "lagrange" } } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-                "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+                "version": "v4.33.0",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ]
 }
 ```
@@ -67,7 +67,7 @@ Each end is an object:
 | `type` | Yes | `pdf`, `latex`, `html`, `lean` or `generic` |
 | `uri` | Yes | A [reference](#references) to the document, usually the companion's copy; for `lean`, the project |
 | `location` | No | An object selecting part of the document ([Location](#location)) |
-| `version` | No | Which [revision](#ends) of the document, such as a Git commit |
+| `version` | No | Which [revision](#ends) of the document, such as a release tag or a Git commit |
 | `sha256` | No | The SHA-256 of the file that `uri` names |
 | `citation` | No | A [CSL-JSON item](#ends) describing the work |
 | `identifiers` | No | Identifiers in other registries, by name |
@@ -153,7 +153,7 @@ that does not know the version it searched writes `"object": []` instead, with
 a `status` such as `not_formalized`.
 
 The first annotation below leaves a remark unlinked. The second says that
-Mathlib at that commit was searched and holds no counterpart to it:
+Mathlib at that version was searched and holds no counterpart to it:
 
 ```json
 { "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 8 }, "title": "Remark 1.5" } ],
@@ -163,7 +163,7 @@ Mathlib at that commit was searched and holds no counterpart to it:
 ```json
 { "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 8 }, "title": "Remark 1.5" } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-                "version": "db584cd6d46c92f209a44c0f1c829460d327499d" } ],
+                "version": "v4.33.0" } ],
   "relation": "noMatch" }
 ```
 
@@ -190,8 +190,8 @@ coincide.
 ## Ends
 
 `uri` says where a copy of the document is, and that copy may be local.
-`version` names the revision: a Git commit, a Wikipedia `oldid` or an arXiv
-version. So an end can open the companion's own copy and still name the
+`version` names the revision: a Git tag or commit, a Wikipedia `oldid` or an
+arXiv version. So an end can open the companion's own copy and still name the
 revision, and a Wikipedia article keeps its readable URL with the `oldid`
 beside it:
 
@@ -341,9 +341,11 @@ optionally with `lines`.
 A `lean` end's `uri` is the project, so without a location the end is the whole
 project. The `uri` is a repository URL, which is recommended, or a path to a
 checkout, such as `..` when the annotations live in a folder of the project.
-The end's `version` is the commit and should be given in full, as a Git object
-ID of 40 lowercase hex digits, or 64 in a SHA-256 repository, not as a branch
-or a tag.
+The end's `version` is a release tag, such as Mathlib's `v4.33.0`, or the full
+commit, as a Git object ID of 40 lowercase hex digits, or 64 in a SHA-256
+repository. It should not be a branch, which moves. A tag reads better, but it
+can be moved and not every revision has one, so a producer that needs the exact
+tree gives the commit.
 
 `declaration` is the fully qualified name of a declaration, as Lean prints it
 in the declaration's own module. Validation does not parse it. A name survives
@@ -374,7 +376,7 @@ proof step; an annotation that means the whole declaration leaves `lines` out.
 Lines outside the declaration, or in a module that does not hold it, are
 unresolved.
 
-At the commit below, `Subgroup.card_dvd_of_injective` proves its claim with a
+At the version below, `Subgroup.card_dvd_of_injective` proves its claim with a
 `calc` alone on line 81, so its first step starts on line 82. This annotation
 links the first step of a proof in the notes to that step:
 
@@ -383,7 +385,7 @@ links the first step of a proof in the notes to that step:
   "subject": [ { "type": "pdf", "uri": "notes.pdf", "location": { "page": 9, "rect": [0.12, 0.4, 0.76, 0.06] },
                  "title": "Proof of Corollary 1.7, first step" } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-                "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+                "version": "v4.33.0",
                 "location": { "declaration": "Subgroup.card_dvd_of_injective",
                               "module": "Mathlib.GroupTheory.Coset.Card", "lines": [82] } } ],
   "relation": "exactMatch",
@@ -495,7 +497,7 @@ With this file as `chapter-1/_defaults.json`:
 { "subject": { "type": "pdf", "uri": "../notes.pdf",
                "sha256": "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f" },
   "object": { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-              "version": "db584cd6d46c92f209a44c0f1c829460d327499d" } }
+              "version": "v4.33.0" } }
 ```
 
 this annotation in `chapter-1/`, whose statement on page 7 is corrected by an
@@ -517,7 +519,7 @@ reads as:
                  "location": { "page": 7 }, "title": "Theorem 1.4 (Lagrange)" },
                { "type": "pdf", "uri": "../errata.pdf", "location": { "page": 1 } } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
-                "version": "db584cd6d46c92f209a44c0f1c829460d327499d",
+                "version": "v4.33.0",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" },
                 "junk": [ "Nat.card of an infinite type is 0" ] } ],
   "relation": "exactMatch" }
@@ -527,7 +529,7 @@ The errata end names its own file, so it does not take the hash of `notes.pdf`.
 An annotation in the same folder that writes
 `{ "subject": [ { "location": { "page": 9 } } ], "relation": "noMatch" }`
 leaves `object` out, so its object is the template alone: a checked absence in
-Mathlib at that commit. One that writes `"object": []` instead is merely
+Mathlib at that version. One that writes `"object": []` instead is merely
 unlinked. Below a template that selects a declaration or gives a `role`, a
 checked absence writes its object end in full: `type`, `uri` and `version`.
 
