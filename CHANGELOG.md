@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 (2026-11-01)
 
 - A `lean` end's `version` may be a release tag, such as Mathlib's `v4.33.0`, as
   well as the full commit. It still should not be a branch. Annotations that give

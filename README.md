@@ -72,7 +72,7 @@ The package is not on PyPI. Install it from a clone, as in [Try it](#try-it), or
 at a release tag:
 
 ```sh
-python -m pip install "git+https://github.com/mathlib-initiative/literature-links@v1.0.0"
+python -m pip install "git+https://github.com/mathlib-initiative/literature-links@v1.0.1"
 ```
 
 `literature-links validate FILE...` checks the files it is given, and
