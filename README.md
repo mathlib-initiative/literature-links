@@ -37,8 +37,9 @@ examples/companion/latex.json: ok (1 annotation, latex, lean)
 
 ```json
 {
-  "subject": [ { "type": "latex", "uri": "chapters/groups.tex",
-                 "location": { "label": "thm:lagrange" } } ],
+  "subject": [ { "type": "html", "uri": "https://en.wikipedia.org/wiki/Lagrange's_theorem_(group_theory)",
+                 "version": "1382438659",
+                 "location": { "quote": { "exact": "every subgroup divides the order of the whole group" } } } ],
   "object": [ { "type": "lean", "uri": "https://github.com/leanprover-community/mathlib4",
                 "version": "v4.33.0",
                 "location": { "declaration": "Subgroup.card_subgroup_dvd_card" } } ],
@@ -46,8 +47,9 @@ examples/companion/latex.json: ok (1 annotation, latex, lean)
 }
 ```
 
-`exactMatch` says that Mathlib states the theorem labeled `thm:lagrange`, up to
-[junk values](docs/companion.md#relation).
+`exactMatch` says that [Mathlib's theorem](https://github.com/leanprover-community/mathlib4/blob/v4.33.0/Mathlib/GroupTheory/Coset/Card.lean#L69)
+states the passage quoted from [that revision of the article](https://en.wikipedia.org/w/index.php?oldid=1382438659),
+up to [junk values](docs/companion.md#relation).
 
 ## Concepts
 
