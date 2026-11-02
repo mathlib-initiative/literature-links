@@ -10,8 +10,7 @@ such as a book passage and a Lean declaration.
 Each record is an *annotation*. It names a passage of informal text like a page in a book, article,
 wiki or LaTeX label, and its formal counterpart, such as a declaration in
 [Mathlib](https://github.com/leanprover-community/mathlib4). This repository holds [its specification](docs/companion.md) and [an offline checker](docs/tools.md),
-and the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/)
-shows every field on one page.
+and the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/).
 
 ## Try it
 
