@@ -62,10 +62,13 @@ def _json_equal(a: Any, b: Any) -> bool:
     return type(a) is type(b) and a == b
 
 
+_IDENTIFIER = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
+
+
 def _child(path: str, key: Any) -> str:
     if isinstance(key, int):
         return f"{path}[{key}]"
-    if re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]*", str(key)):
+    if _IDENTIFIER.fullmatch(str(key)):
         return f"{path}.{key}"
     return f"{path}[{json.dumps(key, ensure_ascii=False)}]"
 
@@ -99,6 +102,7 @@ class Validator:
     def __init__(self, schema: dict[str, Any]) -> None:
         self.root = schema
         self._patterns: dict[str, re.Pattern[str]] = {}
+        self._refs: dict[str, Any] = {}
         self._check_schema(schema, "#")
 
     # -- schema self-check -------------------------------------------------
@@ -134,6 +138,8 @@ class Validator:
         return compiled
 
     def _resolve(self, ref: str) -> Any:
+        if ref in self._refs:
+            return self._refs[ref]
         if not ref.startswith("#/"):
             raise SchemaError(f"only local $ref is supported, got {ref!r}")
         node: Any = self.root
@@ -142,6 +148,7 @@ class Validator:
             if not isinstance(node, dict) or part not in node:
                 raise SchemaError(f"$ref {ref!r} resolves nowhere")
             node = node[part]
+        self._refs[ref] = node
         return node
 
     # -- evaluation --------------------------------------------------------

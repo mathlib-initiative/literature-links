@@ -91,6 +91,10 @@ class _Defaults:
         self.root = root
         self.files: dict[Path, Any] = {}
         self.walks: dict[Path, Sequence[Path] | None] = {}
+        # Files in one folder share its walk to the root, its defaults files and their merge.
+        self.folder_walks: dict[Path, Sequence[Path] | None] = {}
+        self.chains: dict[Path, list[tuple[Path, dict[str, Any]]] | None] = {}
+        self.merged: dict[Path, dict[str, Any]] = {}
 
     def read(self, path: Path) -> Any:
         """Return the object in ``path``, None when there is no file, or _BROKEN."""
@@ -140,13 +144,15 @@ class _Defaults:
         if self.root is None:
             return path.parents
         if path not in self.walks:
-            self.walks[path] = None
-            for depth, folder in enumerate(path.parents):
-                # By identity too: on a case-insensitive file system, Companion and companion are one folder.
-                if folder == self.root or _same(folder, self.root):
-                    self.walks[path] = path.parents[:depth + 1]
-                    break
-            else:
+            if path.parent not in self.folder_walks:
+                self.folder_walks[path.parent] = None
+                for depth, folder in enumerate(path.parents):
+                    # By identity too: on a case-insensitive file system, Companion and companion are one folder.
+                    if folder == self.root or _same(folder, self.root):
+                        self.folder_walks[path.parent] = path.parents[:depth + 1]
+                        break
+            self.walks[path] = self.folder_walks[path.parent]
+            if self.walks[path] is None:
                 self.problems.append(Problem("PATH", str(path), f"the file is outside the root {self.root}"))
         return self.walks[path]
 
@@ -156,24 +162,33 @@ class _Defaults:
         folders = self.folders(path)
         if folders is None:
             return None
-        found = []
-        for folder in folders:
-            value = self.read(folder / DEFAULTS)
-            if value is _BROKEN:
-                return None
-            if value is not None:
-                found.append((folder / DEFAULTS, value))
-        return found[::-1]
+        if path.parent not in self.chains:
+            found: list[tuple[Path, dict[str, Any]]] | None = []
+            for folder in folders:
+                value = self.read(folder / DEFAULTS)
+                if value is _BROKEN:
+                    found = None
+                    break
+                if value is not None:
+                    found.append((folder / DEFAULTS, value))
+            self.chains[path.parent] = None if found is None else found[::-1]
+        return self.chains[path.parent]
 
 
-def _apply(annotation: dict[str, Any], path: Path,
-           chain: list[tuple[Path, dict[str, Any]]]) -> dict[str, Any]:
+def _apply(annotation: dict[str, Any], path: Path, chain: list[tuple[Path, dict[str, Any]]],
+           cache: dict[Path, dict[str, Any]] | None = None) -> dict[str, Any]:
+    """Merge ``annotation`` over the defaults in ``chain``; ``cache`` keeps each folder's merged defaults."""
     if not chain:
         return annotation
-    merged: dict[str, Any] = {}
-    for file, value in chain:
-        depth = len(path.parent.relative_to(file.parent).parts)
-        merged = companion.merge(merged, companion.rebase(value, "../" * depth + DEFAULTS), defaults=True)
+    merged = None if cache is None else cache.get(path.parent)
+    if merged is None:
+        merged = {}
+        for file, value in chain:
+            depth = len(path.parent.relative_to(file.parent).parts)
+            merged = companion.merge(merged, companion.rebase(value, "../" * depth + DEFAULTS), defaults=True)
+        if cache is not None:
+            cache[path.parent] = merged
+    # merge copies what it inherits, so a cached value is never changed.
     return companion.merge(merged, annotation)
 
 
@@ -249,7 +264,7 @@ def _read(path: Path, result: Collection, defaults: _Defaults) -> None:
         if chain is None:
             continue
         try:
-            value = _apply(value, path, chain)
+            value = _apply(value, path, chain, defaults.merged)
         except RecursionError:
             result.problems.append(Problem("JSON", origin, _TOO_DEEP))
             continue
