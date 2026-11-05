@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.2 (2026-11-05)
 
 - `literature-links scan` and `discovery.collect` take about 40% less time on
   large companions: 44,652 annotations read in 13.7 s instead of 23.7 s, one file
