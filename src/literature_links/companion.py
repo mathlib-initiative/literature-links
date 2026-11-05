@@ -24,6 +24,9 @@ SCHEMA_PATH = (_HERE.parent.parent / "schema" / "companion.schema.json"
 # The two sides of an annotation, each a list of ends.
 _SIDES = ("subject", "object")
 
+# An unpaired surrogate. In a str, every surrogate is unpaired: a JSON escape pair decodes to one code point.
+_SURROGATE = re.compile("[\ud800-\udfff]")
+
 
 class LoadError(ValueError):
     """The input is not an unambiguous, finite JSON value."""
@@ -55,14 +58,55 @@ def _child(path: str, key: str | int) -> str:
     return f"{path}[{json.dumps(key)}]"
 
 
+# Deeper values are left to _json_problems' walk, so its recursion limit alone decides how deep a value may nest.
+_PLAIN_DEPTH = 100
+
+
+def _plain_json(value: Any) -> bool:
+    """Whether :func:`_json_problems` finds nothing in ``value``, decided without building paths."""
+    active: set[int] = set()
+
+    def plain(node: Any, depth: int) -> bool:
+        if isinstance(node, str):
+            return _SURROGATE.search(node) is None
+        if node is None or isinstance(node, (bool, int)):
+            return True
+        if isinstance(node, float):
+            return math.isfinite(node)
+        identity = id(node)
+        if not isinstance(node, (dict, list)) or identity in active or depth == _PLAIN_DEPTH:
+            return False
+        active.add(identity)
+        try:
+            if isinstance(node, dict):
+                for key, item in node.items():
+                    if not (isinstance(key, str) and _SURROGATE.search(key) is None and plain(item, depth + 1)):
+                        return False
+            else:
+                for item in node:
+                    if not plain(item, depth + 1):
+                        return False
+            return True
+        finally:
+            active.remove(identity)
+
+    try:
+        return plain(value, 0)
+    except RecursionError:
+        return False
+
+
 def _json_problems(value: Any) -> list[Problem]:
     """Reject values JSON cannot represent, even inside opaque payloads."""
+    # Nearly every value is plain JSON; only a value with a problem pays for the paths below.
+    if _plain_json(value):
+        return []
     problems: list[Problem] = []
     active: set[int] = set()
 
     def walk(node: Any, path: str) -> None:
         if isinstance(node, str):
-            if any(0xD800 <= ord(char) <= 0xDFFF for char in node):
+            if _SURROGATE.search(node):
                 problems.append(Problem("JSON", path, "strings must not contain unpaired Unicode surrogates"))
             return
         if node is None or isinstance(node, (bool, int)):

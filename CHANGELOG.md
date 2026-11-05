@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- `literature-links scan` and `discovery.collect` take about 40% less time on
+  large companions: 44,652 annotations read in 13.7 s instead of 23.7 s, one file
+  each, on a GitHub runner. Files in one folder share its walk to the root, its
+  defaults files and their merge. The JSON check finds unpaired surrogates with
+  one regular expression and builds a problem's path only when there is a
+  problem, and the schema checker resolves each `$ref` once. What the tools
+  accept, reject and report does not change.
+
 ## 1.0.1 (2026-11-01)
 
 - A `lean` end's `version` may be a release tag, such as Mathlib's `v4.33.0`, as
