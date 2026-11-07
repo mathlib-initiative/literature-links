@@ -51,6 +51,10 @@ examples/companion/latex.json: ok (1 annotation, latex, lean)
 states the passage quoted from [that revision of the article](https://en.wikipedia.org/w/index.php?oldid=1382438659),
 up to [junk values](docs/companion.md#relation).
 
+A complete example is [the Seifert–van Kampen theorem](https://mathlib-initiative.github.io/seifert-van-kampen-tauceti/pdf-overlay/viewer/index.html).
+Its [PDF](https://github.com/mathlib-initiative/seifert-van-kampen-tauceti/releases/download/v1/svk-tauceti.pdf) links definitions and theorems to Lean declarations;
+the [annotations](https://github.com/mathlib-initiative/seifert-van-kampen-tauceti/tree/v1/annotations) can be read by other tools.
+
 ## Concepts
 
 | Concept | Meaning |
