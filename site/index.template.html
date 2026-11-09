@@ -51,6 +51,9 @@ main a:not(.ex), .prov a, footer a, noscript a { text-decoration: underline; }
 main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; min-width: 0; }
 section, tr[id] { scroll-margin-top: 12px; }
 .lead { margin-bottom: 12px; max-width: none; }
+.vocabulary { margin-top: 12px; scroll-margin-top: 12px; }
+.vocabulary > summary { cursor: pointer; color: var(--accent); }
+.vocabulary[open] > summary { margin-bottom: 12px; }
 .note { margin-top: 10px; font-size: 14px; scroll-margin-top: 12px; max-width: none; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -121,7 +124,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
       <a href="#record">The annotation</a>
       <a href="#ends">Ends</a>
       <a href="#locations">Locations</a>
-      <a href="#relation">Relation</a>
       <a href="#files">Files</a>
       <a href="#examples">Examples</a>
     </nav>
@@ -130,6 +132,11 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
         <h2>The annotation</h2>
         <div class="panel" id="record-table"></div>
         <p class="note" id="record-note"></p>
+        <details class="vocabulary" id="relation">
+          <summary>Suggested relation values</summary>
+          <p class="lead" id="relation-lead"></p>
+          <div class="panel" id="relation-table"></div>
+        </details>
       </section>
       <section id="ends">
         <h2>Ends</h2>
@@ -142,11 +149,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
         <div class="panel" id="location-table"></div>
         <p class="note" id="quote"></p>
         <p class="note" id="lines"></p>
-      </section>
-      <section id="relation">
-        <h2>Relation</h2>
-        <p class="lead" id="relation-lead"></p>
-        <div class="panel" id="relation-table"></div>
       </section>
       <section id="files">
         <h2>Files</h2>
@@ -213,7 +215,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   var SAY = {
     'subject': ', usually the informal side',
     'object': ', the other side; ' + code('[]') + ' leaves the subject unlinked',
-    'relation': 'see ' + link('relation', 'Relation'),
+    'relation': 'any nonempty string describing how the subject relates to the object',
     'end.junk': ': values this end assigns where the other side is undefined, such as ' + code('x / 0 = 0'),
     'status': 'how far the subject is formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code), 'or'),
     'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'proof', 'proof_step'].map(code), 'or'),
@@ -300,8 +302,8 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     list(qopt.map(code)) + ': the text just before and after it.');
   set('lines', code('lines') + ' is ' + code('[start, end]') + ', inclusive, or ' + code('[n]') + ', the outermost item that starts on line n.');
 
-  // 4. Relation. The schema allows any string; these are the spec's recommended values.
-  set('relation-lead', 'These values are recommended.');
+  // Suggested relation vocabulary, collapsed beneath the annotation fields.
+  set('relation-lead', 'These names have shared meanings; other values are allowed.');
   var RELATIONS = [
     ['exactMatch', 'The same definition or claim, up to notation and junk values', 'split-declarations.json'],
     ['closeMatch', 'Nearly the same'],
