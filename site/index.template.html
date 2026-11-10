@@ -54,7 +54,8 @@ section, tr[id] { scroll-margin-top: 12px; }
 .vocabulary { margin-top: 12px; scroll-margin-top: 12px; }
 .vocabulary > summary { cursor: pointer; color: var(--accent); }
 .vocabulary[open] > summary { margin-bottom: 12px; }
-.note { margin-top: 10px; font-size: 14px; scroll-margin-top: 12px; max-width: none; }
+.subheading { margin: 16px 0 8px; }
+.example-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th code { text-transform: none; letter-spacing: 0; font-size: 12px; }
@@ -74,7 +75,7 @@ td.ex { width: 1%; white-space: nowrap; }
 .kl .grp > .lbl { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
 a.ex { display: inline-block; font-family: var(--mono); font-size: 12px; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; background: var(--surface); }
 a.ex:hover { border-color: var(--accent); text-decoration: none; }
-.lead a.ex, .note a.ex { margin-left: 4px; }
+.lead a.ex { margin-left: 4px; }
 @media (max-width: 700px) {
   table.stack, table.stack tbody { display: block; }
   table.stack thead { display: none; }
@@ -91,7 +92,7 @@ a.ex:hover { border-color: var(--accent); text-decoration: none; }
 .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
 .chips button:hover { border-color: var(--accent); }
 .example { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
-.example h3 { font-family: var(--mono); font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+#example-title { margin: 0; color: var(--fg); font-family: var(--mono); overflow-wrap: anywhere; }
 .example h4 { margin: 4px 0 0; }
 pre.json { margin: 0; padding: 14px 16px; background: var(--code-bg); border-radius: 8px; line-height: 1.45; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 pre.json code { background: none; padding: 0; }
@@ -118,7 +119,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     <p class="lede">An annotation records a correspondence between two documents, such as a book passage and a Lean declaration.</p>
     <p class="prov">@@PROVENANCE@@</p>
   </header>
-  <noscript><p class="note">This page needs JavaScript. The <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> has the same fields as text.</p></noscript>
+  <noscript><p class="lead">This page needs JavaScript. The <a href="https://github.com/mathlib-initiative/literature-links/blob/main/docs/companion.md">specification</a> has the same fields as text.</p></noscript>
   <div class="wrap">
     <nav class="toc" aria-label="Sections">
       <a href="#record">The annotation</a>
@@ -131,7 +132,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
       <section id="record">
         <h2>The annotation</h2>
         <div class="panel" id="record-table"></div>
-        <p class="note" id="record-note"></p>
         <details class="vocabulary" id="relation">
           <summary>Suggested relation values</summary>
           <p class="lead" id="relation-lead"></p>
@@ -142,13 +142,20 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
         <h2>Ends</h2>
         <p class="lead" id="ends-lead"></p>
         <div class="panel" id="end-table"></div>
-        <p class="note" id="end-note"></p>
       </section>
       <section id="locations">
         <h2>Locations</h2>
         <div class="panel" id="location-table"></div>
-        <p class="note" id="quote"></p>
-        <p class="note" id="lines"></p>
+        <h3 class="subheading">Shared location fields</h3>
+        <div class="panel">
+          <table class="stack">
+            <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+            <tbody>
+              <tr id="quote"><td class="key"><code>quote</code></td><td class="val main" id="quote-value"></td></tr>
+              <tr id="lines"><td class="key"><code>lines</code></td><td class="val main" id="lines-value"></td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
       <section id="files">
         <h2>Files</h2>
@@ -156,10 +163,18 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
       </section>
       <section id="examples">
         <h2>Examples</h2>
-        <p class="note">Read <a href="https://mathlib-initiative.github.io/seifert-van-kampen-tauceti/pdf-overlay/viewer/index.html">the Seifert–van Kampen theorem beside its Lean declarations</a>, or browse its <a href="https://github.com/mathlib-initiative/seifert-van-kampen-tauceti/tree/v1/annotations">annotations</a>.</p>
+        <article class="example">
+          <h3>Seifert–van Kampen in TauCeti</h3>
+          <p>The annotated PDF links statements and individual proof steps to their Lean counterparts.</p>
+          <p class="example-links">
+            <a href="https://mathlib-initiative.github.io/seifert-van-kampen-tauceti/">Open the annotated PDF</a>
+            <a href="https://github.com/mathlib-initiative/seifert-van-kampen-tauceti/tree/main/annotations">Browse the annotation files</a>
+          </p>
+        </article>
+        <h3 class="subheading">Sample annotation files</h3>
         <div class="chips" id="example-chips" role="group" aria-label="Example files"></div>
         <div class="example">
-          <h3 id="example-title"></h3>
+          <h4 id="example-title"></h4>
           <pre class="json"><code id="example-json"></code></pre>
           <div id="example-merged"></div>
         </div>
@@ -219,39 +234,36 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     'end.junk': ': values this end assigns where the other side is undefined, such as ' + code('x / 0 = 0'),
     'status': 'how far the subject is formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code), 'or'),
     'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'proof', 'proof_step'].map(code), 'or'),
-    'id': 'names the subject: annotations about one subject should share it',
+    'id': 'name shared by annotations about the same subject',
+    'note': 'free-text note',
+    '$schema': 'schema reference for editor tooling',
     'end.uri': 'the document; for ' + code('lean') + ', the project',
     'end.location': 'the part of the document: see ' + link('locations', 'Locations') + '. Without it, the whole document',
     'end.version': 'the revision, such as a release tag or a Git commit',
     'end.sha256': ': the SHA-256 of the file that ' + code('uri') + ' names',
-    'end.identifiers': ', by registry, such as ' + code('wikidata') + ' or ' + code('arxiv')
+    'end.identifiers': ', by registry, such as ' + code('wikidata') + ' or ' + code('arxiv'),
+    'end.title': 'readable name for the selected content',
+    'end.role': 'how the application uses this end'
   };
   function value(n, at) {
     var s = shape(n), say = SAY[at] || '';
     return say.charAt(0) === ',' || say.charAt(0) === ':' ? (s ? s + say : '') : s && say ? s + '; ' + say : s || say;
   }
-  function keyTable(obj, prefix, first, keep) {
-    var rows = '', plain = [];
-    inOrder(first, Object.keys(obj.properties)).forEach(function (k) {
-      var v = keep.indexOf(k) < 0 ? '' : value(obj.properties[k], prefix + k);
-      if (!v && !badge(obj, k)) { plain.push(k); return; }
-      rows += '<tr id="key-' + esc(prefix + k).replace(/\./g, '-') + '"><td class="key">' + code(k) + badge(obj, k) + '</td><td class="val main">' + v + '</td></tr>';
-    });
-    return { html: table(['Field', 'Value'], rows), plain: plain };
+  function keyTable(obj, prefix, first) {
+    var rows = inOrder(first, Object.keys(obj.properties)).map(function (k) {
+      var id = esc(prefix + k).replace(/\./g, '-');
+      var v = value(obj.properties[k], prefix + k);
+      return '<tr id="key-' + id + '"><td class="key">' + code(k) + badge(obj, k) + '</td><td class="val main">' + v + '</td></tr>';
+    }).join('');
+    return table(['Field', 'Value'], rows);
   }
 
   // 1. The annotation.
-  var rec = keyTable(SCHEMA, '', ['subject', 'object', 'relation', 'status', 'kind', 'id', 'note', 'extensions', '$schema'],
-    ['subject', 'object', 'relation', 'status', 'kind', 'id', 'extensions']);
-  set('record-table', rec.html);
-  set('record-note', 'An annotation may also hold ' + list(rec.plain.map(code)) + '.');
+  set('record-table', keyTable(SCHEMA, '', ['subject', 'object', 'relation', 'status', 'kind', 'id', 'note', 'extensions', '$schema']));
 
-  // 2. Ends. Extensions are described once, on the annotation.
-  set('ends-lead', 'An end is a document or part of one. A theorem that runs over a page break is one subject with two ends, taken together.' + exLink('page-split.json'));
-  var end = keyTable(END, 'end.', ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk', 'title', 'role', 'extensions'],
-    ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk']);
-  set('end-table', end.html);
-  set('end-note', 'An end may also hold ' + list(end.plain.map(function (k) { return k === 'extensions' ? link('key-extensions', code(k)) : k === 'role' ? code(k) + ' (such as ' + list(['states', 'uses'].map(code), 'or') + ')' : code(k); })) + '.');
+  // 2. Ends.
+  set('ends-lead', 'An end identifies a document or a part of one. Use multiple ends for a passage split across pages.' + exLink('page-split.json'));
+  set('end-table', keyTable(END, 'end.', ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk', 'title', 'role', 'extensions']));
 
   // 3. Locations, from the end's allOf: fields, value shapes, and the one-of rules.
   var EXAMPLES = { pdf: ['pdf-quote.json'], latex: ['latex-several.jsonl'], html: ['html-quote.json'], lean: ['proof-step.json', 'lean-module-lines.json'],
@@ -298,9 +310,9 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   lrows += lrow('profile', 'any, with ' + code('profile'), '<span class="v">names the convention that gives the other fields their meaning</span>');
   set('location-table', table(['<code>type</code>', 'Fields', 'Example'], lrows));
   var q = DEFS.quote, qopt = Object.keys(q.properties).filter(function (k) { return !badge(q, k); });
-  set('quote', 'A ' + code('quote') + ' is an object with ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) + ', and ' +
-    list(qopt.map(code)) + ': the text just before and after it.');
-  set('lines', code('lines') + ' is ' + code('[start, end]') + ', inclusive, or ' + code('[n]') + ', the outermost item that starts on line n.');
+  set('quote-value', 'Object with the text to match in ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) +
+    ' and optional surrounding text in ' + list(qopt.map(code)) + '.');
+  set('lines-value', code('[start, end]') + ' selects an inclusive range. ' + code('[n]') + ' selects the outermost item that starts on line n.');
 
   // Suggested relation vocabulary, collapsed beneath the annotation fields.
   set('relation-lead', 'These names have shared meanings; other values are allowed.');
