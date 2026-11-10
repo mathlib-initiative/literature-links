@@ -12,27 +12,6 @@ wiki or LaTeX label, and its formal counterpart, such as a declaration in
 [Mathlib](https://github.com/leanprover-community/mathlib4). This repository holds [its specification](docs/companion.md) and [an offline checker](docs/tools.md),
 and the [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/).
 
-## Try it
-
-The checker needs Python 3.11 or newer.
-
-```sh
-git clone https://github.com/mathlib-initiative/literature-links &&
-cd literature-links &&
-python3 -m venv .venv &&
-. .venv/bin/activate &&
-python -m pip install . &&
-literature-links validate examples/companion/latex.json &&
-literature-links scan examples/companion/folder-defaults
-```
-
-After pip's output, the last two commands print:
-
-```text
-examples/companion/latex.json: ok (1 annotation, latex, lean)
-3 annotations from 3 files; 0 problems
-```
-
 ## Example
 
 ```json
@@ -69,6 +48,27 @@ the [annotations](https://github.com/mathlib-initiative/seifert-van-kampen-tauce
 
 Validation checks structure, PDF rectangles and line order. It does not resolve
 locations, fetch resources or check mathematics.
+
+## Try it
+
+The checker needs Python 3.11 or newer.
+
+```sh
+git clone https://github.com/mathlib-initiative/literature-links &&
+cd literature-links &&
+python3 -m venv .venv &&
+. .venv/bin/activate &&
+python -m pip install . &&
+literature-links validate examples/companion/latex.json &&
+literature-links scan examples/companion/folder-defaults
+```
+
+After pip's output, the last two commands print:
+
+```text
+examples/companion/latex.json: ok (1 annotation, latex, lean)
+3 annotations from 3 files; 0 problems
+```
 
 ## Install and use
 
