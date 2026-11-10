@@ -169,6 +169,28 @@
                   "$ref": "#/$defs/latex_location"
                 }
               }
+            },
+            "if": {
+              "properties": {
+                "location": {
+                  "required": [
+                    "bytes"
+                  ],
+                  "not": {
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "location"
+              ]
+            },
+            "then": {
+              "required": [
+                "sha256"
+              ]
             }
           }
         },
@@ -221,6 +243,28 @@
                   "$ref": "#/$defs/lean_location"
                 }
               }
+            },
+            "if": {
+              "properties": {
+                "location": {
+                  "required": [
+                    "bytes"
+                  ],
+                  "not": {
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "location"
+              ]
+            },
+            "then": {
+              "required": [
+                "version"
+              ]
             }
           }
         }
@@ -266,6 +310,9 @@
         },
         "lines": {
           "$ref": "#/$defs/lines"
+        },
+        "bytes": {
+          "$ref": "#/$defs/bytes"
         }
       },
       "additionalProperties": false,
@@ -278,6 +325,11 @@
         {
           "required": [
             "lines"
+          ]
+        },
+        {
+          "required": [
+            "bytes"
           ]
         }
       ]
@@ -327,6 +379,9 @@
         },
         "lines": {
           "$ref": "#/$defs/lines"
+        },
+        "bytes": {
+          "$ref": "#/$defs/bytes"
         }
       },
       "additionalProperties": false,
@@ -343,14 +398,29 @@
         }
       ],
       "if": {
-        "required": [
-          "lines"
+        "anyOf": [
+          {
+            "required": [
+              "lines"
+            ]
+          },
+          {
+            "required": [
+              "bytes"
+            ]
+          }
         ]
       },
       "then": {
         "required": [
           "module"
-        ]
+        ],
+        "not": {
+          "required": [
+            "lines",
+            "bytes"
+          ]
+        }
       }
     },
     "quote": {
@@ -379,6 +449,15 @@
       "items": {
         "type": "integer",
         "minimum": 1
+      }
+    },
+    "bytes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "integer",
+        "minimum": 0
       }
     },
     "sha256": {

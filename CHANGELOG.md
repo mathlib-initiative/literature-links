@@ -4,6 +4,13 @@
 
 - The specification moved from `docs/companion.md` to `docs/spec.md`. The old
   path now only links to the new one.
+- A `latex` or `lean` location may give `bytes`, `[start, end]`, which selects
+  the bytes from offset start up to, not including, offset end, counting from
+  0. It selects part of a line, such as one hypothesis, where `label` and
+  `lines` select the whole statement. A `latex` end with `bytes` must give
+  `sha256`, and a `lean` end must give `version`; in Lean, `bytes` needs
+  `module` and excludes `lines`. The new `BYTES` problem says that a range
+  ends at or before its start. Annotations valid under 1.0 stay valid.
 
 ## 1.0.2 (2026-11-05)
 

@@ -18,7 +18,7 @@ Without a `relation`, an annotation claims only that its sides correspond, not
 equivalence, proof or review. No annotation claims that its ends exist.
 
 The [JSON Schema](../schema/companion.schema.json) gives the structure of an
-annotation, [Validation](#validation) adds two checks, and [tools.md](tools.md)
+annotation, [Validation](#validation) adds three checks, and [tools.md](tools.md)
 documents the checker and the command line. The format is versioned by release,
 and annotations have no version field. Annotations valid under 1.x stay valid
 in later 1.x; a breaking change bumps the major version.
@@ -285,7 +285,8 @@ application's concern.
 
 ### LaTeX
 
-Use exactly one of `{ "label": "thm:lagrange" }` or `{ "lines": [12, 18] }`.
+Use exactly one of `{ "label": "thm:lagrange" }`, `{ "lines": [12, 18] }` or
+`bytes`, a [byte range](#bytes) that also needs the end's `sha256`.
 
 `label` is the literal argument of a `\label` command. It is looked up in the
 document rooted at the end's `uri` and in the files it reads with `\input` and
@@ -295,7 +296,7 @@ generated labels are the application's concern. Every path in an `\input` or
 there. So a chapter in a subfolder does not find the files it reads by paths
 from the main file's folder; for a label in one of them, give the main file, or
 the file that holds the label, as `uri`. `lines` selects [lines](#lines) of the
-file at `uri`.
+file at `uri`, and `bytes` selects a byte range of it.
 
 ### HTML
 
@@ -335,8 +336,9 @@ U+2028–2029, U+202F, U+205F and U+3000.
 ### Lean
 
 `{ "declaration": "Subgroup.card_subgroup_dvd_card" }`, optionally with
-`module` and `lines`, or `{ "module": "Mathlib.GroupTheory.Coset.Card" }`,
-optionally with `lines`.
+`module` and one of `lines` or `bytes`, or
+`{ "module": "Mathlib.GroupTheory.Coset.Card" }`, optionally with one of
+`lines` or `bytes`.
 
 A `lean` end's `uri` is the project, so without a location the end is the whole
 project. The `uri` is a repository URL, which is recommended, or a path to a
@@ -393,6 +395,12 @@ links the first step of a proof in the notes to that step:
 }
 ```
 
+`bytes` requires `module`, excludes `lines`, and selects a [byte range](#bytes)
+of the module's file. Like `lines`, beside a declaration it narrows it, and a
+range outside the declaration is unresolved. An end whose location gives
+`bytes` must give a `version`, and should give the full commit, since a tag
+can be moved.
+
 ### Lines
 
 `lines` in a LaTeX or Lean location is `[start, end]` or `[n]`, positive
@@ -406,6 +414,35 @@ tactic sequence, such as the body of a `by`, with everything nested in it, so a
 whole; to select that step alone, give its lines as `[start, end]`. Lines count
 from 1, and the bytes CRLF, CR and LF each end a line, so the count is the same
 whether the file is UTF-8, Latin-1 or another ASCII-compatible encoding.
+
+### Bytes
+
+`bytes` in a LaTeX or Lean location is `[start, end]`, two integers with
+0 ≤ start < end. It selects the bytes of the file from offset start up to, but
+not including, offset end, counting from 0, so the range holds end − start
+bytes and is never empty. These are the offsets that editors, Git and parsers
+report, which is why `bytes` counts differently from `lines`. In a UTF-8 file,
+both offsets fall on character boundaries; a range that starts or ends inside a
+character is unresolved.
+
+A byte range selects part of a line, such as one hypothesis of a theorem or
+one clause of a definition, where a `label` or `lines` would select the whole
+statement. A `quote` cannot do this reliably, since a short part such as
+`n ≥ 1` often occurs more than once, and a quote that matches twice is
+ambiguous.
+
+A byte range goes stale with any edit to its file, so it is only meaningful in
+a pinned revision: a `latex` end with `bytes` must give `sha256`, and a `lean`
+end must give `version`. A consumer that finds other bytes at `uri` resolves
+the range in the revision the end names or reports it unresolved, as for any
+[end](#ends). This end selects the hypothesis on bytes 1544 to 1566 of a
+pinned chapter:
+
+```json
+{ "type": "latex", "uri": "chapters/walks.tex",
+  "sha256": "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f",
+  "location": { "bytes": [1544, 1566] } }
+```
 
 ### Generic
 
@@ -564,10 +601,10 @@ annotations below it are not read.
 
 ## Validation
 
-Validation checks the JSON rules below, the JSON Schema, and two things the
+Validation checks the JSON rules below, the JSON Schema, and three things the
 schema cannot express, in each end: a PDF `rect` has positive size and fits the
-page, and `lines` end no earlier than they start. Neither of the two applies to
-a location with a `profile`. Validation never resolves locations, fetches
+page, `lines` end no earlier than they start, and `bytes` end after they start.
+None of the three applies to a location with a `profile`. Validation never resolves locations, fetches
 resources or judges mathematics. Where the schema asks for an integer, a JSON
 number with no fractional part counts, so `2.0` is a valid `page`, as in JSON
 Schema.
