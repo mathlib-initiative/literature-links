@@ -24,7 +24,7 @@ to counterparts such as Lean declarations. Each annotation records the
 
 `exactMatch` says that [Mathlib's theorem](https://github.com/leanprover-community/mathlib4/blob/v4.33.0/Mathlib/GroupTheory/Coset/Card.lean#L69)
 states the passage quoted from [that revision of the article](https://en.wikipedia.org/w/index.php?oldid=1382438659),
-up to [junk values](docs/companion.md#relation).
+up to [junk values](docs/spec.md#relation).
 
 For a worked example, explore the statements and proof steps in the
 [annotated Seifert–van Kampen PDF](https://mathlib-initiative.github.io/seifert-van-kampen-tauceti/)
@@ -64,7 +64,7 @@ python -m pip install "git+https://github.com/mathlib-initiative/literature-link
 ## Documentation
 
 - [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/) and [sample files](examples/companion/)
-- [Format specification](docs/companion.md) and [JSON Schema](schema/companion.schema.json)
+- [Format specification](docs/spec.md) and [JSON Schema](schema/companion.schema.json)
 - [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
 
 Within 1.x, valid annotations stay valid and the public Python API keeps its

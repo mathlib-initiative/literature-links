@@ -214,8 +214,8 @@ class TestEntryPoints(unittest.TestCase):
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "site/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
-#: The section anchors of docs/companion.md. Other repositories may link to them.
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/spec.md", "docs/tools.md")
+#: The section anchors of docs/spec.md. Other repositories may link to them.
 SPEC_ANCHORS = ("literature-links-specification", "terms", "fields", "relation", "unlinked-passages-and-checked-absences",
                 "status-kind-id-and-note", "ends", "location", "pdf", "latex", "html", "lean", "lines", "generic",
                 "extensions", "references", "folder-defaults", "validation", "discovery")
@@ -264,7 +264,7 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                 self.assertEqual(C.validate(C.loads(block)), [])
 
     def test_the_specification_examples_are_valid(self):
-        spec = (ROOT / "docs" / "companion.md").read_text(encoding="utf-8")
+        spec = (ROOT / "docs" / "spec.md").read_text(encoding="utf-8")
         # A block holds an annotation, an end or a "location" member, or belongs to the folder defaults
         # example: a defaults file, an annotation written beside it, and that annotation as read.
         blocks = [C.loads(block if block.startswith("{") else "{" + block + "}")
@@ -349,15 +349,15 @@ class TestTheDocsCiteWhatIsHere(unittest.TestCase):
                                       f"{name} links to a missing heading: {link}")
 
     def test_the_specification_and_the_tools_link_both_ways(self):
-        spec, tools = ((ROOT / "docs" / name).read_text(encoding="utf-8") for name in ("companion.md", "tools.md"))
+        spec, tools = ((ROOT / "docs" / name).read_text(encoding="utf-8") for name in ("spec.md", "tools.md"))
         self.assertIn("](tools.md", spec)
-        self.assertIn("](companion.md", tools)
+        self.assertIn("](spec.md", tools)
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("](docs/companion.md)", readme)
+        self.assertIn("](docs/spec.md)", readme)
         self.assertIn("](docs/tools.md)", readme)
 
     def test_the_specification_keeps_its_anchors(self):
-        found = anchors((ROOT / "docs" / "companion.md").read_text(encoding="utf-8"))
+        found = anchors((ROOT / "docs" / "spec.md").read_text(encoding="utf-8"))
         for anchor in SPEC_ANCHORS:
             with self.subTest(anchor=anchor):
                 self.assertIn(anchor, found)

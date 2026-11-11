@@ -142,7 +142,7 @@ class TestTheMap(unittest.TestCase):
                 self.assertIn(name, known)
 
     def test_the_relation_table_is_the_specifications(self):
-        spec = (ROOT / "docs" / "companion.md").read_text(encoding="utf-8")
+        spec = (ROOT / "docs" / "spec.md").read_text(encoding="utf-8")
         section = re.search(r"(?ms)^## Relation$(.*?)^#", spec)[1]
         self.assertEqual(re.findall(r"(?m)^\s*\['(\w+)',", self.relations),
                          re.findall(r"(?m)^\| `(\w+)` \| (?!Reading)", section))

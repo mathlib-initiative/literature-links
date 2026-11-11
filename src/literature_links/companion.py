@@ -284,7 +284,7 @@ def validate(document: Any) -> list[str]:
 
 
 def merge(inherited: dict[str, Any], written: dict[str, Any], *, defaults: bool = False) -> dict[str, Any]:
-    """Merge ``written`` over ``inherited`` (docs/companion.md, "Folder defaults").
+    """Merge ``written`` over ``inherited`` (docs/spec.md, "Folder defaults").
 
     Objects merge member by member at any depth, and any other written value
     replaces the inherited one. A ``null`` removes the inherited member; where
@@ -358,7 +358,7 @@ def rebase(value: dict[str, Any], base: str) -> dict[str, Any]:
 
     ``base`` is a relative reference to the file that holds ``value``, written
     from the file that will hold the result, such as ``"../_defaults.json"``.
-    Only the references that docs/companion.md lists under "References" change:
+    Only the references that docs/spec.md lists under "References" change:
     ``$schema``, and each end's ``uri`` and ``location.profile``, where a side
     is an end template or a list of ends. ``citation`` and ``extensions`` are
     copied unchanged.

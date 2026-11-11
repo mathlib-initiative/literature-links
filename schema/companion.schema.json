@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/mathlib-initiative/literature-links/v1.0.2/schema/companion.schema.json",
   "title": "Literature Links annotation",
-  "description": "One Literature Links annotation. The specification (docs/companion.md) defines every field.",
+  "description": "One Literature Links annotation. The specification (docs/spec.md) defines every field.",
   "type": "object",
   "properties": {
     "$schema": {

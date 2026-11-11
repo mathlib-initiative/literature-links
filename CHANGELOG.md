@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The specification moved from `docs/companion.md` to `docs/spec.md`. The old
+  path now only links to the new one.
+
 ## 1.0.2 (2026-11-05)
 
 - `literature-links scan` and `discovery.collect` take about 40% less time on
