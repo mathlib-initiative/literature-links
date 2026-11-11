@@ -298,14 +298,20 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
       if (needs && needs.keys.indexOf(k) >= 0) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? SELECTS[k] || '' : '');
       return '<span class="k">' + key + badge(d, k) + '</span><span class="v">' + v + '</span>';
     };
-    var rule = d.oneOf ? ['exactly one of', d.oneOf] : d.anyOf ? ['at least one of', d.anyOf] : d.not ? ['at most one of', null] : null;
-    var one = !rule ? [] : rule[1] ? rule[1].map(function (o) { return o.required[0]; }) : d.not.required;
-    var out = '', grouped = false;
+    // Each group is a label and its keys: the def's own one-of rule, then an at-most-one-of rule from its then.not.
+    var firsts = function (os) { return os.map(function (o) { return o.required[0]; }); };
+    var groups = [];
+    if (d.oneOf) groups.push(['exactly one of', firsts(d.oneOf)]);
+    else if (d.anyOf) groups.push(['at least one of', firsts(d.anyOf)]);
+    else if (d.not) groups.push(['at most one of', d.not.required]);
+    if (d.then && d.then.not) groups.push(['at most one of', d.then.not.required]);
+    var out = '', drawn = [];
     keys.forEach(function (k) {
-      if (one.indexOf(k) < 0) { out += item(k); return; }
-      if (grouped) return;
-      grouped = true;
-      out += '<div class="grp"><span class="lbl">' + rule[0] + '</span>' + one.map(item).join('') + '</div>';
+      var g = groups.filter(function (g) { return g[1].indexOf(k) >= 0; })[0];
+      if (!g) { out += item(k); return; }
+      if (drawn.indexOf(g) >= 0) return;
+      drawn.push(g);
+      out += '<div class="grp"><span class="lbl">' + g[0] + '</span>' + g[1].map(item).join('') + '</div>';
     });
     return '<div class="kl">' + out + '</div>';
   }
