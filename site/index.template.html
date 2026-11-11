@@ -51,9 +51,6 @@ main a:not(.ex), .prov a, footer a, noscript a { text-decoration: underline; }
 main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 44px; min-width: 0; }
 section, tr[id] { scroll-margin-top: 12px; }
 .lead { margin-bottom: 12px; max-width: none; }
-.vocabulary { margin-top: 12px; scroll-margin-top: 12px; }
-.vocabulary > summary { cursor: pointer; color: var(--accent); }
-.vocabulary[open] > summary { margin-bottom: 12px; }
 .subheading { margin: 16px 0 8px; }
 .example-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
@@ -68,9 +65,10 @@ td.ex { width: 1%; white-space: nowrap; }
 .kb { white-space: nowrap; }
 .badge { display: inline-block; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 999px; vertical-align: middle; margin-left: 6px; background: var(--req-soft); color: var(--req); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; }
-/* A location's fields: field, then what its value holds; one-of groups get a guide line. */
+/* A location's fields, or the suggested relations: name, then what it holds; groups get a guide line. */
 .kl { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 3px 14px; }
-.kl .k { white-space: nowrap; }
+.kl .k { white-space: nowrap; color: var(--fg); }
+.kl .v a.ex { margin-left: 6px; }
 .kl .grp { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; gap: 3px 14px; border-left: 2px solid var(--line); padding-left: 10px; margin: 2px 0; }
 .kl .grp > .lbl { grid-column: 1 / -1; color: var(--muted); font-size: 13px; }
 a.ex { display: inline-block; font-family: var(--mono); font-size: 12px; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; background: var(--surface); }
@@ -132,11 +130,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
       <section id="record">
         <h2>The annotation</h2>
         <div class="panel" id="record-table"></div>
-        <details class="vocabulary" id="relation">
-          <summary>Suggested relation values</summary>
-          <p class="lead" id="relation-lead"></p>
-          <div class="panel" id="relation-table"></div>
-        </details>
       </section>
       <section id="ends">
         <h2>Ends</h2>
@@ -227,10 +220,24 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
     }
     return '';
   }
+  // The spec's recommended relations, grouped in the relation row like a location's fields.
+  // They are suggestions, not a closed list: the label must never say "one of".
+  var RELATIONS = [
+    ['exactMatch', 'the same definition or claim, up to notation and junk values', 'split-declarations.json'],
+    ['closeMatch', 'nearly the same'],
+    ['broadMatch', 'the object is more general', 'broad-match.json'],
+    ['narrowMatch', 'the subject is more general'],
+    ['relatedMatch', 'related in another way, such as a lemma the proof uses', 'pdf-region.jsonl'],
+    ['hasPart', 'the object states one part of the subject', 'has-part.json'],
+    ['noMatch', 'checked absence: the object, usually a project at a ' + code('version') + ', was searched and holds no counterpart', 'checked-absence.json']
+  ];
+  var SUGGESTED = '<div class="kl"><div class="grp"><span class="lbl">suggested, or any other nonempty string</span>' + RELATIONS.map(function (r) {
+    return '<span class="k">' + code(r[0]) + '</span><span class="v">' + r[1] + (r[2] ? exLink(r[2]) : '') + '</span>';
+  }).join('') + '</div></div>';
   var SAY = {
     'subject': ', usually the informal side',
     'object': ', the other side; ' + code('[]') + ' leaves the subject unlinked',
-    'relation': 'any nonempty string describing how the subject relates to the object',
+    'relation': 'how the subject relates to the object' + SUGGESTED,
     'end.junk': ': values this end assigns where the other side is undefined, such as ' + code('x / 0 = 0'),
     'status': 'how far the subject is formalized, such as ' + list(['formalized', 'partial', 'not_formalized'].map(code), 'or'),
     'kind': 'what the subject is, such as ' + list(['definition', 'theorem', 'proof', 'proof_step'].map(code), 'or'),
@@ -313,21 +320,6 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   set('quote-value', 'Object with the text to match in ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) +
     ' and optional surrounding text in ' + list(qopt.map(code)) + '.');
   set('lines-value', code('[start, end]') + ' selects an inclusive range. ' + code('[n]') + ' selects the outermost item that starts on line n.');
-
-  // Suggested relation vocabulary, collapsed beneath the annotation fields.
-  set('relation-lead', 'These names have shared meanings; other values are allowed.');
-  var RELATIONS = [
-    ['exactMatch', 'The same definition or claim, up to notation and junk values', 'split-declarations.json'],
-    ['closeMatch', 'Nearly the same'],
-    ['broadMatch', 'The object is more general', 'broad-match.json'],
-    ['narrowMatch', 'The subject is more general'],
-    ['relatedMatch', 'Related in another way, such as a lemma the proof uses', 'pdf-region.jsonl'],
-    ['hasPart', 'The object states one part of the subject', 'has-part.json'],
-    ['noMatch', 'Checked absence: the object, usually a project at a ' + code('version') + ', was searched and holds no counterpart', 'checked-absence.json']
-  ];
-  set('relation-table', table(['<code>relation</code>', 'Reading', 'Example'], RELATIONS.map(function (r) {
-    return '<tr><td class="key">' + code(r[0]) + '</td><td class="main">' + r[1] + '</td>' + exCell(r[2] ? [r[2]] : []) + '</tr>';
-  }).join('')));
 
   // 5. Files, with folder defaults and the end template.
   var FILE_ROWS = [
