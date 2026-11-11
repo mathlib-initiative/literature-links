@@ -375,8 +375,8 @@ that holds the annotations:
 
 Beside a declaration, `lines` narrows it to the part on those lines, such as a
 proof step; an annotation that means the whole declaration leaves `lines` out.
-Lines outside the declaration, or in a module that does not hold it, are
-unresolved.
+Lines not wholly inside the declaration, or in a module that does not hold
+it, are unresolved.
 
 At the version below, `Subgroup.card_dvd_of_injective` proves its claim with a
 `calc` alone on line 81, so its first step starts on line 82. This annotation
@@ -397,9 +397,12 @@ links the first step of a proof in the notes to that step:
 
 `bytes` requires `module`, excludes `lines`, and selects a [byte range](#bytes)
 of the module's file. Like `lines`, beside a declaration it narrows it, and a
-range outside the declaration is unresolved. An end whose location gives
-`bytes` must give a `version`, and should give the full commit, since a tag
-can be moved.
+range not wholly inside the declaration is unresolved. An end whose location
+gives `bytes` must give a `version`, and should give the full commit, since a
+tag can be moved. The offsets count the module's file as committed at
+`version`, not a checkout of it, whose bytes can differ: with Git's
+`core.autocrlf`, for example, a checkout ends its lines with CRLF where the
+commit has LF.
 
 ### Lines
 
@@ -420,7 +423,7 @@ whether the file is UTF-8, Latin-1 or another ASCII-compatible encoding.
 `bytes` in a LaTeX or Lean location is `[start, end]`, two integers with
 0 ≤ start < end. It selects the bytes of the file from offset start up to, but
 not including, offset end, counting from 0, so the range holds end − start
-bytes and is never empty. These are the offsets that editors, Git and parsers
+bytes and is never empty. These are the offsets that parsers, such as Lean's,
 report, which is why `bytes` counts differently from `lines`. In a UTF-8 file,
 both offsets fall on character boundaries; a range that starts or ends inside a
 character is unresolved.
