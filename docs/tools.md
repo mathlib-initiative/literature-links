@@ -2,7 +2,7 @@
 
 The `literature_links` package checks annotations offline and reads them from
 files. It needs Python 3.11 or newer and nothing else.
-[companion.md](companion.md) defines the format.
+[The specification](spec.md) defines the format.
 
 ## Python API
 
@@ -23,8 +23,8 @@ files. It needs Python 3.11 or newer and nothing else.
 - `merge(inherited, written, *, defaults=False)` merges an annotation, or with
   `defaults=True` another defaults file, over inherited defaults.
   `rebase(value, base)` rewrites the relative references listed in
-  [References](companion.md#references). Both follow
-  [folder defaults](companion.md#folder-defaults).
+  [References](spec.md#references). Both follow
+  [folder defaults](spec.md#folder-defaults).
 - `load_schema()` reads the bundled schema at `SCHEMA_PATH`.
 
 `discovery` reads annotations from files and folders, as in
@@ -101,7 +101,7 @@ is written as an escape such as `\udce9`.
 
 `literature-links scan` and `discovery.collect` read annotations from local
 files, and `literature-links validate` reads each file the same way. The
-[specification](companion.md#discovery) says what a JSON and a JSONL document
+[specification](spec.md#discovery) says what a JSON and a JSONL document
 carry; the rest is a reader convention.
 
 | File | Annotations | Origin |
@@ -125,7 +125,7 @@ carry; the rest is a reader convention.
 - Hidden directories are read. Symlinks are skipped while walking and are an
   error when named explicitly.
 - A file named `_defaults.json` holds
-  [folder defaults](companion.md#folder-defaults), not annotations. Every
+  [folder defaults](spec.md#folder-defaults), not annotations. Every
   defaults file that covers a selected file, up to `--root`, applies, whatever
   `--include` and `--exclude` select, and a symlinked one is an error.
 - Files are read in sorted path order, each resolved path once.

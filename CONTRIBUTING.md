@@ -1,7 +1,7 @@
 # Contributing
 
 - Open an issue before changing the format: a field, a value or a rule.
-- A format change updates, in one pull request, `docs/companion.md`, `schema/companion.schema.json`, the checker in `src/literature_links/companion.py`, a test or example, and `CHANGELOG.md`.
+- A format change updates, in one pull request, `docs/spec.md`, `schema/companion.schema.json`, the checker in `src/literature_links/companion.py`, a test or example, and `CHANGELOG.md`.
 - A change to the checker, its Python API or the command line updates `docs/tools.md`.
 - Only a major release may make a valid annotation invalid or remove a name from `__all__`.
 - The Annotation Format Map, built from `site/index.template.html` by `site/build.py`, is published on every push to `main`. Its field and location tables come from the schema and its examples from `examples/companion`, but its wording and its relation and file tables are written by hand: a format change updates those too. `tests/test_site.py` checks that the page builds, that its script runs and that the fields its wording names exist.

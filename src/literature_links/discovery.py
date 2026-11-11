@@ -13,7 +13,7 @@ from .companion import Problem
 
 __all__ = ["DEFAULTS", "Collection", "Problem", "Record", "collect", "inherit"]
 
-# The file name of folder defaults (docs/companion.md, "Folder defaults").
+# The file name of folder defaults (docs/spec.md, "Folder defaults").
 DEFAULTS = "_defaults.json"
 
 # Files read one annotation per line; other files hold one JSON value.
