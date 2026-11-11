@@ -65,6 +65,7 @@ python -m pip install "git+https://github.com/mathlib-initiative/literature-link
 
 - [Annotation Format Map](https://mathlib-initiative.github.io/literature-links/) and [sample files](examples/companion/)
 - [Format specification](docs/companion.md) and [JSON Schema](schema/companion.schema.json)
+- [Adopting Literature Links](docs/adopting.md)
 - [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
 
 Within 1.x, valid annotations stay valid and the public Python API keeps its

@@ -214,7 +214,7 @@ class TestEntryPoints(unittest.TestCase):
 REPO_ROOTS = ("src/", "schema/", "examples/", "docs/", "site/", "tests/", ".github/")
 REPO_FILES = ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "pyproject.toml")
 #: CHANGELOG.md is excluded: release notes may name paths that are gone.
-DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md")
+DOCS = ("README.md", "CONTRIBUTING.md", "docs/companion.md", "docs/tools.md", "docs/adopting.md")
 #: The section anchors of docs/companion.md. Other repositories may link to them.
 SPEC_ANCHORS = ("literature-links-specification", "terms", "fields", "relation", "unlinked-passages-and-checked-absences",
                 "status-kind-id-and-note", "ends", "location", "pdf", "latex", "html", "lean", "lines", "generic",
