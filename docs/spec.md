@@ -18,10 +18,10 @@ Without a `relation`, an annotation claims only that its sides correspond, not
 equivalence, proof or review. No annotation claims that its ends exist.
 
 The [JSON Schema](../schema/companion.schema.json) gives the structure of an
-annotation, [Validation](#validation) adds three checks, and [tools.md](tools.md)
-documents the checker and the command line. The format is versioned by release,
-and annotations have no version field. Annotations valid under 1.x stay valid
-in later 1.x; a breaking change bumps the major version.
+annotation, [Validation](#validation) adds three checks, and
+[tools.md](tools.md) documents the checker and the command line. The format is
+versioned by release, and annotations have no version field. Annotations valid
+under 1.x stay valid in later 1.x; a breaking change bumps the major version.
 
 ## Terms
 
@@ -607,8 +607,8 @@ annotations below it are not read.
 Validation checks the JSON rules below, the JSON Schema, and three things the
 schema cannot express, in each end: a PDF `rect` has positive size and fits the
 page, `lines` end no earlier than they start, and `bytes` end after they start.
-None of the three applies to a location with a `profile`. Validation never resolves locations, fetches
-resources or judges mathematics. Where the schema asks for an integer, a JSON
+None of the three applies to a location with a `profile`. Validation never
+resolves locations, fetches resources or judges mathematics. Where the schema asks for an integer, a JSON
 number with no fractional part counts, so `2.0` is a valid `page`, as in JSON
 Schema.
 

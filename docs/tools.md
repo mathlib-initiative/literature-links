@@ -11,8 +11,9 @@ files. It needs Python 3.11 or newer and nothing else.
 - `check(document)` returns a `Report` whose `problems` are
   `Problem(code, path, message)` items with the codes `JSON`, `SCHEMA`,
   `PDF_RECT`, `LINES` and `BYTES`. Any problem makes the annotation invalid.
-  `PDF_RECT`, `LINES` and `BYTES` are checked in each end, subject first, only when the schema
-  finds nothing, and name the end, as in `$.subject[1].location.rect`.
+  `PDF_RECT`, `LINES` and `BYTES` are checked in each end, subject first, only
+  when the schema finds nothing, and name the end, as in
+  `$.subject[1].location.rect`.
   `warnings` is always empty.
 - `validate(document)` returns the problems as `path: message` strings.
 - `loads(text)` only parses. It keeps integers exact and reads other numbers as
