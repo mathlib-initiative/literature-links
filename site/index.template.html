@@ -146,6 +146,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
             <tbody>
               <tr id="quote"><td class="key"><code>quote</code></td><td class="val main" id="quote-value"></td></tr>
               <tr id="lines"><td class="key"><code>lines</code></td><td class="val main" id="lines-value"></td></tr>
+              <tr id="bytes"><td class="key"><code>bytes</code></td><td class="val main" id="bytes-value"></td></tr>
             </tbody>
           </table>
         </div>
@@ -273,12 +274,13 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   set('end-table', keyTable(END, 'end.', ['type', 'uri', 'location', 'version', 'sha256', 'citation', 'identifiers', 'junk', 'title', 'role', 'extensions']));
 
   // 3. Locations, from the end's allOf: fields, value shapes, and the one-of rules.
-  var EXAMPLES = { pdf: ['pdf-quote.json'], latex: ['latex-several.jsonl'], html: ['html-quote.json'], lean: ['proof-step.json', 'lean-module-lines.json'],
+  var EXAMPLES = { pdf: ['pdf-quote.json'], latex: ['latex-several.jsonl', 'byte-range.json'], html: ['html-quote.json'], lean: ['proof-step.json', 'lean-module-lines.json', 'byte-range.json'],
                    generic: ['generic-table.json'], profile: ['html-profile.json'] };
   var KEYS = {
     'pdf_location.page': 'physical page number',
     'pdf_location.rect': '[x, y, width, height] as fractions of the page, from the top left',
     'latex_location.label': 'argument of a <code>\\label</code> command',
+    'latex_location.bytes': 'a byte range of the file; needs the end\'s <code>sha256</code>',
     'html_location.css': 'CSS selector',
     'html_location.fragment': 'an element\'s <code>id</code>',
     'lean_location.declaration': 'fully qualified name',
@@ -286,21 +288,30 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   };
   function keyList(name) {
     var d = DEFS[name], keys = Object.keys(d.properties);
-    var needs = d['if'] && d.then ? { key: d['if'].required[0], what: d.then.required[0] } : null;
+    var needs = d['if'] && d.then ? { keys: d['if'].required || d['if'].anyOf.map(function (o) { return o.required[0]; }),
+                                      what: d.then.required[0] } : null;
+    var SELECTS = { lines: '; selects lines of its file, such as a proof step',
+                    bytes: ' and the end\'s <code>version</code>; selects a byte range of its file, such as one hypothesis' };
     var item = function (k) {
-      var r = refName(d.properties[k]), key = r === 'quote' || r === 'lines' ? link(r, code(k)) : code(k);
+      var r = refName(d.properties[k]), key = r === 'quote' || r === 'lines' || r === 'bytes' ? link(r, code(k)) : code(k);
       var v = KEYS[name + '.' + k] || '';
-      if (needs && needs.key === k) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? '; selects lines of its file, such as a proof step' : '');
+      if (needs && needs.keys.indexOf(k) >= 0) v = 'needs ' + code(needs.what) + (name === 'lean_location' ? SELECTS[k] || '' : '');
       return '<span class="k">' + key + badge(d, k) + '</span><span class="v">' + v + '</span>';
     };
-    var rule = d.oneOf ? ['exactly one of', d.oneOf] : d.anyOf ? ['at least one of', d.anyOf] : d.not ? ['at most one of', null] : null;
-    var one = !rule ? [] : rule[1] ? rule[1].map(function (o) { return o.required[0]; }) : d.not.required;
-    var out = '', grouped = false;
+    // Each group is a label and its keys: the def's own one-of rule, then an at-most-one-of rule from its then.not.
+    var firsts = function (os) { return os.map(function (o) { return o.required[0]; }); };
+    var groups = [];
+    if (d.oneOf) groups.push(['exactly one of', firsts(d.oneOf)]);
+    else if (d.anyOf) groups.push(['at least one of', firsts(d.anyOf)]);
+    else if (d.not) groups.push(['at most one of', d.not.required]);
+    if (d.then && d.then.not) groups.push(['at most one of', d.then.not.required]);
+    var out = '', drawn = [];
     keys.forEach(function (k) {
-      if (one.indexOf(k) < 0) { out += item(k); return; }
-      if (grouped) return;
-      grouped = true;
-      out += '<div class="grp"><span class="lbl">' + rule[0] + '</span>' + one.map(item).join('') + '</div>';
+      var g = groups.filter(function (g) { return g[1].indexOf(k) >= 0; })[0];
+      if (!g) { out += item(k); return; }
+      if (drawn.indexOf(g) >= 0) return;
+      drawn.push(g);
+      out += '<div class="grp"><span class="lbl">' + g[0] + '</span>' + g[1].map(item).join('') + '</div>';
     });
     return '<div class="kl">' + out + '</div>';
   }
@@ -320,6 +331,7 @@ footer { margin-top: 44px; color: var(--muted); font-size: 13px; }
   set('quote-value', 'Object with the text to match in ' + list(q.required.map(function (k) { return kb(code(k), REQ); })) +
     ' and optional surrounding text in ' + list(qopt.map(code)) + '.');
   set('lines-value', code('[start, end]') + ' selects an inclusive range. ' + code('[n]') + ' selects the outermost item that starts on line n.');
+  set('bytes-value', code('[start, end]') + ' selects bytes start up to, not including, end, counting from 0, in a file pinned by ' + code('sha256') + ' or ' + code('version') + '.');
 
   // 5. Files, with folder defaults and the end template.
   var FILE_ROWS = [

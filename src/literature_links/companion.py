@@ -233,9 +233,10 @@ def _validator(path: Path) -> tuple[Validator, dict[str, str]]:
 def check(document: Any) -> Report:
     """Check one annotation without changing it.
 
-    Problem codes are ``JSON`` (not a JSON value), ``SCHEMA``, ``PDF_RECT`` and
-    ``LINES``. The last two are checked in each end, subject first, whose
-    location has no ``profile``, and only when the schema finds nothing.
+    Problem codes are ``JSON`` (not a JSON value), ``SCHEMA``, ``PDF_RECT``,
+    ``LINES`` and ``BYTES``. The last three are checked in each end, subject
+    first, whose location has no ``profile``, and only when the schema finds
+    nothing.
     """
     report = Report(problems=_json_problems(document))
     if report.problems:
@@ -275,6 +276,10 @@ def check(document: Any) -> Report:
                 if last < start:
                     report.problems.append(Problem("LINES", path + ".lines",
                                                    "end must be greater than or equal to start"))
+            elif end["type"] in ("latex", "lean") and "bytes" in location:
+                start, stop = location["bytes"]
+                if stop <= start:
+                    report.problems.append(Problem("BYTES", path + ".bytes", "end must be greater than start"))
     return report
 
 

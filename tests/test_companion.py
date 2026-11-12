@@ -455,12 +455,18 @@ class TestStructuredDiagnostics(unittest.TestCase):
         bad_shape["object"] = {}
         lean_lines = document()
         lean_lines["object"][0]["location"] = {"module": "Notes.Groups", "lines": [9, 3]}
+        latex_bytes = document("latex", {"bytes": [5, 5]})
+        latex_bytes["subject"][0]["sha256"] = SHA256
+        lean_bytes = document()
+        lean_bytes["object"][0]["location"] = {"module": "Notes.Groups", "bytes": [9, 3]}
         cases = [(bad_json, "JSON", '$["subject"][0]["location"]["payload"]'),
                  (bad_shape, "SCHEMA", "$.object"),
                  (document("pdf", {"page": 1, "rect": [0, 0, 0, 1]}), "PDF_RECT", "$.subject[0].location.rect"),
                  (document("pdf", {"page": 1, "rect": [0.8, 0, 0.3, 1]}), "PDF_RECT", "$.subject[0].location.rect"),
                  (document("latex", {"lines": [5, 2]}), "LINES", "$.subject[0].location.lines"),
-                 (lean_lines, "LINES", "$.object[0].location.lines")]
+                 (lean_lines, "LINES", "$.object[0].location.lines"),
+                 (latex_bytes, "BYTES", "$.subject[0].location.bytes"),
+                 (lean_bytes, "BYTES", "$.object[0].location.bytes")]
         for doc, code, path in cases:
             with self.subTest(code=code, path=path):
                 report = C.check(doc)
@@ -844,8 +850,8 @@ class TestSchema(unittest.TestCase):
                 else:
                     self.assertTrue(codes)
                     self.assertEqual(set(codes), {"SCHEMA"})
-        # The table covers both outcomes and both checks beyond the schema.
-        self.assertEqual({code for case in cases for code in case["beyond"]}, {"PDF_RECT", "LINES"})
+        # The table covers both outcomes and every check beyond the schema.
+        self.assertEqual({code for case in cases for code in case["beyond"]}, {"PDF_RECT", "LINES", "BYTES"})
         self.assertEqual({case["schema_valid"] for case in cases}, {True, False})
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")
@@ -955,7 +961,7 @@ class TestSchemaEvaluator(unittest.TestCase):
         self.assertEqual(C.validate(document("html", {})),
                          ["$.subject[0].location: must have exactly one of 'fragment', 'css' and 'quote'"])
         self.assertEqual(C.validate(document("latex", {"label": "a", "lines": [1]})),
-                         ["$.subject[0].location: must have exactly one of 'label' and 'lines'"])
+                         ["$.subject[0].location: must have exactly one of 'label', 'lines' and 'bytes'"])
         self.assertEqual(C.validate(document("lean", {})), ["$.subject[0].location: must have 'declaration' or 'module'"])
 
     @unittest.skipUnless(importlib.util.find_spec("jsonschema"), "optional jsonschema not installed")

@@ -191,12 +191,14 @@ class TestEntryPoints(unittest.TestCase):
 
     def test_the_examples_name_mathlib_by_its_release_tag(self):
         # No tag names the mathlib3 revision, so that end keeps its commit and shows the other form.
+        # A byte range needs the exact tree, so its project, which is not Mathlib, gives the commit.
         records = discovery.collect([EXAMPLES]).records
         versions = {(end["uri"], end["version"]) for record in records for side in ("subject", "object")
                     for end in record.annotation[side] if end["type"] == "lean" and "version" in end}
         self.assertEqual(versions, {("https://github.com/leanprover-community/mathlib4", "v4.33.0"),
                                     ("https://github.com/leanprover-community/mathlib3",
-                                     "65a1391a0106c9204fe45bc73a039f056558cb83")})
+                                     "65a1391a0106c9204fe45bc73a039f056558cb83"),
+                                    ("https://example.org/walks", "4f3c2a1b0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b")})
 
     def test_a_missing_schema_is_reported_without_a_traceback(self):
         good = FIXTURE / "links.jsonl"

@@ -1,0 +1,21 @@
+{
+  "subject": [
+    {
+      "type": "latex",
+      "uri": "https://example.org/walks/paper.tex",
+      "sha256": "6c6a04b64488546e49f0ebb4c6310bb091487b5861b5b525985faec6e80c2e7f",
+      "location": { "bytes": [2766, 2781] },
+      "title": "Theorem 2, hypothesis on d"
+    }
+  ],
+  "object": [
+    {
+      "type": "lean",
+      "uri": "https://example.org/walks",
+      "version": "4f3c2a1b0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b",
+      "location": { "declaration": "Walks.walk_sparse", "module": "Walks.Sparse", "bytes": [962, 977] }
+    }
+  ],
+  "relation": "exactMatch",
+  "note": "The subject is the clause Let $d \\geq 10$, 15 bytes of the pinned source of Theorem 2. The object is the binder (hd : 10 ≤ d), also 15 bytes, since ≤ takes three in UTF-8, in the declaration at that commit. Lines would select the whole statement on both sides, and a quote of a clause this short could match elsewhere."
+}
